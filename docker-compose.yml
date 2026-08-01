@@ -1,1 +1,18 @@
-version: "3.9"
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bastion-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bastion
+      POSTGRES_PASSWORD: bastion_secret
+      POSTGRES_DB: bastion_db
+    ports: -"5433:5432"
+    volumes: -postgres_data:/var/lib/postgresql/postgres_data - ./infra/postgres/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg-isready -U bastion -d bastion_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
