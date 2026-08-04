@@ -1,3 +1,4 @@
 /.agents
 .env
 *.exe
+.notes

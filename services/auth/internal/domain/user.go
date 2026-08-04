@@ -1,5 +1,7 @@
 package domain
 
+// Password Hashing
+
 import "time"
 
 type User struct {
