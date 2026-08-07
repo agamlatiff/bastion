@@ -165,3 +165,33 @@ func (s *authService) ValidateToken(ctx context.Context, tokenStr string) (*doma
 	// Get profile new user data from database
 	return s.userRepo.FindByID(ctx, userID)
 }
+
+func (s *authService) Logout(ctx context.Context, tokenStr string) error {
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		return []byte(s.jwtSecret), nil
+	})
+
+	if err != nil || !token.Valid {
+		return errors.New("Invalid or expired token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+
+	if !ok {
+		return errors.New("Invalid token claims")
+	}
+
+	expFloat, ok := claims["exp"].(float64)
+	if !ok {
+		return errors.New("Invalid exp claims")
+	}
+
+	expTime := time.Unix(int64(expFloat), 0)
+	remainingDuration := time.Until(expTime)
+
+	if remainingDuration <= 0 {
+		return nil
+	}
+
+	return s.rdb.Set(ctx, "blacklist:"+tokenStr, "true", remainingDuration).Err()
+}
