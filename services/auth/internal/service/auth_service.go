@@ -168,6 +168,10 @@ func (s *authService) ValidateToken(ctx context.Context, tokenStr string) (*doma
 
 func (s *authService) Logout(ctx context.Context, tokenStr string) error {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("Unexpected signing method")
+		}
+		
 		return []byte(s.jwtSecret), nil
 	})
 
