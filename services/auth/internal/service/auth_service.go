@@ -38,7 +38,7 @@ func NewAuthService(userRepo repository.UserRepository,
 	}
 }
 
-func (s *authService) Register (ctx context.Context, req domain.RegisterRequest) (*domain.AuthResponse, error) {
+func (s *authService) Register(ctx context.Context, req domain.RegisterRequest) (*domain.AuthResponse, error) {
 
 	// Checking email is already sign in database
 	existingUser, _ := s.userRepo.FindByEmail(ctx, req.Email)
@@ -55,10 +55,10 @@ func (s *authService) Register (ctx context.Context, req domain.RegisterRequest)
 
 	// Create new object user
 	newUser := &domain.User{
-		Email: req.Email,
+		Email:        req.Email,
 		PasswordHash: string(hashedBytes),
-		FullName: req.FullName,
-		Tier: "tier_1",
+		FullName:     req.FullName,
+		Tier:         "tier_1",
 	}
 
 	// Save the new user into database PostgreSQL
@@ -80,7 +80,7 @@ func (s *authService) Register (ctx context.Context, req domain.RegisterRequest)
 
 	return &domain.AuthResponse{
 		Token: tokenStr,
-		User: newUser,
+		User:  newUser,
 	}, nil
 }
 
@@ -89,15 +89,15 @@ func (s *authService) generateToken(user *domain.User) (string, error) {
 	// Create payload into JWT Token
 	claims := jwt.MapClaims{
 		"user_id": user.ID,
-		"email" : user.Email,
-		"tier" : user.Tier,
-		"exp" : time.Now().Add(time.Duration(s.jwtExpiryHours) * time.Hour).Unix(),
+		"email":   user.Email,
+		"tier":    user.Tier,
+		"exp":     time.Now().Add(time.Duration(s.jwtExpiryHours) * time.Hour).Unix(),
 	}
 
 	// Create token object with HS256 Algorithm
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// Sign token with key secret from .env	
+	// Sign token with key secret from .env
 	return token.SignedString([]byte(s.jwtSecret))
 }
 
@@ -112,7 +112,7 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest) (*doma
 	}
 
 	// Compare password input with password database (hash)
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash),[]byte(req.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
 	if err != nil {
 		return nil, errors.New(errMessage)
 	}
@@ -126,6 +126,42 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest) (*doma
 
 	return &domain.AuthResponse{
 		Token: tokenStr,
-		User: user,
-	},nil
+		User:  user,
+	}, nil
+}
+
+func (s *authService) ValidateToken(ctx context.Context, tokenStr string) (*domain.User, error) {
+	// Checking is token already ever to logout (blacklist)
+	blacklisted, _ := s.rdb.Get(ctx, "blacklist:"+tokenStr).Result()
+	if blacklisted != "" {
+		return nil, errors.New("Token has been logged out")
+	}
+
+	// Parse & verification the stamp HS256 JWT Token
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("Unexpected signing method")
+		}
+		return []byte(s.jwtSecret), nil
+	})
+
+	if err != nil || !token.Valid {
+		return nil, errors.New("Invalid or expired token")
+	}
+
+	// Extract the fill of payload into JWT Token
+	claims, ok := token.Claims.(jwt.MapClaims)
+
+	if !ok {
+		return nil, errors.New("Invalid token claims")
+	}
+
+	userID, ok := claims["user_id"].(string)
+
+	if !ok {
+		return nil, errors.New("Invalid user_id in token")
+	}
+
+	// Get profile new user data from database
+	return s.userRepo.FindByID(ctx, userID)
 }
