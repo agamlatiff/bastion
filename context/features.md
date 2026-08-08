@@ -1,135 +1,141 @@
-# ⚡ Bastion — Core Features Specification
+# ⚡ Bastion — Feature Specifications
 
-> **Source**: Derived from [prd.md](file:///c:/Projects/bastion/context/prd.md) & [database_design.md](file:///c:/Projects/bastion/context/database_design.md)
-> **Purpose**: Detailed breakdown of functional features, endpoints, technical design, and acceptance criteria.
+> **Purpose**: Endpoint-level specifications with implementation state markers
+> **Convention**: `[CURRENT]` = implemented, `[PLANNED — Level N]` = committed, `[FUTURE]` = not committed
 
 ---
 
 ## 1. Authentication & User Management
 
-### 1.1 User Registration
-- **Description**: Allows new users to create an account with email, password, and full name. Upon successful registration, a `Tier 1` (Unverified) wallet is automatically created with an initial balance of `0 IDR` and a maximum balance limit of `2,000,000 IDR`.
+### [CURRENT] 1.1 User Registration
 - **Endpoint**: `POST /api/v1/auth/register`
+- **Description**: Creates a new user account with email, password, and full name. Upon success, a Tier 1 wallet is auto-created with 0 IDR balance and 2,000,000 IDR limit.
 - **Technical Specs**:
-  - Passwords hashed using **bcrypt** (cost factor 12).
-  - Generates a default 1:1 `Tier 1` wallet in PostgreSQL.
-  - Returns a valid JWT auth token and user profile object.
+  - Passwords hashed using **bcrypt** (cost factor 12)
+  - Generates a default 1:1 Tier 1 wallet in PostgreSQL
+  - Returns JWT auth token and user profile object
 - **Acceptance Criteria**:
-  - Rejects duplicate email registration with `409 Conflict`.
-  - Rejects weak passwords (< 8 characters) or invalid email formats with `400 Bad Request`.
+  - Rejects duplicate email with `409 Conflict`
+  - Rejects weak passwords (< 8 characters) or invalid email with `400 Bad Request`
 
-### 1.2 User Login & Audit Logging
-- **Description**: Authenticates users with registered credentials, issues a signed JWT token, and records security audit logs.
+### [CURRENT] 1.2 User Login
 - **Endpoint**: `POST /api/v1/auth/login`
+- **Description**: Authenticates user credentials, issues a signed JWT token.
 - **Technical Specs**:
-  - Verifies hashed password with bcrypt.
-  - Issues JWT containing `sub` (User ID), `iat`, and `exp` claims (24h validity).
-  - Inserts entry into `audit_logs` capturing client IP and User-Agent.
+  - Verifies hashed password with bcrypt
+  - Issues JWT containing `sub` (User ID), `iat`, and `exp` claims (24h validity)
 - **Acceptance Criteria**:
-  - Returns JWT token and user profile on valid credentials.
-  - Returns generic `401 Unauthorized` ("invalid email or password") on failure without revealing email existence.
+  - Returns JWT token and user profile on valid credentials
+  - Returns generic `401 Unauthorized` on failure without revealing email existence
 
-### 1.3 Profile Retrieval & KYC Tier Info
-- **Description**: Returns authenticated user information including current KYC status and tier limits.
+### [CURRENT] 1.3 Profile Retrieval
 - **Endpoint**: `GET /api/v1/auth/me` (Protected 🔒)
+- **Description**: Returns authenticated user information including current tier and limits.
 
-### 1.4 User Logout
-- **Description**: Invalidates the current session's JWT token.
+### [CURRENT] 1.4 User Logout
 - **Endpoint**: `POST /api/v1/auth/logout` (Protected 🔒)
+- **Description**: Invalidates the current JWT token.
 - **Technical Specs**:
-  - Adds the JWT token string to Redis with key format `blacklist:{token}` and TTL matching the token's remaining lifespan.
+  - Adds the JWT token to Redis with key `blacklist:{token}` and TTL matching remaining token lifespan
 
 ---
 
-## 2. KYC Verification & Limit Upgrade (Regulated E-Money)
+## 2. KYC Verification & Tier Upgrade
 
-### 2.1 KYC Verification Submission
-- **Description**: Allows Tier 1 users to submit ID card (KTP) details and selfie image URLs to request account upgrade to `Tier 2` (Verified).
+### [PLANNED — Level 1] 2.1 KYC Submission
 - **Endpoint**: `POST /api/v1/kyc/submit` (Protected 🔒)
+- **Description**: Allows Tier 1 users to submit ID card (KTP) details to request upgrade to Tier 2.
 - **Technical Specs**:
-  - Validates 16-digit ID card number uniqueness.
-  - Creates a `pending` record in `kyc_verifications`.
+  - Validates 16-digit ID card number uniqueness
+  - Creates a `pending` record in `kyc_verifications`
 - **Acceptance Criteria**:
-  - Rejects submission if user is already verified or has a pending KYC request (`409 Conflict`).
+  - Rejects if user already verified or has pending request (`409 Conflict`)
 
-### 2.2 KYC Approval (Admin / Automated)
-- **Description**: Approves a user's KYC submission, upgrading account status from `Tier 1` to `Tier 2`.
+### [PLANNED — Level 1] 2.2 KYC Approval (Admin)
 - **Endpoint**: `POST /api/v1/admin/kyc/:id/approve` (Protected 🔒)
+- **Description**: Approves a KYC submission, upgrading user from Tier 1 to Tier 2.
 - **Technical Specs**:
-  - Updates `users.tier` to `'tier_2'`.
-  - Increases `wallets.max_balance_limit` from `2,000,000 IDR` to `20,000,000 IDR`.
-  - Unlocks P2P transfer privileges.
+  - Updates `users.tier` to `'tier_2'`
+  - Increases `wallets.max_balance_limit` from 2,000,000 to 20,000,000 IDR
+  - Unlocks P2P transfer privileges
 
 ---
 
-## 3. Wallet & Virtual Account Management
+## 3. Wallet & Top-Up
 
-### 3.1 Get Wallet Balance & Tier Limits
-- **Description**: Retrieves current balance, max balance limit, and currency for the authenticated user's wallet.
+### [PLANNED — Level 1] 3.1 Get Wallet Balance
 - **Endpoint**: `GET /api/v1/wallet` (Protected 🔒)
+- **Description**: Returns current balance, max balance limit, and currency.
 
-### 3.2 Bank Virtual Account Generation
-- **Description**: Generates a dedicated Bank Virtual Account (e.g., BCA, Mandiri, BRI) assigned to the user for top-up payments.
-- **Endpoint**: `POST /api/v1/wallet/virtual-account` (Protected 🔒)
-- **Acceptance Criteria**:
-  - Returns unique VA number bound to user account.
-
-### 3.3 Top-Up Callback Handler (Simulated Bank Webhook)
-- **Description**: Callback webhook invoked when a user pays through a Bank Virtual Account.
+### [PLANNED — Level 1] 3.2 Top-Up Callback (Simulated Bank Webhook)
 - **Endpoint**: `POST /api/v1/webhooks/bank-callback`
+- **Description**: Simulated callback when a user pays via bank transfer.
 - **Technical Specs**:
-  - Enforces database transactions (ACID).
-  - Uses `SELECT ... FOR UPDATE` row-level locking.
-  - Verifies that new balance will not exceed `max_balance_limit` (`2,000,000 IDR` for Tier 1; `20,000,000 IDR` for Tier 2).
-  - Writes event to `outbox_events` table (Transactional Outbox Pattern).
+  - Enforces ACID database transaction
+  - Uses `SELECT FOR UPDATE` row-level locking
+  - Verifies balance will not exceed `max_balance_limit`
+  - Idempotency check to prevent duplicate callbacks
 
 ---
 
-## 4. Peer-to-Peer Transfers & Double-Entry Ledger
+## 4. P2P Transfers & Double-Entry Ledger
 
-### 4.1 Peer-to-Peer Transfer
-- **Description**: Transfers funds from sender's wallet to receiver's wallet using receiver email.
+### [PLANNED — Level 2] 4.1 Peer-to-Peer Transfer
 - **Endpoint**: `POST /api/v1/transactions/transfer` (Protected 🔒)
+- **Description**: Transfers funds from sender's wallet to receiver's wallet using receiver email.
 - **Technical Specs**:
-  - **Tier Gate**: Only `Tier 2` (KYC Verified) users can perform outgoing P2P transfers.
-  - **Idempotency**: Checked against Redis key `idempotency:{key}` (24h TTL) to prevent duplicate processing.
-  - **Deadlock Prevention**: Locks both sender and receiver wallet rows using `SELECT FOR UPDATE` in ascending order of Wallet UUIDs.
-  - **Receiver Limit Check**: Verifies receiver balance + transfer amount <= receiver's `max_balance_limit`.
-  - **Double-Entry Bookkeeping**: Inserts 1 transaction record and 2 ledger entries (`debit` for sender, `credit` for receiver).
-  - **Transactional Outbox**: Emits event payload into `outbox_events` table in the SAME SQL transaction.
+  - **Tier Gate**: Only Tier 2 (KYC Verified) users can send transfers
+  - **Idempotency**: Checked against Redis key `idempotency:{key}` (24h TTL)
+  - **Deadlock Prevention**: Locks wallet rows using `SELECT FOR UPDATE` in ascending UUID order
+  - **Receiver Limit Check**: Verifies receiver balance + amount ≤ receiver's `max_balance_limit`
+  - **Double-Entry Bookkeeping**: 1 transaction record + 2 ledger entries (debit + credit)
 - **Acceptance Criteria**:
-  - Returns `403 Forbidden` if sender is `Tier 1` (Unverified).
-  - Returns `422 Unprocessable Entity` if sender has insufficient balance or receiver limit is exceeded.
-  - Returns `404 Not Found` if receiver email does not exist.
-  - Retried requests with identical `idempotency_key` return cached response without double-charging.
+  - `403 Forbidden` if sender is Tier 1
+  - `422 Unprocessable Entity` if insufficient balance or receiver limit exceeded
+  - `404 Not Found` if receiver email does not exist
+  - Retry with same `idempotency_key` returns cached response without double-charging
 
-### 4.2 Transaction History & Detail
-- **Endpoints**:
-  - List: `GET /api/v1/transactions?page=1&limit=20&type=transfer` (Protected 🔒)
-  - Detail: `GET /api/v1/transactions/:id` (Protected 🔒)
-- **Technical Specs**:
-  - Append-only immutable records.
-  - Uses SQL `LIMIT` / `OFFSET` pagination with indexed lookup.
+### [PLANNED — Level 1] 4.2 Transaction History
+- **Endpoint**: `GET /api/v1/transactions?page=1&limit=20` (Protected 🔒)
+- **Description**: Paginated transaction list.
+
+### [PLANNED — Level 1] 4.3 Transaction Detail
+- **Endpoint**: `GET /api/v1/transactions/:id` (Protected 🔒)
+- **Description**: Transaction detail with associated ledger entries.
 
 ---
 
-## 5. Event Publishing & Real-Time Notifications
+## 5. Notifications
 
-### 5.1 Outbox Worker & Kafka Publisher
-- **Description**: Background worker polls `outbox_events` table with status `pending`, publishes to Kafka topic `payment.events`, and marks as `published`.
-- **Technical Specs**:
-  - Guarantees **At-Least-Once Delivery** to Kafka even if broker temporarily fails.
+### [PLANNED — Level 3] 5.1 Notification List
+- **Endpoint**: `GET /api/v1/notifications` (Protected 🔒)
+- **Description**: Returns user's notifications.
 
-### 5.2 Real-Time Push (WebSocket) & Notification API
-- **Endpoints**:
-  - List: `GET /api/v1/notifications` (Protected 🔒)
-  - Mark Read: `PATCH /api/v1/notifications/:id/read` (Protected 🔒)
-  - Stream: `WS /api/v1/ws?token=<jwt>` (Protected 🔒)
-- **Acceptance Criteria**:
-  - Active WebSocket clients receive real-time push payload upon transfer reception.
+### [PLANNED — Level 3] 5.2 Mark Notification Read
+- **Endpoint**: `PATCH /api/v1/notifications/:id/read` (Protected 🔒)
+- **Description**: Marks a notification as read.
+
+### [PLANNED — Level 3] 5.3 Real-time Push
+- **Endpoint**: `WS /api/v1/ws?token=<jwt>` (Protected 🔒)
+- **Description**: WebSocket stream for incoming payment alerts.
 
 ---
 
-## 6. Audit Logging & Security Tracking
+## 6. Audit Logging
 
-- Automatically records IP addresses, User-Agents, and action types in `audit_logs` for critical operations (Login, Transfer, KYC submission, Password change).
+### [PLANNED — Level 2] 6.1 Security Audit Trail
+- **Description**: Automatically records IP addresses, User-Agents, and action types for critical operations.
+- **Auditable Actions**: Login, Transfer, KYC Submission
+- **Implementation**: Handled within the relevant service (not a separate microservice)
+
+---
+
+## 7. Future Endpoints (Not Committed)
+
+### [FUTURE] Virtual Account Generation
+- `POST /api/v1/wallet/virtual-account` — Generate bank VA for top-up
+- Will be introduced only if the simulated top-up flow requires it
+
+### [FUTURE] Health Check
+- `GET /health` — Basic service health check
+- Will be introduced when production readiness becomes relevant

@@ -1,205 +1,213 @@
-# 🏗️ Bastion — System Architecture & Design Patterns
+# 🏗️ Bastion — System Architecture
 
-> **Source**: Derived from [prd.md](file:///c:/Projects/bastion/context/prd.md), [features.md](file:///c:/Projects/bastion/context/features.md), & [database_design.md](file:///c:/Projects/bastion/context/database_design.md)
-> **Pattern Focus**: Microservices, Event-Driven Architecture, Transactional Outbox, Clean Architecture
-
----
-
-## 1. System Component Diagram
-
-```mermaid
-graph TD
-    Client["📱 Client Dashboard<br/>(React + TypeScript - Port 3000)"]
-    
-    subgraph Edge Layer
-        Gateway["Gateway API / Router<br/>(Go/Gin - Port 8080)<br/>• Rate Limiter • JWT Verifier • WS Hub"]
-    end
-    
-    subgraph Microservices Layer
-        AuthSvc["Auth Service<br/>(gRPC Port 50051)<br/>• User Auth • KYC • Audit Logs"]
-        WalletSvc["Wallet Service<br/>(gRPC Port 50052)<br/>• Wallet • Transfers • Outbox Worker"]
-        NotifSvc["Notification Service<br/>(gRPC Port 50053)<br/>• Kafka Consumer • WebSocket Pusher"]
-    end
-    
-    subgraph Message Broker
-        Kafka["Kafka Event Stream<br/>• Topic: payment.events<br/>• Topic: payment.dlq"]
-    end
-    
-    subgraph Data & Storage Layer
-        PostgreSQL[("PostgreSQL 16<br/>• users • wallets • transactions<br/>• ledger_entries • outbox_events<br/>• kyc_verifications • audit_logs")]
-        Redis[("Redis 7<br/>• blacklist:{token}<br/>• idempotency:{key}<br/>• rate_limit:{ip}<br/>• wallet:cache:{user}")]
-    end
-
-    %% Connections
-    Client -->|HTTPS REST / WS| Gateway
-    Gateway -->|gRPC| AuthSvc
-    Gateway -->|gRPC| WalletSvc
-    Gateway -->|gRPC| NotifSvc
-    
-    AuthSvc -->|SQL| PostgreSQL
-    AuthSvc -->|Cache/Blacklist| Redis
-    
-    WalletSvc -->|ACID SQL & Outbox| PostgreSQL
-    WalletSvc -->|Idempotency| Redis
-    WalletSvc -.->|Publishes via Outbox Worker| Kafka
-    
-    Kafka -.->|Consumes events| NotifSvc
-    NotifSvc -->|Store Notifs| PostgreSQL
-    NotifSvc -.->|Push Real-time Alerts| Gateway
-```
+> **Purpose**: System design, technology choices, design patterns, failure handling, and observability strategy
+> **Convention**: `[CURRENT]` = implemented, `[PLANNED — Level N]` = committed, `[FUTURE]` = not committed
 
 ---
 
-## 2. Clean Architecture Pattern (Service Level)
+## 1. Current State
 
-Every microservice in Bastion follows strict **Clean Layered Architecture** to maintain separation of concerns, testability, and independence from external drivers.
+What actually exists and runs today:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    1. Handler / Transport                   │
-│   (HTTP Gin Handlers / gRPC Protobuf Handlers / Consumers)  │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ Calls
-┌──────────────────────────────▼──────────────────────────────┐
-│                    2. Service / Business                    │
-│      (Core Domain Logic, Validations, Workflow Controls)     │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ Calls (via Interfaces)
-┌──────────────────────────────▼──────────────────────────────┐
-│                   3. Repository / Storage                   │
-│     (SQL Queries via pgxpool, Redis Operations, Outbox)     │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ Interacts
-┌──────────────────────────────▼──────────────────────────────┐
-│                 4. Database & External Drivers              │
-│                 (PostgreSQL, Redis, Kafka Broker)           │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│           Auth Service — Go/Gin (Port 8080)      │
+│     Register | Login | Profile | Logout          │
+│     Clean Architecture: Handler → Service → Repo │
+└──────────┬────────────────────────┬──────────────┘
+           │ SQL                    │ Cache
+   ┌───────▼──────┐         ┌──────▼──────┐
+   │ PostgreSQL 16│         │   Redis 7   │
+   │ Port 5433    │         │  Port 6379  │
+   │ ───────────  │         │  ─────────  │
+   │ users        │         │  blacklist: │
+   │ wallets      │         │  {token}    │
+   └──────────────┘         └─────────────┘
+       Docker Compose
 ```
+
+**Services**: 1 (Auth Service — REST)
+**Tables**: 2 (`users`, `wallets`)
+**Redis Keys**: 1 pattern (`blacklist:{token}`)
 
 ---
 
-## 3. Core Technical Patterns & Engineering Solutions
+## 2. Target State
 
-### 3.1 Transactional Outbox Pattern (Reliable Event Delivery)
-To prevent dual-write inconsistency (where PostgreSQL updates succeed, but Kafka network fails), Bastion uses the **Transactional Outbox Pattern**:
+What Bastion evolves toward across Levels 1–5:
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Client
-    participant WalletSvc as Wallet Service
-    participant DB as PostgreSQL DB
-    participant Worker as Outbox Worker
-    participant Kafka as Kafka Broker
-    participant NotifSvc as Notification Service
-
-    Client->>WalletSvc: POST /transactions/transfer
-    activate WalletSvc
-    WalletSvc->>DB: BEGIN Transaction
-    WalletSvc->>DB: Lock sender & receiver wallets (SELECT FOR UPDATE)
-    WalletSvc->>DB: Update balance & insert transactions & ledger_entries
-    WalletSvc->>DB: INSERT into outbox_events (Status: 'pending')
-    WalletSvc->>DB: COMMIT Transaction
-    WalletSvc-->>Client: 200 OK (Transfer Success)
-    deactivate WalletSvc
-
-    loop Every 1 Second
-        Worker->>DB: SELECT pending outbox_events FOR UPDATE SKIP LOCKED
-        Worker->>Kafka: Publish event to 'payment.events'
-        Worker->>DB: UPDATE outbox_events SET status = 'published'
-    end
-
-    Kafka->>NotifSvc: Consume 'payment.events'
-    NotifSvc->>DB: Save notification & push to WebSocket
+```
+┌──────────────────────────────────────────────────────────┐
+│              React Dashboard (Port 3000)                  │
+└────────────────────────┬─────────────────────────────────┘
+                         │ REST / WebSocket
+┌────────────────────────▼─────────────────────────────────┐
+│            API Gateway — Go/Gin (Port 8080)               │
+│  JWT Middleware | Rate Limiting | CORS | Request Router    │
+└───────┬────────────────┬────────────────┬────────────────┘
+        │ gRPC           │ gRPC           │ gRPC
+        │ :50051         │ :50052         │ :50053
+┌───────▼──────┐  ┌──────▼───────┐  ┌────▼──────────────┐
+│ Auth Service │  │Wallet Service│  │Notification Svc   │
+│ Identity+KYC │  │Wallet+Money  │  │ (Kafka Consumer)  │
+│              │  │Movement+     │  │                   │
+│              │  │Ledger        │  │ Store & push      │
+└───────┬──────┘  └──────┬───────┘  └────┬──────────────┘
+        │                │               │
+        │         ┌──────▼───────────────▼────┐
+        │         │          Kafka             │
+        │         │  Topic: payment.events     │
+        │         └───────────────────────────┘
+        │                │
+┌───────▼────────────────▼──────────────────────────────────┐
+│                     Data Layer                             │
+│   PostgreSQL 16                  Redis 7                   │
+│   ─────────────                  ───────                   │
+│   users, wallets                 blacklist:{token}         │
+│   transactions                   idempotency:{key}         │
+│   ledger_entries                 rate_limit:{ip}:{endpoint}│
+│   kyc_verifications                                        │
+│   notifications                                            │
+│   audit_logs                                               │
+└────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Concurrency Control & Deadlock Prevention
-During P2P transfers, simultaneous requests between mutual users (e.g., Alice sending to Bob while Bob sends to Alice) can cause database deadlocks if rows are locked in random order.
+> ⚠️ This is the **target** architecture. It does not exist yet. The project evolves toward this across Levels 1–5.
 
-**Bastion Solution:** Always acquire `SELECT ... FOR UPDATE` row locks in **ascending alphabetical order of Wallet UUIDs**:
+---
+
+## 3. Service Boundaries
+
+| Service | Domains | Port | Level |
+|---------|---------|------|-------|
+| **Auth Service** | Identity + KYC | REST `:8080` → gRPC `:50051` | [CURRENT] REST, [PLANNED — Level 3] gRPC |
+| **Wallet Service** | Wallet + Money Movement + Ledger | gRPC `:50052` | [PLANNED — Level 3] |
+| **Notification Service** | Notifications (Kafka Consumer) | gRPC `:50053` | [PLANNED — Level 3] |
+| **API Gateway** | Routing, JWT, Rate Limiting, WebSocket Hub | REST `:8080` | [PLANNED — Level 3] |
+
+**Audit** stays within the relevant services — not a separate microservice.
+
+**Why these boundaries?** See [ADR-005](file:///c:/Projects/bastion/context/decisions/005-service-boundaries.md).
+
+---
+
+## 4. Clean Architecture Pattern
+
+Every service follows strict layered architecture:
+
+```
+┌─────────────────────────────────────────────────┐
+│              1. Handler / Transport              │
+│   (HTTP Gin / gRPC Protobuf / Kafka Consumer)   │
+└────────────────────┬────────────────────────────┘
+                     │ Calls
+┌────────────────────▼────────────────────────────┐
+│              2. Service / Business               │
+│   (Domain Logic, Validations, Workflow)          │
+└────────────────────┬────────────────────────────┘
+                     │ Calls (via Interfaces)
+┌────────────────────▼────────────────────────────┐
+│              3. Repository / Storage             │
+│   (SQL via pgxpool, Redis Operations)            │
+└────────────────────┬────────────────────────────┘
+                     │ Interacts
+┌────────────────────▼────────────────────────────┐
+│           4. Database & External Drivers         │
+│           (PostgreSQL, Redis, Kafka)             │
+└─────────────────────────────────────────────────┘
+```
+
+**Key rules**:
+- DTOs (Data Transfer Objects) are passed **by value** — immutable, read-only copies
+- Entities (database models) are passed **by reference** (`*`) — mutable, shared across layers
+- Dependencies flow inward: Handler depends on Service, Service depends on Repository
+- Repository is accessed via **interfaces** for testability
+
+---
+
+## 5. Design Patterns
+
+### [CURRENT] JWT + Redis Blacklist
+Stateless JWT for authentication. Redis stores blacklisted tokens with TTL matching remaining token lifespan.
+
+### [PLANNED — Level 2] Deadlock Prevention
+During P2P transfers, lock wallet rows using `SELECT FOR UPDATE` in **ascending UUID order** to prevent deadlock when two users transfer to each other simultaneously.
 
 ```go
-// Consistent locking order prevents deadlocks
 firstID, secondID := senderWalletID, receiverWalletID
 if firstID > secondID {
     firstID, secondID = secondID, firstID
 }
-
-// Lock first wallet, then second wallet
-lockedFirst := repo.GetWalletForUpdate(ctx, tx, firstID)
-lockedSecond := repo.GetWalletForUpdate(ctx, tx, secondID)
 ```
 
-### 3.3 Idempotency Key Handling
-Network retries by mobile/web clients must not cause double-charging.
+### [PLANNED — Level 2] Idempotency Key
+Prevent duplicate processing from client retries:
+1. Request includes header `Idempotency-Key: "tx-uuid-12345"`
+2. Check Redis key `idempotency:tx-uuid-12345`
+   - FOUND → return cached response (skip business logic)
+   - NOT FOUND → acquire lock, execute, cache result (24h TTL)
 
-```
-1. Request arrives with header: Idempotency-Key: "tx-uuid-12345"
-2. Service checks Redis key idempotency:tx-uuid-12345
-   ├── FOUND: Return cached response immediately (Skip business logic)
-   └── NOT FOUND: Acquire Redis lock, execute transaction, cache result in Redis (24h TTL)
-```
+### [FUTURE] Transactional Outbox
+Write events to `outbox_events` table in the **same SQL transaction** as business logic. A background worker polls and publishes to Kafka. Prevents dual-write inconsistency.
+
+See [ADR-007](file:///c:/Projects/bastion/context/decisions/007-outbox-pattern-deferred.md) for why this is deferred.
 
 ---
 
-## 4. Communication Protocols
+## 6. Technology Choices
 
-| Route | Protocol | Format | Port | Purpose |
-|---|---|---|---|---|
-| Client ↔ Gateway | **HTTPS REST** | JSON | `8080` | Public client requests |
-| Client ↔ Gateway | **WebSocket** | WS JSON Frame | `8080` | Real-time push notification stream |
-| Gateway ↔ Auth Service | **gRPC** | Protobuf | `50051` | Internal user authentication & JWT check |
-| Gateway ↔ Wallet Service | **gRPC** | Protobuf | `50052` | Internal financial transactions & balance operations |
-| Gateway ↔ Notif Service | **gRPC** | Protobuf | `50053` | Internal notification retrieval |
-| Wallet Svc ↔ Kafka | **TCP Binary** | Kafka Protocol | `9092` | Async event streaming (`payment.events`) |
+| Technology | Why for Bastion |
+|------------|----------------|
+| **Go** | Goroutines for concurrent request handling. Compiled binaries for Docker. Strong typing for financial logic safety. Standard language in fintech (Gojek, Xendit, Grab). |
+| **Gin** | Lightweight HTTP framework. Built-in middleware chaining. `ShouldBindJSON` with validation tags. Good for learning HTTP fundamentals without heavy abstractions. |
+| **PostgreSQL 16** | ACID compliance required for money movement. Row-level locking (`SELECT FOR UPDATE`) for concurrent balance mutations. CHECK constraints (`balance >= 0`) as safety net. |
+| **Redis 7** | Sub-millisecond lookup for JWT blacklist checks on every authenticated request. Automatic TTL expiration for token lifecycle. Shared state across multiple server instances for idempotency and rate limiting. |
+| **pgxpool** | Native PostgreSQL driver for Go. Connection pooling without ORM overhead. Prepared statements. Direct access to PostgreSQL-specific features. See [ADR-002](file:///c:/Projects/bastion/context/decisions/002-pgxpool-over-database-sql.md). |
+| **gRPC + Protobuf** | Binary serialization over HTTP/2 for typed, fast inter-service calls. Strongly-typed contracts via `.proto` files. [PLANNED — Level 3] |
+| **Apache Kafka** | Asynchronous event streaming to decouple services. Durable message log for replay. Consumer groups for scalability. [PLANNED — Level 3] |
+| **Docker Compose** | Reproducible development environment. Single command to start all databases and services. |
+| **React (Vite)** | Frontend dashboard. AI-assisted implementation. Not a primary learning objective. |
 
 ---
 
-## 5. Container & Network Architecture (Docker Compose)
+## 7. Communication Protocols
 
-All microservices run inside a unified Docker network (`bastion_network`):
+| Route | Protocol | Format | Port | State |
+|-------|----------|--------|------|-------|
+| Client ↔ Auth Service | REST | JSON | `8080` | [CURRENT] |
+| Client ↔ Gateway | REST | JSON | `8080` | [PLANNED — Level 3] |
+| Client ↔ Gateway | WebSocket | WS Frame | `8080` | [PLANNED — Level 3] |
+| Gateway ↔ Auth | gRPC | Protobuf | `50051` | [PLANNED — Level 3] |
+| Gateway ↔ Wallet | gRPC | Protobuf | `50052` | [PLANNED — Level 3] |
+| Gateway ↔ Notification | gRPC | Protobuf | `50053` | [PLANNED — Level 3] |
+| Wallet ↔ Kafka | TCP | Kafka Protocol | `9092` | [FUTURE] |
 
-```yaml
-version: '3.9'
+---
 
-networks:
-  bastion_network:
-    driver: bridge
+## 8. Failure Handling Strategy
 
-services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: bastion_postgres
-    networks: [bastion_network]
+What happens when infrastructure components fail:
 
-  redis:
-    image: redis:7-alpine
-    container_name: bastion_redis
-    networks: [bastion_network]
+| Failure | Impact | Strategy | Level |
+|---------|--------|----------|-------|
+| **PostgreSQL down** | All operations fail | Fast-fail with clear error. No fallback — financial data requires strong consistency. | [PLANNED — Level 4] |
+| **Redis down** | JWT blacklist unavailable, idempotency checks fail | Fail-open for blacklist (accept tokens, log warning). Fail-closed for idempotency (reject to prevent duplicates). | [PLANNED — Level 4] |
+| **Kafka down** | Events not published | Outbox pattern retries automatically. Events stay in `pending` state until Kafka recovers. | [FUTURE] |
+| **Another service unavailable** | gRPC calls fail | Timeout + retry with exponential backoff. Return partial response or clear error to client. | [PLANNED — Level 4] |
+| **Consumer crashes** | Events not processed | Kafka consumer group rebalances. Unprocessed messages are picked up by another consumer or on restart. | [FUTURE] |
+| **Duplicate event delivery** | Risk of double-processing | Consumer-side idempotency check before applying side effects. | [FUTURE] |
+| **Request timeout** | Client receives no response | Server-side context deadlines. Client retries with idempotency key. | [PLANNED — Level 4] |
 
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    container_name: bastion_kafka
-    networks: [bastion_network]
+---
 
-  auth_service:
-    build: ./services/auth
-    container_name: bastion_auth
-    networks: [bastion_network]
+## 9. Observability Strategy
 
-  wallet_service:
-    build: ./services/wallet
-    container_name: bastion_wallet
-    networks: [bastion_network]
+Introduced progressively — each tool solves a problem that emerges at its level:
 
-  notification_service:
-    build: ./services/notification
-    container_name: bastion_notification
-    networks: [bastion_network]
-
-  gateway:
-    build: ./services/gateway
-    container_name: bastion_gateway
-    ports: ["8080:8080"]
-    networks: [bastion_network]
-```
+| Level | Tool | Problem It Solves |
+|-------|------|-------------------|
+| **Level 1 — Foundation** | Structured logging (`log/slog`) | "What happened?" — Replace `log.Printf` with JSON-structured logs that monitoring tools can parse |
+| **Level 2 — Correctness** | Request IDs | "Which request caused this log line?" — Attach a unique ID to every HTTP request for traceability |
+| **Level 3 — Distribution** | Correlation IDs | "How did this request flow across services?" — Propagate a shared ID from Gateway through gRPC calls to Kafka events |
+| **Level 4 — Reliability** | Metrics (Prometheus) | "How is the system performing?" — Request rates, error rates, latencies, queue depths |
+| **Level 5 — Production** | Distributed tracing (OpenTelemetry) | "Where is the bottleneck in a cross-service request?" — Visualize end-to-end request traces |

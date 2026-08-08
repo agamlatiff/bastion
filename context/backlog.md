@@ -1,13 +1,13 @@
-# 🏰 Bastion — Future Differentiators
+# 💡 Bastion — Backlog & Future Differentiators
 
-> **Status**: Deferred — revisit after Phase 3 is complete
+> **Status**: Deferred — revisit after Level 3 is complete
 > **Priority**: Low (focus on core engineering quality first)
 
 ---
 
 ## Why Deferred?
 
-The core value of Bastion as a portfolio project lies in **engineering quality**, not feature novelty. Recruiters evaluate:
+The core value of Bastion as a portfolio project lies in **engineering quality**, not feature novelty. Reviewers evaluate:
 
 - Clean architecture and code organization
 - Handling of real-world problems (race conditions, idempotency, ACID)
@@ -20,7 +20,7 @@ A well-engineered standard payment platform beats a poorly-built "unique" one ev
 
 ## Candidate Differentiators
 
-Evaluate these **after Phase 3 (Microservices & gRPC) is complete**. Pick at most one to implement.
+Evaluate these **after Level 3 (Distribution) is complete**. Pick at most one to implement.
 
 ### 1. Full Ledger Transparency
 **Effort**: Low | **Impact**: Medium
@@ -78,11 +78,8 @@ Auto-categorize transactions and provide monthly spending breakdowns.
 When the time comes, pick based on:
 
 | Criteria | Weight |
-|---|---|
+|----------|--------|
 | How much new engineering skill does it teach? | High |
 | How much does it leverage existing code? | Medium |
 | How impressive is it in a portfolio walkthrough? | High |
 | How long does it take to implement? | Medium |
-
----
-
