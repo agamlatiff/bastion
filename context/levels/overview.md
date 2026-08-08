@@ -20,9 +20,9 @@
 
 ```
 Level 1 — Foundation
-  Sprint 1.1 — Infrastructure & Auth Service    [IN PROGRESS]
-  Sprint 1.2 — Wallet & Transactions            [ ]
-  Sprint 1.3 — KYC & Transaction History         [ ]
+  Sprint 1.1 — Infrastructure & Auth Service    [COMPLETED]
+  Sprint 1.2 — Wallet & Transactions            [IN PROGRESS]
+  Sprint 1.3 — KYC & Profile Enhancement        [ ]
 
 Level 2 — Correctness                            [ ]
 Level 3 — Distribution                           [ ]

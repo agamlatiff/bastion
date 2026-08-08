@@ -25,9 +25,9 @@ In simple terms:
 - [x] User repository (`services/auth/internal/repository/user_repository.go`)
 - [x] Auth service (`services/auth/internal/service/auth_service.go`)
 - [x] Auth handler (`services/auth/internal/handler/auth_handler.go`)
-- [/] Server entry point (`services/auth/cmd/main.go`)
-- [ ] JWT middleware (`services/auth/internal/middleware/auth_middleware.go`)
-- [ ] Live API testing (Postman / curl)
+- [x] Server entry point (`services/auth/cmd/main.go`)
+- [x] JWT middleware (`services/auth/internal/middleware/auth_middleware.go`)
+- [x] Live API testing (Postman / curl)
 
 ---
 
@@ -72,10 +72,10 @@ In simple terms:
 
 ## Acceptance Criteria (Level 1 Complete)
 
-- [ ] User can register and receives JWT token + wallet with 0 IDR balance
-- [ ] User can login with email/password
-- [ ] User can view profile with tier status
-- [ ] User can logout (token blacklisted)
+- [x] User can register and receives JWT token + wallet with 0 IDR balance
+- [x] User can login with email/password
+- [x] User can view profile with tier status
+- [x] User can logout (token blacklisted)
 - [ ] User can view wallet balance
 - [ ] User can receive top-up (balance increases)
 - [ ] User can view transaction history (paginated)
