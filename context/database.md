@@ -14,8 +14,8 @@
 | **Timestamps** | `TIMESTAMPTZ` | Always store in UTC. Format to local time on presentation layer. |
 | **Immutability** | Append-only ledger | Transactions, ledger entries, and audit logs are **never UPDATED or DELETED**. |
 | **Concurrency Lock** | Row-level locking | Use `SELECT ... FOR UPDATE` during balance mutations. |
-| **Double-Entry** | Balanced entries | Every successful transaction creates matching debit and credit entries. |
-| **Regulated Limits** | KYC Tiering | Tier 1 max Rp 2,000,000. Tier 2 max Rp 20,000,000. Enforced by CHECK constraints. |
+| **Double-Entry** | Balanced entries | P2P transfers create matching debit and credit entries. Top-ups create a single credit entry. |
+| **Tiered Limits** | KYC Tiering | Simplified simulation: Tier 1 max Rp 2,000,000. Tier 2 max Rp 20,000,000. Enforced by CHECK constraints. |
 
 ---
 
@@ -32,7 +32,7 @@ erDiagram
     WALLETS ||--o{ TRANSACTIONS : "receiver (1:N)"
     WALLETS ||--o{ LEDGER_ENTRIES : "has (1:N)"
 
-    TRANSACTIONS ||--|{ LEDGER_ENTRIES : "generates (1:2)"
+    TRANSACTIONS ||--|{ LEDGER_ENTRIES : "generates (1:N)"
 
     USERS {
         uuid id PK
@@ -131,7 +131,7 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 ### [CURRENT] 3.2 `wallets`
 
-Stores wallet balance with Bank Indonesia tier limits enforced by CHECK constraint.
+Stores wallet balance with simulated tier limits enforced by CHECK constraint.
 
 ```sql
 CREATE TABLE IF NOT EXISTS wallets (
@@ -173,7 +173,7 @@ CREATE INDEX IF NOT EXISTS idx_transactions_idem_key ON transactions(idempotency
 
 ### [PLANNED — Level 1] 3.4 `ledger_entries`
 
-Double-entry accounting log (2 entries per transaction: 1 debit, 1 credit).
+Accounting log tracking balance changes. P2P transfers create 2 entries (1 debit for sender, 1 credit for receiver). Top-ups create 1 entry (credit only).
 
 ```sql
 CREATE TABLE IF NOT EXISTS ledger_entries (

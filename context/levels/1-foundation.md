@@ -37,15 +37,15 @@ In simple terms:
 
 In simple terms:
 1. Build wallet balance endpoint — show current balance and tier limits
-2. Build simulated top-up — bank callback adds money to wallet
-3. Build transaction recording — every top-up creates a transaction + ledger entries
+2. Build top-up flow — adds money to wallet (trigger mechanism TBD)
+3. Build transaction recording — every top-up creates a transaction + 1 credit ledger entry
 4. Build transaction history — paginated list of past transactions
-5. Build transaction detail — single transaction with debit/credit entries
+5. Build transaction detail — single transaction with associated ledger entries
 
 **Tasks**:
 - [ ] Wallet handler & service (GET balance, top-up callback)
 - [ ] Transaction repository (create, list, get by ID)
-- [ ] Ledger entry repository (create paired entries)
+- [ ] Ledger entry repository (create entries — 1 credit for top-up, 2 for transfers)
 - [ ] SQL migration update (add `transactions` + `ledger_entries` tables)
 - [ ] Wire new routes in `main.go`
 - [ ] Live API testing
@@ -58,7 +58,7 @@ In simple terms:
 
 In simple terms:
 1. Build KYC submission — user submits ID card details
-2. Build KYC approval — admin endpoint upgrades tier
+2. Build KYC approval — mechanism TBD (admin endpoint, auto-approve, or queue-based)
 3. Update profile endpoint to show KYC status and tier limits
 
 **Tasks**:
@@ -77,7 +77,7 @@ In simple terms:
 - [ ] User can view profile with tier status
 - [ ] User can logout (token blacklisted)
 - [ ] User can view wallet balance
-- [ ] User can receive simulated top-up (balance increases)
+- [ ] User can receive top-up (balance increases)
 - [ ] User can view transaction history (paginated)
 - [ ] User can view transaction detail with ledger entries
 - [ ] User can submit KYC and be upgraded to Tier 2

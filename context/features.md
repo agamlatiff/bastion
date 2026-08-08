@@ -51,13 +51,14 @@
 - **Acceptance Criteria**:
   - Rejects if user already verified or has pending request (`409 Conflict`)
 
-### [PLANNED — Level 1] 2.2 KYC Approval (Admin)
-- **Endpoint**: `POST /api/v1/admin/kyc/:id/approve` (Protected 🔒)
+### [PLANNED — Level 1] 2.2 KYC Approval
+- **Endpoint**: TBD (authorization model not yet decided — could be admin endpoint, auto-approve for simulation, or queue-based)
 - **Description**: Approves a KYC submission, upgrading user from Tier 1 to Tier 2.
 - **Technical Specs**:
   - Updates `users.tier` to `'tier_2'`
   - Increases `wallets.max_balance_limit` from 2,000,000 to 20,000,000 IDR
   - Unlocks P2P transfer privileges
+- **Open Decision**: Whether this requires an admin role/RBAC system, or whether Bastion uses a simplified auto-approval flow for simulation purposes.
 
 ---
 
@@ -67,14 +68,15 @@
 - **Endpoint**: `GET /api/v1/wallet` (Protected 🔒)
 - **Description**: Returns current balance, max balance limit, and currency.
 
-### [PLANNED — Level 1] 3.2 Top-Up Callback (Simulated Bank Webhook)
-- **Endpoint**: `POST /api/v1/webhooks/bank-callback`
-- **Description**: Simulated callback when a user pays via bank transfer.
+### [PLANNED — Level 1] 3.2 Wallet Top-Up
+- **Endpoint**: TBD (mechanism not yet decided — could be simulated webhook callback, direct API endpoint, or admin action)
+- **Description**: Adds funds to a user's wallet. The trigger mechanism is TBD, but the following engineering requirements apply regardless of mechanism.
 - **Technical Specs**:
   - Enforces ACID database transaction
   - Uses `SELECT FOR UPDATE` row-level locking
   - Verifies balance will not exceed `max_balance_limit`
-  - Idempotency check to prevent duplicate callbacks
+  - Idempotency check to prevent duplicate top-ups
+  - Creates 1 transaction record + 1 ledger entry (credit only — no sender wallet involved, unlike P2P transfers)
 
 ---
 
