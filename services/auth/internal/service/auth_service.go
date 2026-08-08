@@ -94,9 +94,9 @@ func (s *authService) generateToken(user *domain.User) (string, error) {
 	}
 
 	// Create token object with HS256 Algorithm
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// Sign token with key secret from .envw
+	// Sign token with key secret from .env
 	return token.SignedString([]byte(s.jwtSecret))
 }
 
