@@ -68,8 +68,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *AuthHandler) GetMe(c *gin.Context) {
-	// Get Authorization header 
+func (h *AuthHandler) GetProfile(c *gin.Context) {
+	// Get Authorization header
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -94,15 +94,14 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-
 func (h *AuthHandler) Logout(c *gin.Context) {
 	// Get Authorization header
-	authHeader := c.GetHeader("Authorization");
+	authHeader := c.GetHeader("Authorization")
 
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"error" : "Missing or invalid authorization header",
- 		})
+			"error": "Missing or invalid authorization header",
+		})
 		return
 	}
 
@@ -113,13 +112,13 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	err := h.authService.Logout(c.Request.Context(), tokenStr)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"error" : err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
 
 	// Return 200 OK with success message
 	c.JSON(http.StatusOK, gin.H{
-		"message" : "Logged out successfully",
+		"message": "Logged out successfully",
 	})
 }

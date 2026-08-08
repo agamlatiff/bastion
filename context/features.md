@@ -29,7 +29,7 @@
   - Returns generic `401 Unauthorized` on failure without revealing email existence
 
 ### [CURRENT] 1.3 Profile Retrieval
-- **Endpoint**: `GET /api/v1/auth/me` (Protected 🔒)
+- **Endpoint**: `GET /api/v1/auth/profile` (Protected 🔒)
 - **Description**: Returns authenticated user information including current tier and limits.
 
 ### [CURRENT] 1.4 User Logout
