@@ -2,8 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strings"
-
 	"github.com/agamlatiff/bastion/services/auth/internal/domain"
 	"github.com/agamlatiff/bastion/services/auth/internal/service"
 	"github.com/gin-gonic/gin"
@@ -69,23 +67,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 }
 
 func (h *AuthHandler) GetProfile(c *gin.Context) {
-	// Get Authorization header
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+	// Get data user
+	user, exists := c.Get("currentUser")
+	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Missing or invalid authorization header",
-		})
-		return
-	}
-
-	// Extract raw token string
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-
-	// Validate token with auth service
-	user, err := h.authService.ValidateToken(c.Request.Context(), tokenStr)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
+			"error" : "Unauthorized",
 		})
 		return
 	}
@@ -94,19 +80,19 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+// TODO: Optimize JWT validation to avoud double-parsing and redundant DB Query during logout
+// Tech Debt: Currently ValidationToken queries DB via FindByID even for logout
 func (h *AuthHandler) Logout(c *gin.Context) {
-	// Get Authorization header
-	authHeader := c.GetHeader("Authorization")
-
-	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+	// Get token
+	token, exists := c.Get("token");
+	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Missing or invalid authorization header",
+			"error" : "Unauthorized",
 		})
 		return
 	}
 
-	// Extract raw token string
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	tokenStr := token.(string)
 
 	// Call auth service to logout and blacklist token
 	err := h.authService.Logout(c.Request.Context(), tokenStr)

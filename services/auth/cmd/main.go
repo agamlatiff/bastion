@@ -6,6 +6,7 @@ import (
 
 	"github.com/agamlatiff/bastion/services/auth/internal/config"
 	"github.com/agamlatiff/bastion/services/auth/internal/handler"
+	"github.com/agamlatiff/bastion/services/auth/internal/middleware"
 	"github.com/agamlatiff/bastion/services/auth/internal/repository"
 	"github.com/agamlatiff/bastion/services/auth/internal/service"
 	"github.com/gin-gonic/gin"
@@ -41,13 +42,18 @@ func main() {
 	// Initialize Gin router engine
 	r := gin.Default()
 
-	// Register Auth API Routes
-	authRoutes := r.Group("/api/v1/auth")
+	// Public Routes
+	publicRoutes := r.Group("/api/v1/auth")
 	{
-		authRoutes.POST("/register", authHandler.Register)
-		authRoutes.POST("/login", authHandler.Login)
-		authRoutes.GET("/profile", authHandler.GetProfile)
-		authRoutes.POST("/logout", authHandler.Logout)
+		publicRoutes.POST("/register", authHandler.Register)
+		publicRoutes.POST("/login", authHandler.Login)
+	}
+
+	protectedRoutes := r.Group("/api/v1/auth")
+	protectedRoutes.Use(middleware.AuthMiddleware(authService))
+	{
+		protectedRoutes.GET("/profile", authHandler.GetProfile)
+		protectedRoutes.POST("/logout", authHandler.Logout)
 	}
 
 	// Start HTTP Server
