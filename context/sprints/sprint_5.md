@@ -10,6 +10,13 @@
 
 Bring the application to life visually and harden it for production. By the end of this sprint, users can log in via a sleek web UI, check their balance, do P2P transfers, and receive real-time toast notifications via WebSocket. Meanwhile, the backend will be protected by Redis-based Rate Limiting and proven to handle high concurrency via k6 load tests.
 
+In simple terms:
+1. Build a modern web dashboard using Next.js — login page, balance overview, transfer form, and transaction history.
+2. Integrate WebSocket notifications into the UI — when a user receives money, a toast notification pops up instantly on screen.
+3. Build Redis-based Rate Limiting in the API Gateway — if someone sends too many requests (e.g., brute-force login), the server blocks them with `429 Too Many Requests`.
+4. Write load tests using k6 — simulate hundreds of concurrent users doing transfers to prove the system handles pressure without deadlocks or data corruption.
+5. Final end-to-end testing — walk through the entire flow from registration to transfer to real-time notification in one smooth demo.
+
 ---
 
 ## 📋 Detailed Task Breakdown

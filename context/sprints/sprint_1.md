@@ -10,6 +10,13 @@
 
 Build a fully functional **Auth Service** using Go + Gin, backed by PostgreSQL 16 and Redis 7, containerized with Docker Compose. By the end of this sprint, a user can register (wallet auto-created), login (receive JWT), view profile, and logout (token blacklisted in Redis).
 
+In simple terms:
+1. Set up the entire development environment using Docker Compose (PostgreSQL, Redis, and the Go server).
+2. Build user registration — when someone signs up, they get an account and a digital wallet automatically.
+3. Build user login — the server verifies email & password, then hands back a JWT token as a "digital key card".
+4. Build profile viewing — a logged-in user can see their own profile data by presenting their token.
+5. Build logout — the server writes the token into a Redis Blacklist so it can never be used again.
+
 ---
 
 ## 📁 Target File Structure (End of Sprint)

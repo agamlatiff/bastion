@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -21,7 +22,7 @@ type Config struct {
 	JWTExpiryHours int
 }
 
-func Load() *Config {
+func LoadConfig() *Config {
 	if err := godotenv.Load(); err != nil {
 		log.Println("Warning: .env file not found, reading from environment variables")
 	}
@@ -54,4 +55,12 @@ func getEnv(key, defaultValue string) string {
 	}
 
 	return value
+}
+
+func (c *Config) DatabaseURL() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", c.DBUser, c.DBPassword, c.DBHost, c.DBPort, c.DBName)
+}
+
+func (c *Config) RedisAddr() string {
+	return fmt.Sprintf("%s:%s", c.RedisHost, c.RedisPort)
 }

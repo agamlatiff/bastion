@@ -10,6 +10,13 @@
 
 Transition from REST internally to a true microservices architecture. By the end of this sprint, `auth_service` and `wallet_service` will communicate internally via fast binary gRPC (`:50051` & `:50052`). The external world will only talk to a new `gateway` service (`:8080`) via REST, which translates JSON to Protobuf and routes requests.
 
+In simple terms:
+1. Define service contracts using Protocol Buffers (`.proto` files) — the universal language that all microservices agree on.
+2. Convert Auth Service from REST to gRPC — it now listens on port 50051 and speaks binary Protobuf instead of JSON.
+3. Convert Wallet Service from REST to gRPC — it now listens on port 50052 with the same binary protocol.
+4. Build the API Gateway — the single public-facing REST server (port 8080) that receives JSON from Postman/Frontend, translates it to Protobuf, forwards it to the correct gRPC service, and translates the response back to JSON.
+5. Update Docker Compose — wire all three services together so they can discover and talk to each other by container name.
+
 ---
 
 ## 📋 Detailed Task Breakdown

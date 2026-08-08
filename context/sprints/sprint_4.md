@@ -10,6 +10,13 @@
 
 Enable real-time, event-driven communication. By the end of this sprint, when a user successfully receives a transfer (Sprint 2), the Wallet Service will reliably publish a message to Kafka. The new Notification Service will consume this message, save it to the database, and instantly push a real-time WebSocket alert to the receiver's dashboard via the API Gateway.
 
+In simple terms:
+1. Build the Outbox Relay Worker — a background process that reads the outbox table from Sprint 2 and publishes each event to Apache Kafka.
+2. Set up Apache Kafka — add Kafka and Zookeeper to Docker Compose as the central message highway between services.
+3. Build the Notification Service — a new microservice that listens to Kafka topics, saves notifications to the database, and marks them as read/unread.
+4. Build WebSocket support in the API Gateway — when a notification arrives, the gateway pushes it instantly to the user's browser without the user needing to refresh the page.
+5. Wire everything end-to-end — a transfer in Wallet Service triggers an outbox event → Kafka → Notification Service → WebSocket → user sees a live toast notification.
+
 ---
 
 ## 📋 Detailed Task Breakdown

@@ -10,6 +10,15 @@
 
 Extend the application to handle money safely. By the end of this sprint, a user can submit KYC to upgrade their tier, generate a Virtual Account, receive simulated top-up callbacks, and transfer money to other users. All financial mutations must be ACID-compliant, avoid deadlocks, generate double-entry ledger records, and emit outbox events.
 
+In simple terms:
+1. Build KYC verification — users submit identity data to upgrade their account tier and unlock higher transaction limits.
+2. Build Virtual Account generation — each wallet gets a unique bank-like account number for receiving top-ups.
+3. Build top-up simulation — a fake payment gateway callback adds money to the user's wallet balance.
+4. Build P2P transfer — users can send money to each other with deadlock-safe database locking (`SELECT FOR UPDATE`).
+5. Build double-entry ledger — every money movement is recorded as a debit AND credit entry, just like real bank accounting.
+6. Build idempotency protection — if a user accidentally clicks "Send" twice, the server only processes the transfer once.
+7. Build outbox event publishing — every successful transfer writes an event to the outbox table, ready for Kafka in Sprint 4.
+
 ---
 
 ## 📋 Detailed Task Breakdown
