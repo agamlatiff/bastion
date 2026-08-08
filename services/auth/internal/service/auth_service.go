@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"time"
-
 	"github.com/agamlatiff/bastion/services/auth/internal/domain"
 	"github.com/agamlatiff/bastion/services/auth/internal/repository"
 	"github.com/golang-jwt/jwt/v5"
@@ -95,9 +94,9 @@ func (s *authService) generateToken(user *domain.User) (string, error) {
 	}
 
 	// Create token object with HS256 Algorithm
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
 
-	// Sign token with key secret from .env
+	// Sign token with key secret from .envw
 	return token.SignedString([]byte(s.jwtSecret))
 }
 
@@ -138,7 +137,7 @@ func (s *authService) ValidateToken(ctx context.Context, tokenStr string) (*doma
 	}
 
 	// Parse & verification the stamp HS256 JWT Token
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("Unexpected signing method")
 		}
@@ -167,7 +166,9 @@ func (s *authService) ValidateToken(ctx context.Context, tokenStr string) (*doma
 }
 
 func (s *authService) Logout(ctx context.Context, tokenStr string) error {
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+
+	// Checking JWT Secret and parsing them with that
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("Unexpected signing method")
 		}
@@ -175,6 +176,7 @@ func (s *authService) Logout(ctx context.Context, tokenStr string) error {
 		return []byte(s.jwtSecret), nil
 	})
 
+	// Validation token from JWT Token
 	if err != nil || !token.Valid {
 		return errors.New("Invalid or expired token")
 	}
@@ -185,11 +187,14 @@ func (s *authService) Logout(ctx context.Context, tokenStr string) error {
 		return errors.New("Invalid token claims")
 	}
 
+	// Convert exp MapClaims from JWT Token and Checking is it still valid
 	expFloat, ok := claims["exp"].(float64)
 	if !ok {
 		return errors.New("Invalid exp claims")
 	}
 
+
+	// Checking is there expired date
 	expTime := time.Unix(int64(expFloat), 0)
 	remainingDuration := time.Until(expTime)
 
@@ -197,5 +202,6 @@ func (s *authService) Logout(ctx context.Context, tokenStr string) error {
 		return nil
 	}
 
+	// Set blacklist token if still have a time 
 	return s.rdb.Set(ctx, "blacklist:"+tokenStr, "true", remainingDuration).Err()
 }
