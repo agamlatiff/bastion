@@ -2,7 +2,7 @@
 
 > **Module**: Phase 5 — UI & Enterprise Production Readiness
 > **Timeline**: Week 9–10 (14 Days)
-> **Goal**: Build a modern React/Next.js dashboard to visualize the financial core, implement API Gateway Rate Limiting to prevent abuse, and prove system resilience using Load Testing (k6).
+> **Goal**: Build a modern React (Vite) dashboard to visualize the financial core, implement API Gateway Rate Limiting to prevent abuse, and prove system resilience using Load Testing (k6).
 
 ---
 
@@ -11,7 +11,7 @@
 Bring the application to life visually and harden it for production. By the end of this sprint, users can log in via a sleek web UI, check their balance, do P2P transfers, and receive real-time toast notifications via WebSocket. Meanwhile, the backend will be protected by Redis-based Rate Limiting and proven to handle high concurrency via k6 load tests.
 
 In simple terms:
-1. Build a modern web dashboard using Next.js — login page, balance overview, transfer form, and transaction history.
+1. Build a modern web dashboard using React (Vite) — login page, balance overview, transfer form, and transaction history.
 2. Integrate WebSocket notifications into the UI — when a user receives money, a toast notification pops up instantly on screen.
 3. Build Redis-based Rate Limiting in the API Gateway — if someone sends too many requests (e.g., brute-force login), the server blocks them with `429 Too Many Requests`.
 4. Write load tests using k6 — simulate hundreds of concurrent users doing transfers to prove the system handles pressure without deadlocks or data corruption.
@@ -72,13 +72,14 @@ func RateLimit(rdb *redis.Client, maxReqs int64, duration time.Duration) gin.Han
 
 ---
 
-### Task 2: Frontend Infrastructure Setup (Next.js)
+### Task 2: Frontend Infrastructure Setup (React + Vite)
 
-**Action**: Initialize Next.js in `frontend/` directory.
+**Action**: Initialize React (Vite) in `frontend/` directory.
 ```bash
-npx create-next-app@latest frontend --typescript --tailwind --app --use-npm
+npm create vite@latest frontend -- --template react-ts
 cd frontend
-npm install axios zustand lucide-react sonner
+npm install
+npm install react-router-dom axios zustand lucide-react sonner tailwindcss @tailwindcss/vite
 ```
 
 **File**: `src/lib/axios.ts`
