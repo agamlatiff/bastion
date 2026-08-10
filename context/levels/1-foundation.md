@@ -43,10 +43,11 @@ In simple terms:
 5. Build transaction detail — single transaction with associated ledger entries
 
 **Tasks**:
-- [ ] Wallet handler & service (GET balance, top-up callback)
-- [ ] Transaction repository (create, list, get by ID)
-- [ ] Ledger entry repository (create entries — 1 credit for top-up, 2 for transfers)
-- [ ] SQL migration update (add `transactions` + `ledger_entries` tables)
+- [x] SQL migration (`infra/postgres/migrations/002-transactions_and_ledger.sql` — `transactions` + `ledger_entries`)
+- [x] Domain models & DTOs (`services/auth/internal/domain/transaction.go`)
+- [x] Wallet repository (`services/auth/internal/repository/wallet_repository.go` — balance, atomic top-up, history)
+- [ ] Wallet service (`services/auth/internal/service/wallet_service.go` — business logic & tier balance limits)
+- [ ] Wallet handler (`services/auth/internal/handler/wallet_handler.go` — balance, top-up, history endpoints)
 - [ ] Wire new routes in `main.go`
 - [ ] Live API testing
 

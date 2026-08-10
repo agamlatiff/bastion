@@ -18,9 +18,10 @@ type walletRepository struct {
 	db *pgxpool.Pool
 }
 
-// func NewWalletRepository(db *pgxpool.Pool) WalletRepository {
-// 	return &walletRepository{db: db}
-// }
+
+func NewWalletRepository(db *pgxpool.Pool) WalletRepository {
+	return &walletRepository{db: db}
+}
 
 func (r *walletRepository) FindByUserID(ctx context.Context, userID string) (*domain.Wallet, error) {
 	query := `SELECT id, user_id, balance, currency, max_balance_limit, created_at, updated_at FROM wallets WHERE user_id = $1`
@@ -131,4 +132,60 @@ func (r *walletRepository) ExecuteTopUp(ctx context.Context, walletID string, am
 	}
 
 	return txRecord, nil
+}
+
+
+// TODO: DEEP UNDERSTANDING THIS FUNC
+func (r *walletRepository) GetTransaction(ctx context.Context, walletID string, limit int, offset int) ([]*domain.Transaction, error) {
+	query := `
+		SELECT id, idempotency_key, sender_wallet_id, receiver_wallet_id, amount, fee_amount, type, status, description, created_at 
+		FROM transactions 
+		WHERE sender_wallet_id = $1 OR receiver_wallet_id = $1		
+		ORDER BY created_at DESC 
+		LIMIT $2 OFFSET $3		
+	`
+
+	// Execution many rows query
+	rows, err := r.db.Query(ctx, query, walletID, limit, offset) 
+	if err != nil {
+		return nil, err
+	}
+
+	// Ensure the connection automatically close when we have been read all rows
+	defer rows.Close()
+
+	// Create slice for keep the list transactions
+	var transactions []*domain.Transaction
+
+	// Looping each row from database
+	for rows.Next() {
+		tx := &domain.Transaction{}
+		err := rows.Scan(
+			&tx.ID,
+			&tx.IdempotencyKey,
+			&tx.SenderWalletID,
+			&tx.ReceiverWalletID,
+			&tx.Amount,
+			&tx.FeeAmount,
+			&tx.Type,
+			&tx.Status,
+			&tx.Description,
+			&tx.CreatedAt,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// Insert into the list slices
+		transactions = append(transactions, tx)
+	}
+
+	// Checking is there any error while looping
+	if err := rows.Err(); err != nil {
+		return nil, err
+	} 
+
+	return transactions, nil
+
 }
