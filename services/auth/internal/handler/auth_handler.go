@@ -71,7 +71,7 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 	user, exists := c.Get("currentUser")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"error" : "Unauthorized",
+			"error" : "unauthorized",
 		})
 		return
 	}
@@ -87,7 +87,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	token, exists := c.Get("token");
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"error" : "Unauthorized",
+			"error" : "unauthorized",
 		})
 		return
 	}
