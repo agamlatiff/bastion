@@ -39,6 +39,10 @@ func main() {
 	authService := service.NewAuthService(userRepo, rdb, cfg.JWTSecret, cfg.JWTExpiryHours)
 	authHandler := handler.NewAuthHandler(authService)
 
+	walletRepo := repository.NewWalletRepository(dbPool)
+	walletService := service.NewWalletService(walletRepo)
+	walletHandler := handler.NewWalletHandler(walletService)
+
 	// Initialize Gin router engine
 	r := gin.Default()
 
@@ -55,6 +59,15 @@ func main() {
 		protectedRoutes.GET("/profile", authHandler.GetProfile)
 		protectedRoutes.POST("/logout", authHandler.Logout)
 	}
+
+	walletRoutes := r.Group("/api/v1/wallet")
+	walletRoutes.Use(middleware.AuthMiddleware(authService))
+	{
+		walletRoutes.GET("/balance", walletHandler.GetBalance)
+		walletRoutes.POST("/topup", walletHandler.TopUp)
+		walletRoutes.GET("/transactions", walletHandler.GetTransaction)
+	}
+
 
 	// Start HTTP Server
 	log.Printf("Auth Service is running on port %s", cfg.AppPort)
