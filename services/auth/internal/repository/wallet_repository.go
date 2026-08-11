@@ -134,8 +134,6 @@ func (r *walletRepository) ExecuteTopUp(ctx context.Context, walletID string, am
 	return txRecord, nil
 }
 
-
-// TODO: DEEP UNDERSTANDING THIS FUNC
 func (r *walletRepository) GetTransaction(ctx context.Context, walletID string, limit int, offset int) ([]*domain.Transaction, error) {
 	query := `
 		SELECT id, idempotency_key, sender_wallet_id, receiver_wallet_id, amount, fee_amount, type, status, description, created_at 
