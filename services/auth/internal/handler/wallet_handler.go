@@ -3,7 +3,6 @@ package handler
 import (
 	"net/http"
 	"strconv"
-
 	"github.com/agamlatiff/bastion/services/auth/internal/domain"
 	"github.com/agamlatiff/bastion/services/auth/internal/service"
 	"github.com/gin-gonic/gin"
