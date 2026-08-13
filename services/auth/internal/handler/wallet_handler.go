@@ -38,7 +38,7 @@ func (h *WalletHandler) GetBalance(c *gin.Context) {
 		return
 	}
 
-	// Return JSON Status and data
+	// Return JSON Status and Data
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
 		"data":   balance,
