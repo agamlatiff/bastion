@@ -39,5 +39,4 @@ type WalletBalanceResponse struct {
 	Balance         int64  `json:"balance"`
 	Currency        string `json:"currency"`
 	MaxBalanceLimit int64  `json:"max_balance_limit"`
-	Tier            string `json:"tier"`
 }

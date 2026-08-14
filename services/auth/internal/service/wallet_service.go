@@ -31,6 +31,7 @@ func (s *walletService) GetBalance(ctx context.Context, userID string) (*domain.
 
 	return &domain.WalletBalanceResponse{
 		WalletID:        wallet.ID,
+		UserID:          wallet.UserID,
 		Balance:         wallet.Balance,
 		Currency:        wallet.Currency,
 		MaxBalanceLimit: wallet.MaxBalanceLimit,
