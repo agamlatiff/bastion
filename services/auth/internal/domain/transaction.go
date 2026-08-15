@@ -7,8 +7,8 @@ import (
 type Transaction struct {
 	ID               string    `json:"id"`
 	IdempotencyKey   string    `json:"idempotency_key"`
-	SenderWalletID   *string   `json:"sender_wallet_id"`
-	ReceiverWalletID *string   `json:"receiver_wallet_id"`
+	SenderWalletID   *string   `json:"sender_wallet_id,omitempty"`
+	ReceiverWalletID *string   `json:"receiver_wallet_id,omitempty"`
 	Amount           int64     `json:"amount"`
 	FeeAmount        int64     `json:"fee_amount"`
 	Type             string    `json:"type"`
