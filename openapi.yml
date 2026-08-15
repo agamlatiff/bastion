@@ -1,0 +1,254 @@
+openapi: 3.0.3
+info:
+  title: Bastion Backend API
+  version: 1.0.0
+paths:
+  /api/v1/auth/register:
+    post:
+      summary: User Registration
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - full_name
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                full_name:
+                  type: string
+      responses:
+        "201":
+          description: User Registered Successfully
+        "400":
+          description: Validation error
+        "409":
+          description: Email already exists
+  /api/v1/auth/login:
+    post:
+      summary: User Login
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Login successful, returns JWT token
+        "401":
+          description: Invalid email or password
+
+  /api/v1/auth/profile:
+    get:
+      summary: Get Current User Profile
+      tags:
+        - Auth
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile details retrieved
+        "401":
+          description: Unauthorized / Token invalid
+
+  /api/v1/auth/logout:
+    post:
+      summary: User Logout (Blacklist Token)
+      tags:
+        - Auth
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully logged out
+        "401":
+          description: Unauthorized
+
+  /api/v1/wallet/balance:
+    get:
+      summary: Get Wallet Balance & Tier Limits
+      tags:
+        - Wallet
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current wallet balance returned
+        "401":
+          description: Unauthorized
+
+  /api/v1/wallet/topup:
+    post:
+      summary: Top-Up Wallet Balance
+      tags:
+        - Wallet
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - idempotency_key
+              properties:
+                amount:
+                  type: integer
+                  format: int64
+                  minimum: 1
+                  example: 100000
+                idempotency_key:
+                  type: string
+                  format: uuid
+                  example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+                description:
+                  type: string
+                  example: "Top-up saldo bulanan"
+      responses:
+        "200":
+          description: Top-up successful
+        "400":
+          description: Exceeds tier limit or invalid amount
+        "401":
+          description: Unauthorized
+
+  /api/v1/wallet/transactions:
+
+    get:
+      summary: Get Paginated Transaction History
+      tags:
+        - Wallet
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of records to return
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          description: Number of records to skip
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of transactions returned
+        "401":
+          description: Unauthorized
+  
+  /api/v1/auth/kyc:
+    post:
+      summary: Submit KYC Identity Verification (Upgrade to Tier 2)
+      tags:
+        - KYC
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id_card_number
+                - id_card_image_url
+                - selfie_image_url
+              properties:
+                id_card_number:
+                  type: string
+                  example: "3171012345670001"
+                id_card_image_url:
+                  type: string
+                  example: "https://storage.bastion.com/ktp/user-123.jpg"
+                selfie_image_url:
+                  type: string
+                  example: "https://storage.bastion.com/selfie/user-123.jpg"
+      responses:
+        "201":
+          description: KYC application submitted successfully
+        "400":
+          description: Invalid input or already verified
+        "401":
+          description: Unauthorized
+        "409":
+          description: NIK already registered or pending application exists
+
+  /api/v1/auth/kyc/status:
+    get:
+      summary: Get KYC Application Status
+      tags:
+        - KYC
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: KYC status returned
+        "401":
+          description: Unauthorized
+        "404":
+          description: No KYC submission found
+
+  /api/v1/auth/kyc/review:
+    post:
+      summary: Review & Approve KYC (Upgrade User Tier 1 -> Tier 2)
+      tags:
+        - KYC
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [approved, rejected]
+                  example: "approved"
+                rejection_reason:
+                  type: string
+                  example: ""
+      responses:
+        "200":
+          description: KYC reviewed and user upgraded to Tier 2 (if approved)
+        "400":
+          description: Invalid status or no pending KYC
+        "401":
+          description: Unauthorized
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
