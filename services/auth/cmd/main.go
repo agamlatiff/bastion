@@ -35,13 +35,21 @@ func main() {
 	defer rdb.Close()
 
 	// Dependency Injection (Wiring layers together)
+
+	// Auth DI
 	userRepo := repository.NewUserRepository(dbPool)
 	authService := service.NewAuthService(userRepo, rdb, cfg.JWTSecret, cfg.JWTExpiryHours)
 	authHandler := handler.NewAuthHandler(authService)
 
+	// Wallet DI
 	walletRepo := repository.NewWalletRepository(dbPool)
 	walletService := service.NewWalletService(walletRepo)
 	walletHandler := handler.NewWalletHandler(walletService)
+
+	// KYC DI
+	kycRepo := repository.NewKYCRepository(dbPool)
+	kycService := service.NewKYCService(kycRepo)
+	kycHandler := handler.NewKYCHandler(kycService)
 
 	// Initialize Gin router engine
 	r := gin.Default()
@@ -66,6 +74,14 @@ func main() {
 		walletRoutes.GET("/balance", walletHandler.GetBalance)
 		walletRoutes.POST("/topup", walletHandler.TopUp)
 		walletRoutes.GET("/transactions", walletHandler.GetTransaction)
+	}
+
+	kycRoutes := r.Group("/api/v1/auth/kyc")
+	kycRoutes.Use(middleware.AuthMiddleware(authService))
+	{
+		kycRoutes.POST("", kycHandler.SubmitKYC)
+		kycRoutes.GET("/status", kycHandler.GetKYCStatus)
+		kycRoutes.POST("/review", kycHandler.ReviewKYC)
 	}
 
 
