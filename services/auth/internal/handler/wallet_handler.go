@@ -21,6 +21,7 @@ func (h *WalletHandler) GetBalance(c *gin.Context) {
 	userVal, exists := c.Get("currentUser")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
 			"error": "unauthorized",
 		})
 		return
@@ -32,6 +33,7 @@ func (h *WalletHandler) GetBalance(c *gin.Context) {
 	balance, err := h.walletService.GetBalance(c.Request.Context(), currentUser.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "error",
 			"error": err.Error(),
 		})
 
@@ -50,6 +52,7 @@ func (h *WalletHandler) TopUp(c *gin.Context) {
 	userVal, exists := c.Get("currentUser")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
 			"error": "unauthorized",
 		})
 		return
@@ -61,6 +64,7 @@ func (h *WalletHandler) TopUp(c *gin.Context) {
 	var req domain.TopUpRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
 			"error": err.Error(),
 		})
 		return
@@ -70,6 +74,7 @@ func (h *WalletHandler) TopUp(c *gin.Context) {
 	tx, err := h.walletService.TopUp(c.Request.Context(), currentUser.ID, &req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
 			"error": err.Error(),
 		})
 		return
@@ -88,6 +93,7 @@ func (h *WalletHandler) GetTransaction(c *gin.Context) {
 	userVal, exists := c.Get("currentUser")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
 			"error": "unauthorized",
 		})
 		return
@@ -106,6 +112,7 @@ func (h *WalletHandler) GetTransaction(c *gin.Context) {
 	transactions, err := h.walletService.GetTransactionHistory(c.Request.Context(), currentUser.ID, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "error",
 			"error" : err.Error(),
 		})
 		return

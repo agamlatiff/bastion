@@ -2,7 +2,12 @@ openapi: 3.0.3
 info:
   title: Bastion Backend API
   version: 1.0.0
+  description: High-performance Fintech & E-Wallet Backend Engine
+
 paths:
+  # ==========================================
+  # 🔐 1. AUTH ENDPOINTS
+  # ==========================================
   /api/v1/auth/register:
     post:
       summary: User Registration
@@ -22,18 +27,46 @@ paths:
                 email:
                   type: string
                   format: email
+                  example: "agam@test.com"
                 password:
                   type: string
                   minLength: 8
+                  example: "password123"
                 full_name:
                   type: string
+                  example: "Agam Latiff"
       responses:
         "201":
-          description: User Registered Successfully
+          description: User registered successfully
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "user registered successfully"
+                data:
+                  token: "eyJhbGciOiJIUzI1NiIs..."
+                  user:
+                    id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                    email: "agam@test.com"
+                    full_name: "Agam Latiff"
+                    tier: "tier_1"
+                    is_verified: false
+                    created_at: "2026-08-17T10:00:00Z"
         "400":
           description: Validation error
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "password must be at least 8 characters"
         "409":
           description: Email already exists
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "email already registered"
+
   /api/v1/auth/login:
     post:
       summary: User Login
@@ -52,13 +85,33 @@ paths:
                 email:
                   type: string
                   format: email
+                  example: "agam@test.com"
                 password:
                   type: string
+                  example: "password123"
       responses:
         "200":
-          description: Login successful, returns JWT token
+          description: Login successful
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "login successful"
+                data:
+                  token: "eyJhbGciOiJIUzI1NiIs..."
+                  user:
+                    id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                    email: "agam@test.com"
+                    full_name: "Agam Latiff"
+                    tier: "tier_1"
+                    is_verified: false
         "401":
-          description: Invalid email or password
+          description: Invalid credentials
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "invalid email or password"
 
   /api/v1/auth/profile:
     get:
@@ -69,9 +122,25 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-          description: User profile details retrieved
+          description: User profile retrieved
+          content:
+            application/json:
+              example:
+                status: "success"
+                data:
+                  id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                  email: "agam@test.com"
+                  full_name: "Agam Latiff"
+                  tier: "tier_1"
+                  is_verified: false
+                  created_at: "2026-08-17T10:00:00Z"
         "401":
-          description: Unauthorized / Token invalid
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "unauthorized"
 
   /api/v1/auth/logout:
     post:
@@ -82,10 +151,23 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-          description: Successfully logged out
+          description: Logout successful
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "successfully logged out"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "unauthorized"
 
+  # ==========================================
+  # 💳 2. WALLET ENDPOINTS
+  # ==========================================
   /api/v1/wallet/balance:
     get:
       summary: Get Wallet Balance & Tier Limits
@@ -96,8 +178,23 @@ paths:
       responses:
         "200":
           description: Current wallet balance returned
+          content:
+            application/json:
+              example:
+                status: "success"
+                data:
+                  wallet_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                  user_id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                  balance: 500000
+                  currency: "IDR"
+                  max_balance_limit: 2000000
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "unauthorized"
 
   /api/v1/wallet/topup:
     post:
@@ -131,13 +228,35 @@ paths:
       responses:
         "200":
           description: Top-up successful
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "top-up successful"
+                data:
+                  id: "tx-uuid-12345"
+                  amount: 100000
+                  fee_amount: 0
+                  type: "topup"
+                  status: "success"
+                  description: "Top-up saldo bulanan"
+                  created_at: "2026-08-17T10:00:00Z"
         "400":
           description: Exceeds tier limit or invalid amount
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "top-up amount exceeds maximum wallet balance limit"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "unauthorized"
 
   /api/v1/wallet/transactions:
-
     get:
       summary: Get Paginated Transaction History
       tags:
@@ -160,9 +279,29 @@ paths:
       responses:
         "200":
           description: List of transactions returned
+          content:
+            application/json:
+              example:
+                status: "success"
+                data:
+                  - id: "tx-123"
+                    amount: 100000
+                    type: "topup"
+                    status: "success"
+                    created_at: "2026-08-17T10:00:00Z"
+                limit: 10
+                offset: 0
         "401":
           description: Unauthorized
-  
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "unauthorized"
+
+  # ==========================================
+  # 🪪 3. KYC ENDPOINTS
+  # ==========================================
   /api/v1/auth/kyc:
     post:
       summary: Submit KYC Identity Verification (Upgrade to Tier 2)
@@ -193,12 +332,33 @@ paths:
       responses:
         "201":
           description: KYC application submitted successfully
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "KYC application submitted successfully"
+                data:
+                  id: "kyc-uuid-123"
+                  user_id: "usr-uuid-456"
+                  id_card_number: "3171012345670001"
+                  id_card_image_url: "https://storage.bastion.com/ktp/user-123.jpg"
+                  selfie_image_url: "https://storage.bastion.com/selfie/user-123.jpg"
+                  status: "pending"
+                  submitted_at: "2026-08-17T10:00:00Z"
         "400":
-          description: Invalid input or already verified
+          description: Validation error or user already tier 2
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "user is already verified as tier 2"
         "401":
           description: Unauthorized
-        "409":
-          description: NIK already registered or pending application exists
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "unauthorized"
 
   /api/v1/auth/kyc/status:
     get:
@@ -210,10 +370,31 @@ paths:
       responses:
         "200":
           description: KYC status returned
+          content:
+            application/json:
+              example:
+                status: "success"
+                data:
+                  id: "kyc-uuid-123"
+                  user_id: "usr-uuid-456"
+                  id_card_number: "3171012345670001"
+                  status: "approved"
+                  submitted_at: "2026-08-17T10:00:00Z"
+                  verified_at: "2026-08-17T10:05:00Z"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "unauthorized"
         "404":
           description: No KYC submission found
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "kyc application not found"
 
   /api/v1/auth/kyc/review:
     post:
@@ -241,10 +422,29 @@ paths:
       responses:
         "200":
           description: KYC reviewed and user upgraded to Tier 2 (if approved)
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "KYC review processed successfully"
+                data:
+                  id: "kyc-uuid-123"
+                  status: "approved"
+                  verified_at: "2026-08-17T10:05:00Z"
         "400":
-          description: Invalid status or no pending KYC
+          description: Invalid review status or no pending submission
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "only pending KYC applications can be reviewed"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "unauthorized"
 
 components:
   securitySchemes:

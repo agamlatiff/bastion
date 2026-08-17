@@ -87,6 +87,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	token, exists := c.Get("token");
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
 			"error" : "unauthorized",
 		})
 		return
@@ -98,6 +99,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	err := h.authService.Logout(c.Request.Context(), tokenStr)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
 			"error": err.Error(),
 		})
 		return
@@ -105,6 +107,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 
 	// Return 200 OK with success message
 	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
 		"message": "Logged out successfully",
 	})
 }

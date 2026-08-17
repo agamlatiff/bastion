@@ -14,6 +14,7 @@ func AuthMiddleware(authService service.AuthService) gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") { 
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status": "error",
 				"error": "Missing or invalid authorization header",
 			})
 			return
@@ -27,6 +28,7 @@ func AuthMiddleware(authService service.AuthService) gin.HandlerFunc {
 
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status": "error",
 				"error" : err.Error(),
 			})
 			return
