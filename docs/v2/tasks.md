@@ -17,7 +17,7 @@
 
 **Primary:** Go
 
-Sebelum masuk fitur V2, V1 financial core harus benar-benar solid.
+Before entering V2 features, the V1 financial core must be rock solid.
 
 ### Go Core
 
@@ -721,7 +721,7 @@ request_id
 
 # Sprint Dependency
 
-Ini penting supaya lo gak ngerjain Java terlalu cepat sebelum Go foundation-nya siap.
+This ordering is critical to avoid implementing Java components prematurely before the Go transaction foundation is ready.
 
 ```text
 2.1 V1 Completion
@@ -769,7 +769,7 @@ Ini penting supaya lo gak ngerjain Java terlalu cepat sebelum Go foundation-nya 
 
 # Go vs Java — Final Responsibility
 
-Biar selama development lo gak bingung:
+To maintain crystal-clear separation during development:
 
 | Feature                  |   Go  |  Java |
 | ------------------------ | :---: | :---: |
@@ -793,21 +793,21 @@ Biar selama development lo gak bingung:
 | Financial event creation |   ✅   |       |
 | Financial state mutation | **✅** | **❌** |
 
-Jadi kalau nanti lo lagi coding dan bingung:
+When implementing a feature and questioning:
 
-> **"Ini masuk Go atau Java?"**
+> **"Does this belong in Go or Java?"**
 
-pakai rule sederhana:
+Apply this simple rule:
 
-**Apakah code ini menentukan/mengubah uang? → Go.**
+**Does this code determine or mutate money balances/records? → Go.**
 
-**Apakah code ini menganalisis, memproses workflow, atau bereaksi terhadap transaksi? → Java.**
+**Does this code evaluate, analyze, orchestrate workflows, or react to events? → Java.**
 
 ---
 
 # V2 Definition of Done
 
-V2 dianggap selesai kalau flow besar ini sudah berjalan:
+V2 is considered complete once this end-to-end flow is fully operational:
 
 ```text
                     CUSTOMER

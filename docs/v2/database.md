@@ -10,13 +10,13 @@
 
 ## 1. Database Philosophy
 
-Bastion V2 menggunakan database V1 sebagai **financial source of truth** dan menambahkan tabel baru untuk domain V2.
+Bastion V2 uses the V1 database as the **financial source of truth** and introduces new tables for the V2 domain.
 
-Prinsip utama:
+Core principle:
 
 > **Financial state remains authoritative in PostgreSQL and is mutated by Go Core.**
 
-Java memiliki data domain sendiri untuk risk, fraud, dan reconciliation, tetapi **tidak boleh mengubah financial records secara langsung**.
+Java owns its dedicated domain data for risk, fraud, and reconciliation, but **must not mutate financial records directly**.
 
 ---
 
