@@ -7,177 +7,100 @@
 > **Architecture:** Go Core + Java Platform  
 > **Database:** PostgreSQL 16  
 > **Cache:** Redis 7  
-> **Messaging:** Kafka (introduced later)  
+> **Messaging:** Kafka (Sprint 2.6+)  
 
 ---
 
-# Level 1 — Payment Foundation
+# Sprint 2.1 — Foundation & Java Platform Setup
 
-## Sprint 2.1 — V1 Completion & V2 Foundation
+**Primary:** Go + Java
 
-**Primary:** Go
+Establish the multi-service architecture, containerization, and inter-service communication baseline for Bastion V2.
 
-Before entering V2 features, the V1 financial core must be rock solid.
+### Project & Service Structure
 
-### Go Core
+* [ ] Reorganize project into multi-service workspace:
+  ```text
+  services/
+  ├── core/        # Go (Gin, Clean Architecture)
+  └── platform/    # Java (Spring Boot)
+  ```
+* [ ] Initialize Spring Boot project (`services/platform/`)
+  * [ ] Configure Maven / Gradle dependencies
+  * [ ] Configure PostgreSQL datasource & connection pooling
+  * [ ] Configure Redis client
+  * [ ] Configure application properties & environment bindings
+* [ ] Docker & Local Infrastructure:
+  * [ ] Update `docker-compose.yml` to include Go Core and Java Platform containers
+  * [ ] Create multi-stage `Dockerfile` for Go Core
+  * [ ] Create multi-stage `Dockerfile` for Java Platform
 
-* [ ] Complete P2P Transfer
-  * [ ] `TransferRequest`
-  * [ ] `LedgerEntry`
-  * [ ] Wallet locking
-  * [ ] Deadlock prevention
-  * [ ] Balance validation
-  * [ ] Receiver balance limit
-  * [ ] Self-transfer prevention
-  * [ ] Transaction creation
-  * [ ] Ledger entries
-* [ ] Redis idempotency
-  * [ ] Transfer
-  * [ ] Top-up
-* [ ] Persistent idempotency records
-* [ ] Audit logging
-* [ ] Concurrent transfer tests
-* [ ] 100-request stress test
-* [ ] Race-condition validation
-* [ ] Deadlock validation
-* [ ] Duplicate-request validation
+### Inter-Service Communication & Security
 
-### Database
-
-* [ ] `ledger_entries`
-* [ ] `audit_logs`
-* [ ] `idempotency_records`
+* [ ] Define internal REST API contracts (`/internal/v1/*`)
+* [ ] Implement internal service authentication (API key / shared secret / HMAC)
+* [ ] Standardize error response envelope across Go and Java
+* [ ] Implement `request_id` propagation middleware in both services
+* [ ] Implement health check endpoints (`/health`) in Go and Java
 
 ### Testing
 
-* [ ] A → B transfer
-* [ ] B → A concurrent transfer
-* [ ] Insufficient balance
-* [ ] Receiver limit
-* [ ] Duplicate request
-* [ ] Concurrent duplicate request
-* [ ] Negative balance prevention
-
-### Definition of Done
-
-```text
-V1 Financial Core
-      ↓
-Atomic
-      ↓
-Idempotent
-      ↓
-Concurrency Safe
-      ↓
-Ready for V2
-```
+* [ ] Spring Boot application context load test
+* [ ] Go $\leftrightarrow$ Java internal HTTP ping test
+* [ ] Docker Compose end-to-end service boot test
 
 ---
 
-# Level 2 — Merchant & Payment
-
-## Sprint 2.2 — Merchant Account
+# Sprint 2.2 — Merchant & Payment Requests
 
 **Primary:** Go
 
+Introduce merchant accounts and payment request lifecycle into Go Core.
+
 ### Database
 
-* [ ] Create `merchants`
-* [ ] Merchant status
-* [ ] Merchant-user relationship
-* [ ] Merchant indexes
+* [ ] Database migration: `merchants` table
+* [ ] Database migration: `payments` table
+* [ ] Indexes on `merchant_id`, `customer_id`, `reference`, `status`
+* [ ] Foreign keys and CHECK constraints (`status IN ('pending', 'active', 'suspended')`)
 
-### Domain
+### Domain Layer (Go)
 
-* [ ] `Merchant`
-* [ ] `CreateMerchantRequest`
-* [ ] `MerchantResponse`
+* [ ] `domain/merchant.go` — `Merchant` entity, `CreateMerchantRequest`, `MerchantResponse`
+* [ ] `domain/payment.go` — `Payment` entity, `CreatePaymentRequest`, `PaymentResponse`, status enums
 
-### Repository
+### Repository Layer (Go)
 
-* [ ] `Create`
-* [ ] `FindByID`
-* [ ] `FindByUserID`
-* [ ] `UpdateStatus`
+* [ ] `MerchantRepository` interface + implementation:
+  * [ ] `Create` — Insert merchant profile linked to `user_id`
+  * [ ] `FindByID` — Query merchant by UUID
+  * [ ] `FindByUserID` — Query merchant by user UUID
+  * [ ] `UpdateStatus` — Update merchant status (`pending`, `active`, `suspended`)
+* [ ] `PaymentRepository` interface + implementation:
+  * [ ] `Create` — Insert payment request with unique `reference`
+  * [ ] `FindByID` — Query payment by UUID
+  * [ ] `FindByReference` — Query payment by reference code
+  * [ ] `UpdateStatus` — Update payment lifecycle status
 
-### Service
+### Service Layer (Go)
 
-* [ ] Merchant registration
-* [ ] Merchant activation
-* [ ] Merchant suspension
-* [ ] Merchant authorization
+* [ ] `MerchantService`:
+  * [ ] Register merchant profile
+  * [ ] Activate / suspend merchant account
+  * [ ] Verify merchant status before accepting payments
+* [ ] `PaymentService`:
+  * [ ] Create payment request with amount, merchant ID, reference, and expiration timestamp
+  * [ ] Validate active merchant status and positive amount
+  * [ ] Check expiration on payment retrieval
 
-### API
+### API Layer (Go)
 
 ```text
 POST /api/v1/merchants
 GET  /api/v1/merchants/me
 POST /api/v1/merchants/:id/activate
 POST /api/v1/merchants/:id/suspend
-```
 
-### Testing
-
-* [ ] Register merchant
-* [ ] Duplicate merchant
-* [ ] Activate merchant
-* [ ] Suspend merchant
-* [ ] Unauthorized merchant access
-
----
-
-## Sprint 2.3 — Payment Engine
-
-**Primary:** Go
-
-### Database
-
-* [ ] Create `payments`
-* [ ] Payment indexes
-* [ ] Payment status constraints
-
-### Domain
-
-* [ ] `Payment`
-* [ ] `CreatePaymentRequest`
-* [ ] `PaymentResponse`
-* [ ] Payment status enum
-
-### Service
-
-* [ ] Create payment
-* [ ] Validate merchant
-* [ ] Validate customer
-* [ ] Validate amount
-* [ ] Validate wallet
-* [ ] Payment expiration
-* [ ] Payment state machine
-
-### Payment State Machine
-
-```text
-PENDING
-   │
-   ▼
-AUTHORIZED
-   │
-   ▼
-COMPLETED
-   │
-   ▼
-REFUNDED
-```
-
-Failure paths:
-
-```text
-PENDING → FAILED
-PENDING → CANCELLED
-```
-
-### API
-
-```text
 POST /api/v1/payments
 GET  /api/v1/payments/:id
 POST /api/v1/payments/:id/cancel
@@ -185,623 +108,341 @@ POST /api/v1/payments/:id/cancel
 
 ### Testing
 
-* [ ] Successful payment
-* [ ] Insufficient balance
-* [ ] Invalid merchant
-* [ ] Expired payment
-* [ ] Duplicate payment
-* [ ] Invalid state transition
-* [ ] Concurrent payment
+* [ ] Merchant registration and activation flow
+* [ ] Duplicate merchant prevention per user
+* [ ] Suspended merchant blocked from creating payment requests
+* [ ] Payment request generation with unique reference and expiration check
 
 ---
 
-# Level 3 — Java Platform
+# Sprint 2.3 — Risk Assessment Engine
 
-## Sprint 2.4 — Java/Spring Boot Foundation
+**Primary:** Java + Go Integration
 
-**Primary:** Java
-
-Now Java officially enters Bastion.
-
-### Project
-
-```text
-services/
-├── core/
-│   └── Go
-│
-└── platform/
-    └── Java
-```
-
-### Setup
-
-* [ ] Initialize Spring Boot project
-* [ ] Configure Maven/Gradle
-* [ ] Configure PostgreSQL
-* [ ] Configure Redis
-* [ ] Configure environment variables
-* [ ] Dockerfile
-* [ ] Docker Compose integration
-
-### Architecture
-
-```text
-Java
-├── controller
-├── service
-├── domain
-├── repository
-├── config
-└── exception
-```
-
-### Internal API
-
-```text
-POST /internal/v1/risk/assess
-```
-
-### Security
-
-* [ ] Internal service authentication
-* [ ] Request validation
-* [ ] Error handling
-* [ ] Request ID propagation
-
-### Testing
-
-* [ ] Spring context test
-* [ ] Controller test
-* [ ] Service test
-* [ ] Repository test
-* [ ] Internal API test
-
----
-
-# Level 4 — Risk Intelligence
-
-## Sprint 2.5 — Risk Engine
-
-**Primary:** Java
-
-This is the first major reason Java exists in V2.
+Implement the deterministic Risk Engine in Java and integrate it synchronously into the Go payment flow.
 
 ### Database
 
-* [ ] `risk_assessments`
-* [ ] Risk indexes
+* [ ] Database migration: `risk_assessments` table
+* [ ] Indexes on `transaction_id`, `user_id`, and `created_at`
+* [ ] CHECK constraints on `risk_score (0-100)` and `decision ('approve', 'monitor', 'review')`
 
-### Domain
+### Java Risk Platform (`services/platform/`)
 
-* [ ] `RiskAssessment`
-* [ ] `RiskDecision`
-* [ ] `RiskReason`
+* [ ] Domain: `RiskAssessment`, `RiskDecision`, `RiskRule`, `RiskReason`
+* [ ] Composable Rule Pipeline:
+  * [ ] `AmountRule` — Flags high single-transaction amounts
+  * [ ] `VelocityRule` — Evaluates transaction frequency against Redis counters
+  * [ ] `TimeRule` — Evaluates unusual transaction hours
+  * [ ] `RecipientRule` — Flags first-time / new recipient interactions
+  * [ ] `HistoryRule` — Evaluates historical failure rates and KYC status
+* [ ] `RiskEngineService` — Aggregates rule scores and outputs decision:
+  * [ ] `0 – 30`: `APPROVE`
+  * [ ] `31 – 70`: `MONITOR`
+  * [ ] `71 – 100`: `REVIEW`
+* [ ] Internal Controller: `POST /internal/v1/risk/assess`
 
-### Rule Engine
+### Go Core Integration
 
-* [ ] `AmountRule`
-* [ ] `VelocityRule`
-* [ ] `TimeRule`
-* [ ] `RecipientRule`
-* [ ] `HistoryRule`
-
-Architecture:
-
-```text
-RiskEngine
-    │
-    ├── AmountRule
-    ├── VelocityRule
-    ├── TimeRule
-    ├── RecipientRule
-    └── HistoryRule
-```
-
-### Scoring
-
-```text
-0–30   → APPROVE
-31–70  → MONITOR
-71–100 → REVIEW
-```
-
-Thresholds should remain configurable.
-
-### API
-
-```text
-POST /internal/v1/risk/assess
-```
-
-### Go Integration
-
-Payment flow becomes:
-
-```text
-Client
-  │
-  ▼
-Go Payment
-  │
-  ▼
-Java Risk
-  │
-  ├── APPROVE
-  ├── MONITOR
-  └── REVIEW
-  │
-  ▼
-Go Financial Transaction
-```
+* [ ] Implement `RiskClient` in Go Core to call Java `/internal/v1/risk/assess`
+* [ ] Integrate risk evaluation step before committing payment financial transactions
+* [ ] Handle Java service timeouts and fallback behavior (block/pending rather than silent execution)
 
 ### Testing
 
-* [ ] Low-risk transaction
-* [ ] High-value transaction
-* [ ] High velocity
-* [ ] New recipient
-* [ ] Multiple risk factors
-* [ ] Risk score boundary
-* [ ] Java unavailable
+* [ ] Low-risk transaction $\rightarrow$ `APPROVE` (Score $\le 30$)
+* [ ] High-value transaction $\rightarrow$ `MONITOR` / `REVIEW`
+* [ ] High velocity spike $\rightarrow$ `REVIEW`
+* [ ] Multiple compounding risk factors scoring
+* [ ] Graceful failure handling when Java Risk service is unreachable
 
 ---
 
-# Level 5 — Fraud Detection
-
-## Sprint 2.6 — Fraud Monitoring
+# Sprint 2.4 — Fraud Detection & Case Management
 
 **Primary:** Java
 
+Implement transaction monitoring, velocity tracking, and fraud case management in Java.
+
 ### Database
 
-* [ ] `fraud_cases`
-* [ ] Fraud indexes
+* [ ] Database migration: `fraud_cases` table
+* [ ] Indexes on `transaction_id`, `user_id`, and `status`
+* [ ] CHECK constraints on `status IN ('open', 'under_review', 'confirmed', 'dismissed')`
 
-### Domain
+### Java Fraud Service (`services/platform/`)
 
-* [ ] `FraudCase`
-* [ ] `FraudStatus`
-* [ ] `FraudReason`
-
-### Service
-
-* [ ] Create fraud case
-* [ ] Assign case
-* [ ] Review case
-* [ ] Confirm fraud
-* [ ] Dismiss fraud
-
-### State Machine
-
-```text
-OPEN
- │
- ▼
-UNDER_REVIEW
- │
- ├───────────────┐
- ▼               ▼
-CONFIRMED      DISMISSED
-```
-
-### API
-
-```text
-GET  /internal/v1/fraud/cases
-GET  /internal/v1/fraud/cases/:id
-POST /internal/v1/fraud/cases/:id/review
-POST /internal/v1/fraud/cases/:id/confirm
-POST /internal/v1/fraud/cases/:id/dismiss
-```
+* [ ] Domain: `FraudCase`, `FraudStatus`, `FraudReason`
+* [ ] Automated Case Creation:
+  * [ ] Automatically trigger fraud cases when risk score $> 70$ or velocity threshold exceeded
+  * [ ] Link case to `risk_assessment_id`, `transaction_id`, and `user_id`
+* [ ] Fraud Case Lifecycle & State Machine:
+  ```text
+  OPEN ──► UNDER_REVIEW ──► CONFIRMED / DISMISSED
+  ```
+* [ ] Case Management APIs:
+  ```text
+  GET  /internal/v1/fraud/cases
+  GET  /internal/v1/fraud/cases/:id
+  POST /internal/v1/fraud/cases/:id/review
+  POST /internal/v1/fraud/cases/:id/confirm
+  POST /internal/v1/fraud/cases/:id/dismiss
+  ```
 
 ### Testing
 
-* [ ] High-risk transaction creates case
-* [ ] Case review
-* [ ] Confirm fraud
-* [ ] Dismiss false positive
-* [ ] Duplicate fraud event
+* [ ] High-risk transaction automatically spawns `OPEN` fraud case
+* [ ] Operator workflow: `OPEN` $\rightarrow$ `UNDER_REVIEW` $\rightarrow$ `CONFIRMED`
+* [ ] Operator workflow: `OPEN` $\rightarrow$ `UNDER_REVIEW` $\rightarrow$ `DISMISSED`
+* [ ] Duplicate fraud case prevention for the same transaction
 
 ---
 
-# Level 6 — Refund & Reversal
-
-## Sprint 2.7 — Refund Engine
+# Sprint 2.5 — Payment Lifecycle & Refund Engine
 
 **Primary:** Go
 
+Complete the payment state machine and implement the atomic refund engine in Go Core.
+
 ### Database
 
-* [ ] `refunds`
-* [ ] Refund indexes
+* [ ] Database migration: `refunds` table
+* [ ] Indexes on `payment_id`, `transaction_id`, `status`
+* [ ] CHECK constraints on `amount > 0` and `status IN ('pending', 'completed', 'failed')`
 
-### Domain
-
-* [ ] `Refund`
-* [ ] `CreateRefundRequest`
-* [ ] `RefundResponse`
-
-### Service
-
-* [ ] Validate payment
-* [ ] Validate refundable amount
-* [ ] Support partial refund
-* [ ] Prevent over-refund
-* [ ] Execute atomic wallet mutation
-* [ ] Create refund transaction
-* [ ] Create ledger entries
-
-### API
+### Payment State Machine (Go)
 
 ```text
+                  ┌────────────┐
+                  │  PENDING   │
+                  └─────┬──────┘
+                        │
+                 Risk evaluation
+                        │
+              ┌─────────┴─────────┐
+              ▼                   ▼
+         AUTHORIZED             FAILED
+              │
+              ▼
+          COMPLETED
+              │
+              ▼
+           REFUNDED
+```
+
+* [ ] Enforce valid state transitions; reject invalid transitions (`COMPLETED` $\rightarrow$ `PENDING`, `REFUNDED` $\rightarrow$ `COMPLETED`)
+* [ ] Atomic payment execution:
+  * [ ] Lock customer wallet and merchant wallet with `SELECT ... FOR UPDATE` (ascending UUID order)
+  * [ ] Validate customer balance and merchant wallet limit
+  * [ ] Debit customer balance, credit merchant balance
+  * [ ] Insert `transactions` record (`type = 'payment'`)
+  * [ ] Insert `ledger_entries` (debit + credit)
+  * [ ] Update `payments` status $\rightarrow$ `completed`
+
+### Refund Engine (Go)
+
+* [ ] `domain/refund.go` — `Refund` entity, `CreateRefundRequest`, `RefundResponse`
+* [ ] `RefundRepository` — CRUD and aggregate query `GetTotalRefundedAmount(paymentID)`
+* [ ] `RefundService`:
+  * [ ] Validate original payment is in `completed` status
+  * [ ] Support full and partial refunds
+  * [ ] Prevent over-refund (`SUM(completed_refunds) + requested_amount <= payment.amount`)
+  * [ ] Atomic financial reversal:
+    * [ ] Lock merchant wallet and customer wallet (`SELECT ... FOR UPDATE`)
+    * [ ] Debit merchant wallet, credit customer wallet
+    * [ ] Insert `transactions` record (`type = 'refund'`)
+    * [ ] Insert `ledger_entries` (debit merchant + credit customer)
+    * [ ] Update payment status to `refunded` if fully refunded
+
+### API Layer (Go)
+
+```text
+POST /api/v1/payments/:id/pay
 POST /api/v1/payments/:id/refund
 GET  /api/v1/refunds/:id
 ```
 
-### Example
-
-```text
-Payment
-Rp1.000.000
-
-Refund
-Rp300.000
-
-Remaining
-Rp700.000
-```
-
 ### Testing
 
-* [ ] Full refund
-* [ ] Partial refund
-* [ ] Multiple partial refunds
-* [ ] Over-refund blocked
-* [ ] Refund failed
-* [ ] Concurrent refund
-* [ ] Duplicate refund request
+* [ ] Full payment execution end-to-end
+* [ ] Full refund execution (original payment marked `refunded`)
+* [ ] Multiple partial refunds (e.g., Rp 1,000,000 $\rightarrow$ Rp 300,000 + Rp 200,000)
+* [ ] Over-refund rejection (attempting to refund more than original payment amount)
+* [ ] Concurrent refund race condition protection
 
 ---
 
-# Level 7 — Event-Driven Architecture
-
-## Sprint 2.8 — Outbox + Kafka
+# Sprint 2.6 — Event-Driven Architecture (Outbox + Kafka)
 
 **Primary:** Go + Java
 
-This sprint changes how the two systems communicate.
+Introduce domain events and transactional outbox pattern to decouple asynchronous downstream processing.
 
 ### Database
 
-* [ ] `outbox_events`
-* [ ] Outbox indexes
+* [ ] Database migration: `outbox_events` table
+* [ ] Index on `(status, created_at)`
 
-### Go
+### Go Core (Producer & Outbox)
 
-* [ ] Domain event model
-* [ ] Outbox repository
-* [ ] Write event in same transaction
-* [ ] Outbox publisher
-* [ ] Retry mechanism
-* [ ] Failed event handling
+* [ ] Domain event model (`EventID`, `AggregateType`, `AggregateID`, `EventType`, `Payload`, `Timestamp`)
+* [ ] Implement Transactional Outbox:
+  * [ ] Write `outbox_events` record inside the **same PostgreSQL transaction** as financial mutations
+* [ ] Background Outbox Worker:
+  * [ ] Polls pending events from `outbox_events`
+  * [ ] Publishes to Kafka topics
+  * [ ] Marks status $\rightarrow$ `published` with `published_at` timestamp
+  * [ ] Implements exponential backoff retry for failed publishing
 
-### Events
+### Kafka Infrastructure
 
-Initial events:
+* [ ] Add Kafka & Zookeeper / KRaft to `docker-compose.yml`
+* [ ] Define topics:
+  * [ ] `bastion.payments`
+  * [ ] `bastion.transfers`
+  * [ ] `bastion.kyc`
 
-```text
-PAYMENT_CREATED
-PAYMENT_COMPLETED
-PAYMENT_FAILED
-PAYMENT_REFUNDED
-TRANSFER_COMPLETED
-KYC_APPROVED
-```
+### Java Platform (Consumer)
 
-### Kafka
+* [ ] Configure Spring Kafka consumer
+* [ ] Implement Consumer Idempotency:
+  * [ ] Check against `processed_events` table / Redis before handling
+* [ ] Implement event listeners for asynchronous risk re-assessment and fraud triggers
 
-* [ ] Add Kafka to Docker Compose
-* [ ] Create topics
-* [ ] Configure producer
-* [ ] Configure consumer
-* [ ] Consumer retry
-* [ ] Consumer idempotency
+### Testing
 
-### Java
-
-* [ ] Kafka consumer
-* [ ] Risk event consumer
-* [ ] Fraud event consumer
-* [ ] Notification consumer
-
-Architecture:
-
-```text
-                     Go
-                      │
-                PostgreSQL
-                      │
-                 outbox_events
-                      │
-                      ▼
-                    Kafka
-                      │
-          ┌───────────┼───────────┐
-          ▼           ▼           ▼
-        Risk        Fraud      Notification
-        Java         Java         Java
-```
+* [ ] Outbox event created atomically with payment transaction
+* [ ] Outbox publisher reliably delivers messages to Kafka
+* [ ] Kafka consumer processes events idempotently (duplicate message produces single effect)
+* [ ] Outbox worker recovers and retries when Kafka broker temporarily disconnects
 
 ---
 
-# Level 8 — Notification
-
-## Sprint 2.9 — Notification Platform
+# Sprint 2.7 — Financial Reconciliation & Notifications
 
 **Primary:** Java
 
-### Database
-
-* [ ] `notifications`
-
-### Events
-
-Listen to:
-
-```text
-PAYMENT_COMPLETED
-PAYMENT_FAILED
-PAYMENT_REFUNDED
-TRANSFER_COMPLETED
-KYC_APPROVED
-```
-
-### Channels
-
-V2 initial implementation:
-
-* [ ] In-app
-* [ ] Email
-
-Push notifications can remain future work.
-
-### Service
-
-```text
-NotificationService
-       │
-       ├── EmailNotification
-       └── InAppNotification
-```
-
-### Reliability
-
-* [ ] Retry failed notifications
-* [ ] Duplicate event protection
-* [ ] Delivery status
-* [ ] Failed notification handling
-
-### Important
-
-Notification failure must **never rollback financial transactions**.
-
----
-
-# Level 9 — Reconciliation
-
-## Sprint 2.10 — Financial Reconciliation
-
-**Primary:** Java
-
-This is another major Java responsibility.
+Implement batch reconciliation against external provider statements and asynchronous notification dispatch.
 
 ### Database
 
-* [ ] `reconciliation_runs`
-* [ ] `reconciliation_items`
+* [ ] Database migration: `reconciliation_runs` table
+* [ ] Database migration: `reconciliation_items` table
+* [ ] Database migration: `notifications` table
 
-### Workflow
+### Reconciliation Engine (`services/platform/`)
 
-```text
-External Records
-       │
-       ▼
-Normalize
-       │
-       ▼
-Match
-       │
-       ├── MATCHED
-       ├── AMOUNT_MISMATCH
-       ├── MISSING_INTERNAL
-       └── MISSING_EXTERNAL
-```
+* [ ] Domain: `ReconciliationRun`, `ReconciliationItem`, Discrepancy Enums
+* [ ] Workflow:
+  ```text
+  External Records ──► Ingest & Normalize ──► Match against Ledger ──► Discrepancy Report
+  ```
+* [ ] Matching Logic:
+  * [ ] `MATCHED` — Exact match on reference and amount
+  * [ ] `AMOUNT_MISMATCH` — Reference matches, amounts differ
+  * [ ] `MISSING_INTERNAL` — Present in external statement, missing in Bastion ledger
+  * [ ] `MISSING_EXTERNAL` — Present in Bastion ledger, missing in external statement
+* [ ] Discrepancy summary & reporting API (`/internal/v1/reconciliation/*`)
 
-### Service
+### Notification Platform (`services/platform/`)
 
-* [ ] Create reconciliation run
-* [ ] Import external records
-* [ ] Match transactions
-* [ ] Calculate discrepancy
-* [ ] Generate reconciliation report
+* [ ] Domain: `Notification`, Channels (`email`, `in_app`)
+* [ ] Kafka event listener listening to `PAYMENT_COMPLETED`, `PAYMENT_FAILED`, `PAYMENT_REFUNDED`, `KYC_APPROVED`
+* [ ] Asynchronous notification sender with retry mechanism
+* [ ] Guarantee: Notification failure never impacts or rolls back financial state
 
 ### Testing
 
-* [ ] All records matched
-* [ ] Missing internal
-* [ ] Missing external
-* [ ] Amount mismatch
-* [ ] Duplicate external reference
-* [ ] Large reconciliation batch
+* [ ] Complete reconciliation run with 100% matched records
+* [ ] Reconciliation run detecting `AMOUNT_MISMATCH` and `MISSING_INTERNAL`
+* [ ] Notification listener successfully dispatches on Kafka payment events
+* [ ] Simulated notification failure does not corrupt financial transactions
 
 ---
 
-# Level 10 — Production Hardening
-
-## Sprint 2.11 — Observability & Security
+# Sprint 2.8 — Production Hardening & Observability
 
 **Primary:** Go + Java
 
-### Observability
+End-to-end stress testing, distributed tracing, metrics, and security audit.
 
-* [ ] Request ID
-* [ ] Transaction ID
-* [ ] Payment ID
-* [ ] Event ID
-* [ ] Structured logging
-* [ ] Error correlation
+### Observability & Tracing
 
-Example:
+* [ ] End-to-end trace ID propagation across Go, Java, PostgreSQL, Kafka, and Redis:
+  ```text
+  request_id ──► payment_id ──► transaction_id ──► event_id
+  ```
+* [ ] Structured JSON logging with unified log levels
+* [ ] Prometheus metrics export (`payment_latency`, `risk_score_distribution`, `fraud_cases_total`)
+* [ ] Health check and readiness probes
 
-```text
-request_id
-    │
-    ├── payment_id
-    │
-    ├── transaction_id
-    │
-    ├── risk_assessment_id
-    │
-    └── event_id
-```
+### Security Audit
 
-### Security
+* [ ] Internal service-to-service authentication enforcement
+* [ ] Rate limiting on public Go APIs using Redis token bucket
+* [ ] PII data masking in logs (passwords, card/NIK numbers)
+* [ ] Secure environment variable injection and secret management
 
-* [ ] Internal service authentication
-* [ ] API rate limiting
-* [ ] Input validation
-* [ ] Sensitive-data masking
-* [ ] Secret management
-* [ ] CORS configuration
-* [ ] Security headers
+### Performance & Resilience Testing
 
-### Testing
-
-* [ ] Authentication tests
-* [ ] Authorization tests
-* [ ] Rate-limit tests
-* [ ] Invalid payload tests
-* [ ] Service authentication tests
+* [ ] 100 concurrent payments stress test (verifying no double-charging or race conditions)
+* [ ] 100 concurrent partial refunds stress test (verifying no over-refund)
+* [ ] Failure injection tests:
+  * [ ] Redis downtime handling
+  * [ ] Java Risk engine timeout handling
+  * [ ] Kafka broker temporary outage recovery
+* [ ] Finalize documentation and update API specs in `openapi.yml`
 
 ---
 
-# Level 11 — Performance & Reliability
-
-## Sprint 2.12 — Load & Failure Testing
-
-**Primary:** Go + Java
-
-### Go
-
-* [ ] Concurrent transfers
-* [ ] Concurrent payments
-* [ ] Concurrent refunds
-* [ ] Idempotency under load
-* [ ] Database lock testing
-
-### Java
-
-* [ ] Risk engine load test
-* [ ] Fraud processing load test
-* [ ] Kafka consumer load test
-* [ ] Notification throughput test
-
-### Failure Scenarios
-
-* [ ] PostgreSQL unavailable
-* [ ] Redis unavailable
-* [ ] Java unavailable
-* [ ] Kafka unavailable
-* [ ] Kafka duplicate event
-* [ ] Notification failure
-* [ ] Risk service timeout
-
----
-
-# Sprint Dependency
-
-This ordering is critical to avoid implementing Java components prematurely before the Go transaction foundation is ready.
+# Sprint Dependency Graph
 
 ```text
-2.1 V1 Completion
-       │
-       ▼
-2.2 Merchant
-       │
-       ▼
-2.3 Payment
-       │
-       ├──────────────┐
-       ▼              ▼
-2.4 Java Foundation
-       │
-       ▼
-2.5 Risk
-       │
-       ▼
-2.6 Fraud
-       
-2.3 Payment
-       │
-       ▼
-2.7 Refund
-       
-2.5 / 2.6 / 2.7
-       │
-       ▼
-2.8 Kafka + Events
-       │
-       ├─────────────┬─────────────┐
-       ▼             ▼             ▼
-     2.9           2.10          Future
- Notification   Reconciliation
-       │             │
-       └──────┬──────┘
-              ▼
-          2.11 Security
-              │
-              ▼
-          2.12 Load Test
+Sprint 2.1: Foundation & Java Platform
+                  │
+                  ▼
+Sprint 2.2: Merchant & Payment Requests
+                  │
+                  ▼
+Sprint 2.3: Risk Assessment Engine
+                  │
+                  ▼
+Sprint 2.4: Fraud Detection & Monitoring
+                  │
+                  ▼
+Sprint 2.5: Payment Lifecycle & Refund Engine
+                  │
+                  ▼
+Sprint 2.6: Event-Driven Architecture (Outbox + Kafka)
+                  │
+         ┌────────┴────────┐
+         ▼                 ▼
+Sprint 2.7: Recon & Notify
+         │                 │
+         └────────┬────────┘
+                  ▼
+Sprint 2.8: Production Hardening
 ```
 
 ---
 
-# Go vs Java — Final Responsibility
+# Go vs Java Responsibility Matrix
 
-To maintain crystal-clear separation during development:
-
-| Feature                  |   Go  |  Java |
-| ------------------------ | :---: | :---: |
-| Auth                     |   ✅   |       |
-| User                     |   ✅   |       |
-| Wallet                   |   ✅   |       |
-| Top-up                   |   ✅   |       |
-| P2P Transfer             |   ✅   |       |
-| Ledger                   |   ✅   |       |
-| Merchant                 |   ✅   |       |
-| Payment execution        |   ✅   |       |
-| Refund                   |   ✅   |       |
-| Idempotency              |   ✅   |       |
-| Risk assessment          |       |   ✅   |
-| Risk rules               |       |   ✅   |
-| Fraud detection          |       |   ✅   |
-| Fraud case               |       |   ✅   |
-| Notification             |       |   ✅   |
-| Reconciliation           |       |   ✅   |
-| Kafka consumer           |       |   ✅   |
-| Financial event creation |   ✅   |       |
-| Financial state mutation | **✅** | **❌** |
-
-When implementing a feature and questioning:
-
-> **"Does this belong in Go or Java?"**
-
-Apply this simple rule:
-
-**Does this code determine or mutate money balances/records? → Go.**
-
-**Does this code evaluate, analyze, orchestrate workflows, or react to events? → Java.**
+| Domain / Responsibility | Go Core | Java Platform | Notes |
+|---|:---:|:---:|---|
+| **User Authentication & KYC** | ✅ | ❌ | Auth, JWT, Redis Blacklist |
+| **Wallets & Balances** | ✅ | ❌ | Authoritative balance mutations |
+| **Top-up & P2P Transfers** | ✅ | ❌ | Core money movement |
+| **Double-Entry Ledger** | ✅ | ❌ | Append-only financial truth |
+| **Merchant Management** | ✅ | ❌ | Merchant profiles & wallets |
+| **Payment Execution** | ✅ | ❌ | Debit/credit atomic transaction |
+| **Refund Execution** | ✅ | ❌ | Ledger reversal & balance updates |
+| **Risk Scoring & Rule Pipeline** | ❌ | ✅ | Composable rule engine ($0-100$) |
+| **Fraud Case Management** | ❌ | ✅ | Investigative lifecycle & review |
+| **Reconciliation Engine** | ❌ | ✅ | Batch ledger comparison & discrepancy reports |
+| **Notification Dispatch** | ❌ | ✅ | Async email & in-app delivery |
+| **Domain Event Outbox** | ✅ | ❌ | Transactional outbox in PostgreSQL |
+| **Event Consumer & Workers** | ❌ | ✅ | Kafka async event processing |
 
 ---
 

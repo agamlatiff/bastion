@@ -294,9 +294,9 @@ Level 1 — Foundation (Go Clean Architecture)
   Sprint 1.4 — P2P Transfer & Atomic Concurrency Locking       [NEXT] ⏳
 
 Level 2 — Correctness & Financial Integrity                    [ ]
-  Sprint 2.1 — Redis Idempotency for Transfers
-  Sprint 2.2 — Audit Logging (IP, User-Agent, Action Type)
-  Sprint 2.3 — Stress Testing & Race Condition Validation
+  Sprint 1.5 — Redis Idempotency for Transfers
+  Sprint 1.6 — Audit Logging (IP, User-Agent, Action Type)
+  Sprint 1.7 — Stress Testing & Race Condition Validation
 ```
 
 ---

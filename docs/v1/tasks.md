@@ -141,7 +141,7 @@
 
 ## Level 2 — Correctness & Financial Integrity
 
-### Sprint 2.1 — Redis Idempotency for Transfers
+### Sprint 1.5 — Redis Idempotency for Transfers
 
 - [ ] Implement Redis idempotency middleware/service
   - [ ] Check `idempotency:{key}` in Redis before processing
@@ -150,7 +150,7 @@
 - [ ] Apply idempotency to `Transfer` endpoint
 - [ ] Apply idempotency to `TopUp` endpoint (enhance existing)
 
-### Sprint 2.2 — Audit Logging
+### Sprint 1.6 — Audit Logging
 
 - [ ] Database migration: `audit_logs` table
 - [ ] Domain layer: `AuditLog` entity
@@ -160,7 +160,7 @@
   - [ ] Transfer (record sender, receiver, amount)
   - [ ] KYC Submission (record user, timestamp)
 
-### Sprint 2.3 — Stress Testing & Race Condition Validation
+### Sprint 1.7 — Stress Testing & Race Condition Validation
 
 - [ ] Write concurrent transfer test (simulate 100 simultaneous requests)
 - [ ] Verify no double-spending under load
