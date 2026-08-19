@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/agamlatiff/bastion/services/auth/internal/domain"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -11,13 +12,13 @@ type WalletRepository interface {
 	FindByUserID(ctx context.Context, userID string) (*domain.Wallet, error)
 	FindByID(ctx context.Context, walletID string) (*domain.Wallet, error)
 	ExecuteTopUp(ctx context.Context, walletID string, amount int64, idmKey string, desc string) (*domain.Transaction, error)
+	ExecuteTransfer(ctx context.Context, senderWalletID string, receiverWalletID string, amount int64, idmKey string, desc string) (*domain.Transaction, error)
 	GetTransaction(ctx context.Context, walletID string, limit int, offset int) ([]*domain.Transaction, error)
 }
 
 type walletRepository struct {
 	db *pgxpool.Pool
 }
-
 
 func NewWalletRepository(db *pgxpool.Pool) WalletRepository {
 	return &walletRepository{db: db}
@@ -134,6 +135,130 @@ func (r *walletRepository) ExecuteTopUp(ctx context.Context, walletID string, am
 	return txRecord, nil
 }
 
+func (r *walletRepository) ExecuteTransfer(ctx context.Context, senderWalletID string, receiverWalletID string, amount int64, idmKey string, desc string) (*domain.Transaction, error) {
+	// Starting database transaction
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	defer tx.Rollback(ctx)
+
+	// Row locking both of their walles with ascending id to prevent deadlock
+	//TODO WHY USED ASC? AND WHAT IS FOR UPDATE?
+	query := `
+		SELECT id, balance, max_balance_limit
+		FROM wallets
+		WHERE id IN ($1, $2)
+		ORDER BY id ASC
+		FOR UPDATE
+	`
+
+	// TODO WHAT THE DIFFERENT WAY QUERY AND SCAN
+	rows, err := tx.Query(ctx, query, senderWalletID, receiverWalletID)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var senderBalance, senderLimit int64
+	var receiveBalance, receiveLimit int64
+	count := 0
+
+	for rows.Next() {
+		var id string
+		var bal, limit int64
+		if err := rows.Scan(&id, &bal, &limit); err != nil {
+			return nil, err
+		}
+
+		// TODO WHAT THE CONDITION WE WILL GONNA IF IF AND IF ELSE IF
+		if id == senderWalletID {
+			senderBalance, senderLimit = bal, limit
+		} else if id == receiverWalletID {
+			receiveBalance, receiveLimit = bal, limit
+		}
+
+		count++
+	}
+
+	// Their wallets should be found
+	if count < 2 {
+		return nil, err
+	}
+
+	// Validate finance rule (Sufficient balance & not over the limit)
+	if senderBalance < amount {
+		return nil, errors.New("insufficient balance")
+	}
+
+	if receiveBalance+amount > receiveLimit {
+		return nil, errors.New("receiver balance limit exceeded")
+	}
+
+	// Calculate the last balance
+	newSenderBalance := senderBalance - amount
+	newReceiveBalance := receiveBalance + amount
+
+	// TODO IT'S NOT DRY
+	// Update balance sender and receive
+	updateSenderQuery := `
+		UPDATE wallets SET balance = $1, updated_at = NOW()
+		WHERE ID $2
+	`
+
+	if _, err := tx.Exec(ctx, updateSenderQuery, newSenderBalance, senderWalletID); err != nil {
+		return nil, err
+	}
+
+	updateReceiveQuery := `
+		UPDATE wallets SET balance $1, updated_at = NOW()
+		WHERE ID $2
+	`
+	if _, err := tx.Exec(ctx, updateReceiveQuery, newReceiveBalance, receiverWalletID); err != nil {
+		return nil, err
+	}
+
+	// Save proof of transaction into database
+	//TODO why sender and receive is using ampersand
+	txRecord := &domain.Transaction{
+		IdempotencyKey:   idmKey,
+		SenderWalletID:   &senderWalletID,
+		ReceiverWalletID: &receiverWalletID,
+		Amount:           amount,
+		FeeAmount:        0,
+		Type:             "transfer",
+		Status:           "success",
+		Description:      desc,
+	}
+
+	insertTxQuery := `
+		INSERT INTO transactions (idempotency_key, sender_wallet_id, receiver_wallet_id, amount, fee_amount, type, status, description)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id, created_at
+	`
+
+	err = tx.QueryRow(ctx, insertTxQuery,
+		txRecord.IdempotencyKey,
+		txRecord.SenderWalletID,
+		txRecord.ReceiverWalletID,
+		txRecord.Amount,
+		txRecord.FeeAmount,
+		txRecord.Type,
+		txRecord.Status,
+		txRecord.Description,
+	).Scan(&txRecord.ID, &txRecord.CreatedAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// insertLedgerQuery := `
+	// 	INSERT INTO ledger_entries ()
+	// `
+}
+
 func (r *walletRepository) GetTransaction(ctx context.Context, walletID string, limit int, offset int) ([]*domain.Transaction, error) {
 	query := `
 		SELECT id, idempotency_key, sender_wallet_id, receiver_wallet_id, amount, fee_amount, type, status, description, created_at 
@@ -144,7 +269,7 @@ func (r *walletRepository) GetTransaction(ctx context.Context, walletID string, 
 	`
 
 	// Execution many rows query
-	rows, err := r.db.Query(ctx, query, walletID, limit, offset) 
+	rows, err := r.db.Query(ctx, query, walletID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +307,7 @@ func (r *walletRepository) GetTransaction(ctx context.Context, walletID string, 
 	// Checking is there any error while looping
 	if err := rows.Err(); err != nil {
 		return nil, err
-	} 
+	}
 
 	return transactions, nil
 
