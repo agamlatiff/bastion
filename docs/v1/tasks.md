@@ -102,40 +102,39 @@
 - [ ] Domain layer:
   - [ ] `TransferRequest` DTO — `receiver_email`, `amount`, `idempotency_key`, `description`
   - [ ] `LedgerEntry` entity — `transaction_id`, `wallet_id`, `entry_type`, `amount`, `balance_after`
-- [ ] Database migration: `ledger_entries` table
-- [ ] Repository layer:
-  - [ ] `UserRepository.FindByEmail` — Lookup receiver by email (return user + wallet)
-  - [ ] `WalletRepository.Transfer` — Full ACID transaction:
-    - [ ] Sort wallet UUIDs ascending (deadlock prevention)
-    - [ ] `SELECT ... FOR UPDATE` on first wallet
-    - [ ] `SELECT ... FOR UPDATE` on second wallet
-    - [ ] Validate sender balance >= amount
-    - [ ] Validate receiver balance + amount <= max_balance_limit
-    - [ ] UPDATE sender balance (deduct)
-    - [ ] UPDATE receiver balance (credit)
-    - [ ] INSERT transaction record
-    - [ ] INSERT ledger entry (debit — sender)
-    - [ ] INSERT ledger entry (credit — receiver)
-    - [ ] `defer tx.Rollback(ctx)` for rollback safety
+- [x] Database migration: `ledger_entries` table
+- [x] Repository layer:
+  - [x] `UserRepository.FindByEmail` — (Sudah ada, digunakan Service untuk lookup penerima)
+  - [x] `WalletRepository.ExecuteTransfer` — Full ACID transaction:
+    - [x] `ORDER BY id ASC` (deadlock prevention)
+    - [x] `SELECT ... FOR UPDATE` (row locking)
+    - [x] Validate sender balance >= amount
+    - [x] Validate receiver balance + amount <= max_balance_limit
+    - [x] UPDATE sender balance (deduct)
+    - [x] UPDATE receiver balance (credit)
+    - [x] INSERT transaction record
+    - [x] INSERT ledger entry (debit — sender)
+    - [x] INSERT ledger entry (credit — receiver)
+    - [x] `defer tx.Rollback(ctx)` for rollback safety
 - [ ] Service layer:
   - [ ] `WalletService.Transfer` — Business rule orchestration:
-    - [ ] Tier gate: only Tier 2 users can send transfers
+    - [ ] Inject `UserRepository` ke `WalletService` (untuk lookup email penerima)
+    - [ ] Tier gate: hanya user Tier 2 yang bisa melakukan transfer
     - [ ] Self-transfer prevention (sender != receiver)
-    - [ ] Lookup receiver by email
-    - [ ] Call repository transfer
+    - [ ] Lookup dompet pengirim & penerima (via email)
+    - [ ] Call `walletRepo.ExecuteTransfer`
 - [ ] Handler layer:
   - [ ] `WalletHandler.Transfer` — POST `/api/v1/wallet/transfer`
   - [ ] Extract `currentUser` from middleware context
   - [ ] Bind and validate `TransferRequest` JSON
-  - [ ] Return `201 Created` on success
-- [ ] Route registration in `main.go`
+  - [ ] Return `200 OK` on success
+- [ ] Route registration & Dependency Injection di `main.go`
 - [ ] Postman verification:
   - [ ] Successful P2P transfer between two users
   - [ ] Tier 1 user blocked from sending
   - [ ] Self-transfer blocked
   - [ ] Insufficient balance blocked
   - [ ] Receiver limit exceeded blocked
-  - [ ] Duplicate idempotency key returns cached response
 
 ---
 

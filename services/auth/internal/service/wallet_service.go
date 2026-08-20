@@ -11,6 +11,7 @@ import (
 type WalletService interface {
 	GetBalance(ctx context.Context, userID string) (*domain.WalletBalanceResponse, error)
 	TopUp(ctx context.Context, userID string, req *domain.TopUpRequest) (*domain.Transaction, error)
+	Transfer (ctx context.Context, )
 	GetTransactionHistory(ctx context.Context, userID string, limit, offset int) ([]*domain.Transaction, error)
 }
 

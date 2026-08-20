@@ -135,7 +135,6 @@ func (r *walletRepository) ExecuteTopUp(ctx context.Context, walletID string, am
 	return txRecord, nil
 }
 
-
 // TODO: REFACTORING VALIDATE LOGIC USE HELPER
 func (r *walletRepository) ExecuteTransfer(ctx context.Context, senderWalletID string, receiverWalletID string, amount int64, idmKey string, desc string) (*domain.Transaction, error) {
 	tx, err := r.db.Begin(ctx)
