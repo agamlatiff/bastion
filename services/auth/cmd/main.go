@@ -43,7 +43,7 @@ func main() {
 
 	// Wallet DI
 	walletRepo := repository.NewWalletRepository(dbPool)
-	walletService := service.NewWalletService(walletRepo, userRepo)
+	walletService := service.NewWalletService(walletRepo, userRepo, rdb)
 	walletHandler := handler.NewWalletHandler(walletService)
 
 	// KYC DI

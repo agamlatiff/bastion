@@ -138,16 +138,15 @@
 
 ---
 
-## Level 2 — Correctness & Financial Integrity
+### Sprint 1.5 — Redis Idempotency for Transfers ✅
 
-### Sprint 1.5 — Redis Idempotency for Transfers
+- [x] Implement Redis idempotency service
+  - [x] Check `idempotency:{key}` in Redis before processing
+  - [x] Cache successful response with 24h TTL after processing
+  - [x] Return cached response on duplicate key
+- [x] Apply idempotency to `Transfer` endpoint
+- [x] Apply idempotency to `TopUp` endpoint
 
-- [ ] Implement Redis idempotency middleware/service
-  - [ ] Check `idempotency:{key}` in Redis before processing
-  - [ ] Cache successful response with 24h TTL after processing
-  - [ ] Return cached response on duplicate key
-- [ ] Apply idempotency to `Transfer` endpoint
-- [ ] Apply idempotency to `TopUp` endpoint (enhance existing)
 
 ### Sprint 1.6 — Audit Logging
 

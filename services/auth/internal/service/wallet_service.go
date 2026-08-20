@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-
 	"github.com/agamlatiff/bastion/services/auth/internal/domain"
 	"github.com/agamlatiff/bastion/services/auth/internal/repository"
+	"github.com/redis/go-redis/v9"
+	"time"
 )
 
 type WalletService interface {
@@ -18,12 +20,14 @@ type WalletService interface {
 type walletService struct {
 	walletRepo repository.WalletRepository
 	userRepo   repository.UserRepository
+	rdb        *redis.Client
 }
 
-func NewWalletService(walletRepo repository.WalletRepository, userRepo repository.UserRepository) WalletService {
+func NewWalletService(walletRepo repository.WalletRepository, userRepo repository.UserRepository, rdb *redis.Client) WalletService {
 	return &walletService{
 		walletRepo: walletRepo,
-		userRepo: userRepo,
+		userRepo:   userRepo,
+		rdb:        rdb,
 	}
 
 }
@@ -45,6 +49,18 @@ func (s *walletService) GetBalance(ctx context.Context, userID string) (*domain.
 }
 
 func (s *walletService) TopUp(ctx context.Context, userID string, req *domain.TopUpRequest) (*domain.Transaction, error) {
+
+	cacheKey := "idempotency:" + req.IdempotencyKey
+
+	cachedJSON, err := s.rdb.Get(ctx, cacheKey).Result()
+	if err == nil && cachedJSON != "" {
+		var cachedTx domain.Transaction
+		if err := json.Unmarshal([]byte(cachedJSON), &cachedTx); err != nil {
+			return nil, err
+		}
+		return &cachedTx, nil
+	}
+
 	// Checking amount of top up
 	if req.Amount <= 0 {
 		return nil, errors.New("top-up amount must be greater than 0")
@@ -61,10 +77,29 @@ func (s *walletService) TopUp(ctx context.Context, userID string, req *domain.To
 	}
 
 	// If validations success, execution ACID transaction database
-	return s.walletRepo.ExecuteTopUp(ctx, wallet.ID, req.Amount, req.IdempotencyKey, req.Description)
+	tx, err := s.walletRepo.ExecuteTopUp(ctx, wallet.ID, req.Amount, req.IdempotencyKey, req.Description)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if txBytes, err := json.Marshal(tx); err == nil {
+		s.rdb.Set(ctx, cacheKey, txBytes, 24*time.Hour)
+	}
+	return tx, nil
 }
 
 func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *domain.TransferRequest) (*domain.Transaction, error) {
+	//  Get idk from redis
+	cacheKey := "idempotency:" + req.IdempotencyKey
+
+	cachedJSON, err := s.rdb.Get(ctx, cacheKey).Result()
+	if err == nil && cachedJSON != "" {
+		var cachedTx domain.Transaction
+		if err := json.Unmarshal([]byte(cachedJSON), &cachedTx); err == nil {
+			return &cachedTx, nil
+		}
+	}
 
 	if req.Amount <= 0 {
 		return nil, errors.New("transfer amount must be greater than 0")
@@ -98,7 +133,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 		return nil, errors.New("receiver wallet not found")
 	}
 
-	return s.walletRepo.ExecuteTransfer(
+	tx, err := s.walletRepo.ExecuteTransfer(
 		ctx,
 		senderWallet.ID,
 		receiverWallet.ID,
@@ -106,6 +141,15 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 		req.IdempotencyKey,
 		req.Description,
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if txBytes, err := json.Marshal(tx); err == nil {
+		s.rdb.Set(ctx, cacheKey, txBytes, 24*time.Hour)
+	}
+	return tx, nil
 
 }
 
