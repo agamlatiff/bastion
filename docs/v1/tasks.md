@@ -148,15 +148,16 @@
 - [x] Apply idempotency to `TopUp` endpoint
 
 
-### Sprint 1.6 — Audit Logging
+### Sprint 1.6 — Audit Logging ✅
 
-- [ ] Database migration: `audit_logs` table
-- [ ] Domain layer: `AuditLog` entity
-- [ ] Repository layer: `AuditRepository.Create`
-- [ ] Integrate audit logging into critical actions:
-  - [ ] Login (record IP, User-Agent)
-  - [ ] Transfer (record sender, receiver, amount)
-  - [ ] KYC Submission (record user, timestamp)
+- [x] Database migration: `audit_logs` table
+- [x] Domain layer: `AuditLog` entity
+- [x] Repository layer: `AuditRepository.Create` & `FindByUserID`
+- [x] Integrate audit logging into critical actions:
+  - [x] Login (record IP, User-Agent, email)
+  - [x] Transfer (record sender, receiver, amount, idempotency_key)
+  - [x] KYC Submission (record user, id_card_number)
+- [x] Endpoint & Handler: `GET /api/v1/auth/audit-logs`
 
 ### Sprint 1.7 — Stress Testing & Race Condition Validation
 
