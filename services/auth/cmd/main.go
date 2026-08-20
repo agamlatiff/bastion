@@ -36,20 +36,23 @@ func main() {
 
 	// Dependency Injection (Wiring layers together)
 
+	// Audit DI
+	auditRepo := repository.NewAuditRepository(dbPool)
+
 	// Auth DI
 	userRepo := repository.NewUserRepository(dbPool)
 	authService := service.NewAuthService(userRepo, rdb, cfg.JWTSecret, cfg.JWTExpiryHours)
-	authHandler := handler.NewAuthHandler(authService)
+	authHandler := handler.NewAuthHandler(authService, auditRepo)
 
 	// Wallet DI
 	walletRepo := repository.NewWalletRepository(dbPool)
 	walletService := service.NewWalletService(walletRepo, userRepo, rdb)
-	walletHandler := handler.NewWalletHandler(walletService)
+	walletHandler := handler.NewWalletHandler(walletService, auditRepo)
 
 	// KYC DI
 	kycRepo := repository.NewKYCRepository(dbPool)
 	kycService := service.NewKYCService(kycRepo)
-	kycHandler := handler.NewKYCHandler(kycService)
+	kycHandler := handler.NewKYCHandler(kycService, auditRepo)
 
 	// Initialize Gin router engine
 	r := gin.Default()
@@ -66,6 +69,7 @@ func main() {
 	{
 		protectedRoutes.GET("/profile", authHandler.GetProfile)
 		protectedRoutes.POST("/logout", authHandler.Logout)
+		protectedRoutes.GET("/audit-logs", authHandler.GetAuditLogs)
 	}
 
 	walletRoutes := r.Group("/api/v1/wallet")

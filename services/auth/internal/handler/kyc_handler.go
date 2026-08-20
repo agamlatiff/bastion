@@ -1,18 +1,24 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/agamlatiff/bastion/services/auth/internal/domain"
+	"github.com/agamlatiff/bastion/services/auth/internal/repository"
 	"github.com/agamlatiff/bastion/services/auth/internal/service"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 type KYCHandler struct {
 	kycService service.KYCService
+	auditRepo  repository.AuditRepository
 }
 
-func NewKYCHandler(kycService service.KYCService) *KYCHandler {
-	return &KYCHandler{kycService: kycService}
+func NewKYCHandler(kycService service.KYCService, auditRepo repository.AuditRepository) *KYCHandler {
+	return &KYCHandler{
+		kycService: kycService,
+		auditRepo:  auditRepo,
+	}
 }
 
 func (h *KYCHandler) SubmitKYC(c *gin.Context) {
@@ -21,7 +27,7 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"status": "error",
-			"error": "unauthorized",
+			"error":  "unauthorized",
 		})
 		return
 	}
@@ -33,7 +39,7 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -44,10 +50,20 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
+
+	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
+		UserID:    &currentUser.ID,
+		Action:    "KYC_SUBMISSION",
+		IPAddress: c.ClientIP(),
+		UserAgent: c.Request.UserAgent(),
+		Metadata: map[string]any{
+			"id_card_number": req.IDCardNumber,
+		},
+	})
 
 	// Return HTTP 201 Created on success or HTTP 400 on error
 	c.JSON(http.StatusCreated, gin.H{
@@ -63,7 +79,7 @@ func (h *KYCHandler) GetKYCStatus(c *gin.Context) {
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"status": "error",
-			"error": "unauthorized",
+			"error":  "unauthorized",
 		})
 		return
 	}
@@ -75,7 +91,7 @@ func (h *KYCHandler) GetKYCStatus(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"status": "error",
-			"error": "kyc application not found",
+			"error":  "kyc application not found",
 		})
 		return
 	}
@@ -93,7 +109,7 @@ func (h *KYCHandler) ReviewKYC(c *gin.Context) {
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"status": "error",
-			"error": "unauthorized",
+			"error":  "unauthorized",
 		})
 		return
 	}
@@ -105,7 +121,7 @@ func (h *KYCHandler) ReviewKYC(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -115,7 +131,7 @@ func (h *KYCHandler) ReviewKYC(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"status": "error",
-			"error": "unauthorized",
+			"error":  "unauthorized",
 		})
 		return
 	}
@@ -125,15 +141,15 @@ func (h *KYCHandler) ReviewKYC(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
 
 	// Return 200 if all of the validation passed
 	c.JSON(http.StatusOK, gin.H{
-		"status": "success",
+		"status":  "success",
 		"message": "KYC review processed successfully",
-		"data":   kycData,
+		"data":    kycData,
 	})
 }

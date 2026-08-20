@@ -1,19 +1,25 @@
 package handler
 
 import (
-	"github.com/agamlatiff/bastion/services/auth/internal/domain"
-	"github.com/agamlatiff/bastion/services/auth/internal/service"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"github.com/agamlatiff/bastion/services/auth/internal/domain"
+	"github.com/agamlatiff/bastion/services/auth/internal/repository"
+	"github.com/agamlatiff/bastion/services/auth/internal/service"
+	"github.com/gin-gonic/gin"
 )
 
 type WalletHandler struct {
 	walletService service.WalletService
+	auditRepo     repository.AuditRepository
 }
 
-func NewWalletHandler(walletService service.WalletService) *WalletHandler {
-	return &WalletHandler{walletService: walletService}
+func NewWalletHandler(walletService service.WalletService, auditRepo repository.AuditRepository) *WalletHandler {
+	return &WalletHandler{
+		walletService: walletService,
+		auditRepo:     auditRepo,
+	}
 }
 
 func (h *WalletHandler) GetBalance(c *gin.Context) {
@@ -119,6 +125,19 @@ func (h *WalletHandler) Transfer(c *gin.Context) {
 		})
 		return
 	}
+
+	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
+		UserID:    &currentUser.ID,
+		Action:    "TRANSFER",
+		IPAddress: c.ClientIP(),
+		UserAgent: c.Request.UserAgent(),
+		Metadata: map[string]any{
+			"transaction_id":  tx.ID,
+			"amount":          req.Amount,
+			"receiver_email":  req.ReceiverEmail,
+			"idempotency_key": req.IdempotencyKey,
+		},
+	})
 
 	// Return data and status with JSON
 	c.JSON(http.StatusOK, gin.H{

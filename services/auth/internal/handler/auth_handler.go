@@ -2,18 +2,23 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
+
 	"github.com/agamlatiff/bastion/services/auth/internal/domain"
+	"github.com/agamlatiff/bastion/services/auth/internal/repository"
 	"github.com/agamlatiff/bastion/services/auth/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
 type AuthHandler struct {
 	authService service.AuthService
+	auditRepo   repository.AuditRepository
 }
 
-func NewAuthHandler(authService service.AuthService) *AuthHandler {
+func NewAuthHandler(authService service.AuthService, auditRepo repository.AuditRepository) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
+		auditRepo:   auditRepo,
 	}
 }
 
@@ -62,6 +67,16 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
+		UserID:    &res.User.ID,
+		Action:    "LOGIN",
+		IPAddress: c.ClientIP(),
+		UserAgent: c.Request.UserAgent(),
+		Metadata: map[string]any{
+			"email": res.User.Email,
+		},
+	})
+
 	// Return 200 OK with token and user data
 	c.JSON(http.StatusOK, res)
 }
@@ -71,7 +86,7 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 	user, exists := c.Get("currentUser")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"error" : "unauthorized",
+			"error": "unauthorized",
 		})
 		return
 	}
@@ -84,11 +99,11 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 // Tech Debt: Currently ValidationToken queries DB via FindByID even for logout
 func (h *AuthHandler) Logout(c *gin.Context) {
 	// Get token
-	token, exists := c.Get("token");
+	token, exists := c.Get("token")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"status": "error",
-			"error" : "unauthorized",
+			"error":  "unauthorized",
 		})
 		return
 	}
@@ -100,14 +115,42 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"status": "error",
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
 
 	// Return 200 OK with success message
 	c.JSON(http.StatusOK, gin.H{
-		"status": "success",
+		"status":  "success",
 		"message": "Logged out successfully",
+	})
+}
+
+func (h *AuthHandler) GetAuditLogs(c *gin.Context) {
+	userVal, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	currentUser := userVal.(*domain.User)
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	logs, err := h.auditRepo.FindByUserID(c.Request.Context(), currentUser.ID, limit, offset)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch audit logs"})
+		return
+	}
+
+	
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data": gin.H{
+			"logs": logs,
+		},
 	})
 }
