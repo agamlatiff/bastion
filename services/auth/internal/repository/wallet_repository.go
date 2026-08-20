@@ -135,8 +135,9 @@ func (r *walletRepository) ExecuteTopUp(ctx context.Context, walletID string, am
 	return txRecord, nil
 }
 
+
+// TODO: REFACTORING VALIDATE LOGIC USE HELPER
 func (r *walletRepository) ExecuteTransfer(ctx context.Context, senderWalletID string, receiverWalletID string, amount int64, idmKey string, desc string) (*domain.Transaction, error) {
-	// Starting database transaction
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -144,8 +145,7 @@ func (r *walletRepository) ExecuteTransfer(ctx context.Context, senderWalletID s
 
 	defer tx.Rollback(ctx)
 
-	// Row locking both of their walles with ascending id to prevent deadlock
-	//TODO WHY USED ASC? AND WHAT IS FOR UPDATE?
+	// 1. Row locking both of their walles with ascending id to prevent deadlock
 	query := `
 		SELECT id, balance, max_balance_limit
 		FROM wallets
@@ -154,7 +154,6 @@ func (r *walletRepository) ExecuteTransfer(ctx context.Context, senderWalletID s
 		FOR UPDATE
 	`
 
-	// TODO WHAT THE DIFFERENT WAY QUERY AND SCAN
 	rows, err := tx.Query(ctx, query, senderWalletID, receiverWalletID)
 	if err != nil {
 		return nil, err
@@ -162,9 +161,9 @@ func (r *walletRepository) ExecuteTransfer(ctx context.Context, senderWalletID s
 
 	defer rows.Close()
 
-	var senderBalance, senderLimit int64
+	var senderBalance int64
 	var receiveBalance, receiveLimit int64
-	count := 0
+	var foundSender, foundReceive bool
 
 	for rows.Next() {
 		var id string
@@ -173,22 +172,24 @@ func (r *walletRepository) ExecuteTransfer(ctx context.Context, senderWalletID s
 			return nil, err
 		}
 
-		// TODO WHAT THE CONDITION WE WILL GONNA IF IF AND IF ELSE IF
-		if id == senderWalletID {
-			senderBalance, senderLimit = bal, limit
-		} else if id == receiverWalletID {
+		switch id {
+		case senderWalletID:
+			senderBalance = bal
+			foundSender = true
+		case receiverWalletID:
 			receiveBalance, receiveLimit = bal, limit
+			foundReceive = true
+
 		}
-
-		count++
 	}
 
-	// Their wallets should be found
-	if count < 2 {
-		return nil, err
+	if !foundSender {
+		return nil, errors.New("sender wallet not found")
+	}
+	if !foundReceive {
+		return nil, errors.New("receive wallet not found")
 	}
 
-	// Validate finance rule (Sufficient balance & not over the limit)
 	if senderBalance < amount {
 		return nil, errors.New("insufficient balance")
 	}
@@ -197,31 +198,24 @@ func (r *walletRepository) ExecuteTransfer(ctx context.Context, senderWalletID s
 		return nil, errors.New("receiver balance limit exceeded")
 	}
 
-	// Calculate the last balance
+	// 2. Update balance sender and receive
 	newSenderBalance := senderBalance - amount
 	newReceiveBalance := receiveBalance + amount
 
-	// TODO IT'S NOT DRY
-	// Update balance sender and receive
-	updateSenderQuery := `
+	updateBalanceQuery := `
 		UPDATE wallets SET balance = $1, updated_at = NOW()
 		WHERE ID $2
 	`
 
-	if _, err := tx.Exec(ctx, updateSenderQuery, newSenderBalance, senderWalletID); err != nil {
+	if _, err := tx.Exec(ctx, updateBalanceQuery, newSenderBalance, senderWalletID); err != nil {
 		return nil, err
 	}
 
-	updateReceiveQuery := `
-		UPDATE wallets SET balance $1, updated_at = NOW()
-		WHERE ID $2
-	`
-	if _, err := tx.Exec(ctx, updateReceiveQuery, newReceiveBalance, receiverWalletID); err != nil {
+	if _, err := tx.Exec(ctx, updateBalanceQuery, newReceiveBalance, receiverWalletID); err != nil {
 		return nil, err
 	}
 
-	// Save proof of transaction into database
-	//TODO why sender and receive is using ampersand
+	// 3. Save proof of transaction into database
 	txRecord := &domain.Transaction{
 		IdempotencyKey:   idmKey,
 		SenderWalletID:   &senderWalletID,
@@ -254,9 +248,25 @@ func (r *walletRepository) ExecuteTransfer(ctx context.Context, senderWalletID s
 		return nil, err
 	}
 
-	// insertLedgerQuery := `
-	// 	INSERT INTO ledger_entries ()
-	// `
+	// 4. Save the history transaction i	nto ledger table
+	insertLedgerQuery := `
+		INSERT INTO ledger_entries (transaction_id, wallet_id, entry_type, amount, balance_after) 
+		VALUES ($1, $2, $3, $4, $5)
+	`
+
+	if _, err := tx.Exec(ctx, insertLedgerQuery, txRecord.ID, senderWalletID, "debit", amount, newSenderBalance); err != nil {
+		return nil, err
+	}
+
+	if _, err := tx.Exec(ctx, insertLedgerQuery, txRecord.ID, receiverWalletID, "credit", amount, newReceiveBalance); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	return txRecord, nil
 }
 
 func (r *walletRepository) GetTransaction(ctx context.Context, walletID string, limit int, offset int) ([]*domain.Transaction, error) {
