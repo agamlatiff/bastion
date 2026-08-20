@@ -298,6 +298,80 @@ paths:
               example:
                 status: "error"
                 error: "unauthorized"
+  /api/v1/wallet/transfer:
+    post:
+      summary: P2P Wallet Balance Transfer (Sprint 1.4)
+      tags:
+        - Wallet
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - receiver_email
+                - amount
+                - idempotency_key
+              properties:
+                receiver_email:
+                  type: string
+                  format: email
+                  example: "jack@test.com"
+                amount:
+                  type: integer
+                  format: int64
+                  minimum: 1
+                  example: 50000
+                idempotency_key:
+                  type: string
+                  format: uuid
+                  example: "transfer-uuid-789"
+                description:
+                  type: string
+                  example: "Lunch money"
+      responses:
+        "200":
+          description: Transfer successful
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "transfer successful"
+                data:
+                  id: "tx-uuid-999"
+                  idempotency_key: "transfer-uuid-789"
+                  sender_wallet_id: "wallet-uuid-111"
+                  receiver_wallet_id: "wallet-uuid-222"
+                  amount: 50000
+                  fee_amount: 0
+                  type: "transfer"
+                  status: "success"
+                  description: "Lunch money"
+                  created_at: "2026-08-17T10:00:00Z"
+        "400":
+          description: Validation error, self-transfer, insufficient balance, or tier restriction
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "sender must be tier 2 to make transfers"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "unauthorized"
+        "404":
+          description: Receiver email not found
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "receiver email not found"
 
   # ==========================================
   # 🪪 3. KYC ENDPOINTS
