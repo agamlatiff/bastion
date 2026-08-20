@@ -97,11 +97,11 @@
 
 ---
 
-### Sprint 1.4 — P2P Transfer & Atomic Concurrency Locking ⏳
+### Sprint 1.4 — P2P Transfer & Atomic Concurrency Locking ✅
 
-- [ ] Domain layer:
-  - [ ] `TransferRequest` DTO — `receiver_email`, `amount`, `idempotency_key`, `description`
-  - [ ] `LedgerEntry` entity — `transaction_id`, `wallet_id`, `entry_type`, `amount`, `balance_after`
+- [x] Domain layer:
+  - [x] `TransferRequest` DTO — `receiver_email`, `amount`, `idempotency_key`, `description`
+  - [x] `LedgerEntry` entity — `transaction_id`, `wallet_id`, `entry_type`, `amount`, `balance_after`
 - [x] Database migration: `ledger_entries` table
 - [x] Repository layer:
   - [x] `UserRepository.FindByEmail` — (Sudah ada, digunakan Service untuk lookup penerima)
@@ -116,25 +116,25 @@
     - [x] INSERT ledger entry (debit — sender)
     - [x] INSERT ledger entry (credit — receiver)
     - [x] `defer tx.Rollback(ctx)` for rollback safety
-- [ ] Service layer:
-  - [ ] `WalletService.Transfer` — Business rule orchestration:
-    - [ ] Inject `UserRepository` ke `WalletService` (untuk lookup email penerima)
-    - [ ] Tier gate: hanya user Tier 2 yang bisa melakukan transfer
-    - [ ] Self-transfer prevention (sender != receiver)
-    - [ ] Lookup dompet pengirim & penerima (via email)
-    - [ ] Call `walletRepo.ExecuteTransfer`
-- [ ] Handler layer:
-  - [ ] `WalletHandler.Transfer` — POST `/api/v1/wallet/transfer`
-  - [ ] Extract `currentUser` from middleware context
-  - [ ] Bind and validate `TransferRequest` JSON
-  - [ ] Return `200 OK` on success
-- [ ] Route registration & Dependency Injection di `main.go`
-- [ ] Postman verification:
-  - [ ] Successful P2P transfer between two users
-  - [ ] Tier 1 user blocked from sending
-  - [ ] Self-transfer blocked
-  - [ ] Insufficient balance blocked
-  - [ ] Receiver limit exceeded blocked
+- [x] Service layer:
+  - [x] `WalletService.Transfer` — Business rule orchestration:
+    - [x] Inject `UserRepository` ke `WalletService` (untuk lookup email penerima)
+    - [x] Tier gate: hanya user Tier 2 yang bisa melakukan transfer
+    - [x] Self-transfer prevention (sender != receiver)
+    - [x] Lookup dompet pengirim & penerima (via email)
+    - [x] Call `walletRepo.ExecuteTransfer`
+- [x] Handler layer:
+  - [x] `WalletHandler.Transfer` — POST `/api/v1/wallet/transfer`
+  - [x] Extract `currentUser` from middleware context
+  - [x] Bind and validate `TransferRequest` JSON
+  - [x] Return `200 OK` on success
+- [x] Route registration & Dependency Injection di `main.go`
+- [x] Postman verification:
+  - [x] Successful P2P transfer between two users
+  - [x] Tier 1 user blocked from sending
+  - [x] Self-transfer blocked
+  - [x] Insufficient balance blocked
+  - [x] Receiver limit exceeded blocked
 
 ---
 

@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"net/http"
-	"strconv"
 	"github.com/agamlatiff/bastion/services/auth/internal/domain"
 	"github.com/agamlatiff/bastion/services/auth/internal/service"
 	"github.com/gin-gonic/gin"
+	"net/http"
+	"strconv"
 )
 
 type WalletHandler struct {
@@ -22,7 +22,7 @@ func (h *WalletHandler) GetBalance(c *gin.Context) {
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"status": "error",
-			"error": "unauthorized",
+			"error":  "unauthorized",
 		})
 		return
 	}
@@ -34,7 +34,7 @@ func (h *WalletHandler) GetBalance(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status": "error",
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 
 		return
@@ -53,7 +53,7 @@ func (h *WalletHandler) TopUp(c *gin.Context) {
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"status": "error",
-			"error": "unauthorized",
+			"error":  "unauthorized",
 		})
 		return
 	}
@@ -65,7 +65,7 @@ func (h *WalletHandler) TopUp(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -75,7 +75,7 @@ func (h *WalletHandler) TopUp(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -88,13 +88,53 @@ func (h *WalletHandler) TopUp(c *gin.Context) {
 	})
 }
 
+func (h *WalletHandler) Transfer(c *gin.Context) {
+	// Checking authorization and get token user
+	userVal, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
+			"error":  "unauthorized",
+		})
+		return
+	}
+
+	currentUser := userVal.(*domain.User)
+	// Create data structure for bind JSON from struct
+	var req domain.TransferRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	// Call wallet service
+	tx, err := h.walletService.Transfer(c.Request.Context(), currentUser.ID, &req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	// Return data and status with JSON
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "transfer successful",
+		"data":    tx,
+	})
+}
+
 func (h *WalletHandler) GetTransaction(c *gin.Context) {
 	// Checking authorization and get token user
 	userVal, exists := c.Get("currentUser")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"status": "error",
-			"error": "unauthorized",
+			"error":  "unauthorized",
 		})
 		return
 	}
@@ -113,16 +153,16 @@ func (h *WalletHandler) GetTransaction(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status": "error",
-			"error" : err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
 
-	// Return status and data 
+	// Return status and data
 	c.JSON(http.StatusOK, gin.H{
-		"status" : "success",
-		"data": transactions,
-		"limit": limit,
+		"status": "success",
+		"data":   transactions,
+		"limit":  limit,
 		"offset": offset,
 	})
 

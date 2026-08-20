@@ -203,7 +203,7 @@ func (r *walletRepository) ExecuteTransfer(ctx context.Context, senderWalletID s
 
 	updateBalanceQuery := `
 		UPDATE wallets SET balance = $1, updated_at = NOW()
-		WHERE ID $2
+		WHERE ID = $2
 	`
 
 	if _, err := tx.Exec(ctx, updateBalanceQuery, newSenderBalance, senderWalletID); err != nil {

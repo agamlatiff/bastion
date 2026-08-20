@@ -43,7 +43,7 @@ func main() {
 
 	// Wallet DI
 	walletRepo := repository.NewWalletRepository(dbPool)
-	walletService := service.NewWalletService(walletRepo)
+	walletService := service.NewWalletService(walletRepo, userRepo)
 	walletHandler := handler.NewWalletHandler(walletService)
 
 	// KYC DI
@@ -74,6 +74,7 @@ func main() {
 		walletRoutes.GET("/balance", walletHandler.GetBalance)
 		walletRoutes.POST("/topup", walletHandler.TopUp)
 		walletRoutes.GET("/transactions", walletHandler.GetTransaction)
+		walletRoutes.POST("/transfer", walletHandler.Transfer)
 	}
 
 	kycRoutes := r.Group("/api/v1/auth/kyc")
@@ -83,7 +84,6 @@ func main() {
 		kycRoutes.GET("/status", kycHandler.GetKYCStatus)
 		kycRoutes.POST("/review", kycHandler.ReviewKYC)
 	}
-
 
 	// Start HTTP Server
 	log.Printf("Auth Service is running on port %s", cfg.AppPort)

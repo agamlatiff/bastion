@@ -19,7 +19,7 @@ type Transaction struct {
 
 type TransferRequest struct {
 	ReceiverEmail  string `json:"receiver_email" binding:"required,email"`
-	Amount         int64 `json:"amount"  binding:"required, gt=0"`
+	Amount         int64 `json:"amount"  binding:"required,gt=0"`
 	IdempotencyKey string `json:"idempotency_key" binding:"required"`
 	Description    string `json:"description" binding:"required"`
 }
