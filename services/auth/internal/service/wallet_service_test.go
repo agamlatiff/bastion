@@ -143,7 +143,7 @@ func TestConcurrentTransfer_NoDoubleSpending(t *testing.T) {
 }
 
 // 2. TEST DEADLOCK PREVENTION
-func TestConcurrentTransfer_DeadlokPrevention(t *testing.T) {
+func TestConcurrentTransfer_DeadlockPrevention(t *testing.T) {
 	pool, rdb, walletService, _, walletRepo := setupTestEnv(t)
 	defer pool.Close()
 	defer rdb.Close()

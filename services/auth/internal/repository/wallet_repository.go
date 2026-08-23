@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-
 	"github.com/agamlatiff/bastion/services/auth/internal/domain"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -247,7 +246,7 @@ func (r *walletRepository) ExecuteTransfer(ctx context.Context, senderWalletID s
 		return nil, err
 	}
 
-	// 4. Save the history transaction i	nto ledger table
+	// 4. Save the history transaction into ledger table
 	insertLedgerQuery := `
 		INSERT INTO ledger_entries (transaction_id, wallet_id, entry_type, amount, balance_after) 
 		VALUES ($1, $2, $3, $4, $5)
