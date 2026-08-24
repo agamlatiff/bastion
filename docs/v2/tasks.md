@@ -10,12 +10,13 @@
 
 ### 0.1 Repository baseline
 
-* [ ] Review all V1 endpoints and behavior
-* [ ] Document known bugs from V1
-* [ ] Freeze V1 behavior that remains valid
-* [ ] Create V2 branch
-* [ ] Create V2 changelog
-* [ ] Mark breaking vs non-breaking changes
+* [x] Review all V1 endpoints and behavior
+* [x] Document known bugs from V1
+* [x] Freeze V1 behavior that remains valid
+* [x] Create V2 branch
+* [x] Create V2 changelog
+* [x] Mark breaking vs non-breaking changes
+
 
 ### 0.2 Development tooling
 
