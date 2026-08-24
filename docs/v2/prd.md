@@ -1,837 +1,556 @@
 # Bastion V2 — Product Requirements Document
 
-> **Author:** Agam Latiff  
-> **Version:** 2.0  
-> **Status:** Draft  
-> **Product:** Bastion  
-> **Previous Version:** V1 — Digital Wallet Transaction Core  
+> **Version:** 2.0
+> **Status:** Draft
+> **Product:** Bastion
+> **Document:** Product Requirements Document
 
 ---
 
-## 1. Product Overview
+## 1. Overview
 
-Bastion V2 evolves Bastion from a **digital wallet transaction core** into an extensible **financial platform**.
+Bastion V2 is the second iteration of the Bastion financial backend.
 
-Bastion V1 establishes the foundation for:
+Bastion V1 established the initial foundation:
 
-* User authentication
-* KYC verification
-* Wallet management
-* Top-up
-* P2P transfers
-* Transaction history
-* Ledger integrity
-* Idempotency
-* Concurrency safety
-* Audit logging
+- User registration and authentication
+- JWT authentication
+- Redis-backed token revocation
+- User wallets
+- Wallet top-up
+- Wallet-to-wallet transfer
+- KYC submission and review
+- Transaction records
+- Ledger entries
+- Audit logging
+- PostgreSQL persistence
+- OpenAPI documentation
+- Docker-based local development
 
-V2 builds on that foundation by introducing capabilities around the transaction core:
+Bastion V2 does not rewrite the V1 architecture.
 
-* Merchant payments
-* Payment lifecycle management
-* Risk assessment
-* Fraud detection
-* Transaction monitoring
-* Refunds
-* Financial reconciliation
-* Notifications
-* Event-driven processing
+The primary goal is to make the existing system:
 
-The fundamental principle remains:
-
-> **Go owns the movement and integrity of money. Java owns complex financial intelligence and workflows around money.**
+- More secure
+- Financially correct under concurrency
+- Idempotent
+- Testable
+- Observable
+- More consistent as an API
+- More production-ready
 
 ---
 
 ## 2. Problem Statement
 
-Bastion V1 solves the fundamental problem of securely moving money between wallets.
+A financial backend cannot be considered reliable merely because its happy-path requests work.
 
-However, a realistic financial platform needs to answer additional questions:
+The system must also behave correctly when:
 
-* Who is the merchant receiving the payment?
-* Is this transaction suspicious?
-* Should a transaction be approved, monitored, or reviewed?
-* What happens when a payment fails?
-* Can a completed payment be refunded?
-* How are internal transactions reconciled against external systems?
-* How can other services react to financial events without tightly coupling themselves to the transaction core?
-* How can the platform support increasingly complex financial workflows?
+- Two requests modify the same wallet simultaneously
+- A client retries the same financial request
+- Redis becomes unavailable
+- PostgreSQL rejects a transaction
+- A JWT is malformed or revoked
+- An unauthorized user accesses an administrative endpoint
+- A request fails halfway through a financial operation
+- Multiple concurrent transfers target the same wallet
+- API responses accidentally expose internal security-sensitive fields
 
-V2 addresses these problems without compromising the transaction integrity established in V1.
-
----
-
-## 3. Product Vision
-
-> **Build an extensible financial platform around a reliable transaction core.**
-
-V1 answers:
-
-> **“Can Bastion move money correctly?”**
-
-V2 answers:
-
-> **“Can Bastion operate financial transactions intelligently and reliably?”**
+V2 addresses these failure modes.
 
 ---
 
-## 4. Goals
+## 3. V2 Goals
 
-### 4.1 Primary Goals
+### 3.1 Security
 
-#### G1 — Extend the wallet into a payment platform
-Support transactions between users and merchants.
+Bastion V2 must:
 
-#### G2 — Introduce financial risk evaluation
-Evaluate transactions before or around execution using configurable rules.
+- Prevent password hash exposure
+- Harden JWT validation
+- Support role-based authorization
+- Protect KYC review operations
+- Rate-limit sensitive authentication endpoints
+- Centralize security-sensitive configuration
+- Minimize exposure of sensitive KYC information
 
-#### G3 — Detect suspicious transaction behavior
-Identify abnormal transaction patterns and create fraud cases for investigation.
+### 3.2 Financial Correctness
 
-#### G4 — Introduce complete payment lifecycle management
-Support states such as:
+Bastion V2 must guarantee that financial operations are atomic.
+
+For a successful financial operation:
 
 ```text
-PENDING
-   ↓
-AUTHORIZED
-   ↓
-COMPLETED
+Balance mutation
++
+Transaction record
++
+Ledger entries
 ```
 
-and failure/cancellation/refund flows.
+must either all succeed or all fail.
 
-#### G5 — Introduce reconciliation
-Allow Bastion to compare internal financial records with external financial records.
+The system must prevent:
 
-#### G6 — Introduce asynchronous processing
-Allow financial events to be consumed by independent services without tightly coupling them to the transaction core.
+- Negative balances
+- Wallet limit violations
+- Duplicate financial mutations
+- Lost balance updates
+- Partial transfers
+- Inconsistent ledger entries
 
-#### G7 — Demonstrate Go + Java engineering capability
-Use Go and Java where each language provides a meaningful architectural responsibility.
+### 3.3 Idempotency
 
----
+Financial endpoints must support safe retries.
 
-## 5. Non-Goals
-
-V2 will **not** attempt to become a real banking system.
-
-The following are explicitly outside V2 scope:
-
-* Real bank account integration
-* Real-money settlement
-* Credit card issuing
-* Cryptocurrency
-* Lending
-* Investment products
-* Full AML regulatory compliance
-* Machine-learning fraud detection
-* AI financial advisor
-* Multi-country regulatory support
-
-These can be considered for future versions.
-
----
-
-## 6. Target Users
-
-### 6.1 Wallet User
-
-A user who:
-
-* Owns a Bastion wallet
-* Tops up funds
-* Sends money
-* Pays merchants
-* Receives refunds
-* Views transaction history
-
----
-
-### 6.2 Merchant
-
-A business that:
-
-* Owns a merchant account
-* Creates payment requests
-* Receives customer payments
-* Views payment history
-* Requests refunds
-* Tracks settlements
-
----
-
-### 6.3 Financial Operator
-
-An internal operator responsible for:
-
-* Reviewing suspicious transactions
-* Investigating fraud cases
-* Reviewing reconciliation discrepancies
-* Monitoring financial activity
-
----
-
-## 7. V2 Core Domains
-
-V2 consists of the following domains:
+For the same user, operation, and idempotency key:
 
 ```text
-                    BASTION V2
-                        │
-        ┌───────────────┼────────────────┐
-        │               │                │
-      Wallet          Payments          Risk
-        │               │                │
-        │           Merchant          Fraud
-        │           Refunds          Monitoring
-        │               │                │
-        └───────────────┼────────────────┘
-                        │
-                  Financial Ops
-                        │
-              Reconciliation
-                        │
-                   Events
+same request
+    ↓
+same financial operation
+    ↓
+same result
 ```
+
+Repeated requests must not create duplicate financial mutations.
+
+Idempotency keys must be scoped to the authenticated user.
+
+### 3.4 Testing
+
+V2 must introduce meaningful automated coverage across:
+
+- Unit tests
+- Repository integration tests
+- API integration tests
+- Financial transaction tests
+- Concurrency tests
+- Idempotency tests
+- Security regression tests
+
+### 3.5 Production Readiness
+
+V2 must provide the foundation for deployment beyond local development through:
+
+- Health checks
+- Graceful shutdown
+- Structured logging
+- Request IDs
+- Metrics
+- CI validation
+- Docker hardening
+- Configuration validation
 
 ---
 
-## 8. Functional Requirements
+## 4. Non-Goals
 
-### 8.1 Merchant Management
+The following are explicitly outside the primary scope of V2:
 
-Bastion must support merchant accounts.
+- Kafka
+- RabbitMQ
+- Microservice decomposition
+- Event-driven architecture
+- External payment gateway integration
+- Advanced fraud detection
+- Multi-currency wallets
+- Java-based services
+- Distributed transaction orchestration
+- Full KYC document processing
+- Mobile applications
 
-#### Features
-
-* Merchant registration
-* Merchant profile
-* Merchant status
-* Merchant wallet
-* Merchant identification
-* Merchant transaction history
-
-#### Merchant states
-
-```text
-PENDING
-ACTIVE
-SUSPENDED
-```
-
-Only active merchants may receive payments.
+These capabilities may be considered for V3+.
 
 ---
 
-## 9. Payment Requests
+## 5. User Roles
 
-A merchant must be able to create a payment request.
+### 5.1 USER
 
-Example:
+Normal Bastion customer.
 
-```text
-Merchant
-   │
-   │ Create payment
-   ▼
-Payment Request
-   │
-   ├── amount
-   ├── merchant
-   ├── reference
-   ├── expiration
-   └── status
-```
+Capabilities:
 
-Payment requests must have a unique identifier.
+- Register
+- Login
+- Logout
+- View profile
+- View wallet
+- Submit KYC
+- Top up wallet
+- Transfer funds
+- View own transactions
 
-### Requirements
+### 5.2 KYC_REVIEWER
 
-* Create payment request
-* Retrieve payment request
-* Expire payment request
-* Pay payment request
-* Prevent payment after expiration
-* Prevent duplicate payment
+Authorized operator responsible for reviewing KYC submissions.
 
----
+Capabilities:
 
-## 10. Payment Lifecycle
+- View authorized KYC submissions
+- Approve KYC
+- Reject KYC
+- View relevant KYC audit information
 
-V2 introduces a formal payment state machine.
+### 5.3 ADMIN
 
-```text
-             ┌───────────┐
-             │  PENDING  │
-             └─────┬─────┘
-                   │
-             risk evaluation
-                   │
-          ┌────────┴────────┐
-          ▼                 ▼
-     AUTHORIZED           FAILED
-          │
-          ▼
-      COMPLETED
-          │
-          ▼
-       REFUNDED
-```
+Administrative role.
 
-A payment must never transition arbitrarily between states.
+Capabilities include:
 
-Example:
-
-```text
-COMPLETED → PENDING
-```
-
-must be rejected.
+- KYC review
+- Administrative operations
+- User/account management where explicitly permitted
+- Audit inspection where authorized
 
 ---
 
-## 11. Risk Assessment
+## 6. Functional Requirements
 
-Before a high-risk payment is completed, Bastion should evaluate the transaction.
+### 6.1 Authentication
 
-The Risk Engine is implemented as a Java service.
+#### Register
 
-### Initial risk signals
+The system must allow a user to create an account.
 
-* Transaction amount
-* Transaction frequency
-* User transaction history
-* Recipient history
-* Unusual transaction time
-* Repeated failed transactions
-* New recipient
-* Transaction velocity
+Requirements:
 
-The initial implementation will use deterministic rules rather than machine learning.
+- Email must be valid
+- Email must be unique
+- Password must satisfy configured security requirements
+- Password must be hashed before persistence
+- Password hash must never be returned through the API
+- Registration must generate an auditable event
 
----
+#### Login
 
-## 12. Risk Score
+The system must authenticate users using email and password.
 
-The Risk Engine produces a score between 0 and 100.
+Requirements:
 
-```text
-0 ─────────────────────────────── 100
-│              │             │
-LOW          MONITOR        REVIEW
-```
+- Invalid credentials must return a consistent authentication error
+- Successful login must issue a JWT
+- JWT must contain required claims
+- Login failures must be rate-limited
+- Successful login must be auditable
 
-Example:
+#### Logout
 
-```text
-0–30    → APPROVE
-31–70   → MONITOR
-71–100  → REVIEW
-```
+The system must revoke the authenticated token.
 
-The exact thresholds should be configurable.
+Requirements:
 
----
-
-## 13. Fraud Detection
-
-Transactions identified as suspicious may generate a fraud case.
-
-Example:
-
-```text
-Transaction
-     │
-     ▼
-Risk Engine
-     │
-     ▼
-Risk Score = 85
-     │
-     ▼
-Fraud Case
-     │
-     ├── reason
-     ├── transaction
-     ├── user
-     ├── risk score
-     └── status
-```
-
-Fraud cases may have states:
-
-```text
-OPEN
-UNDER_REVIEW
-CONFIRMED
-DISMISSED
-```
+- Token must contain a unique `jti`
+- Revocation must be stored in Redis
+- Revocation TTL must correspond to token expiration
+- Revoked tokens must be rejected by authentication middleware
 
 ---
 
-## 14. Refunds
+## 7. Authorization Requirements
 
-Completed payments may be refunded.
+Authenticated access does not automatically grant permission to every operation.
 
-V2 must support:
+The system must distinguish:
 
-* Full refund
-* Partial refund
-* Refund reason
-* Refund status
-* Refund transaction record
+```text
+Authentication
+    ≠
+Authorization
+```
 
-A refund must create appropriate financial records.
+KYC review endpoints must require:
 
-The original transaction must remain immutable.
+```text
+KYC_REVIEWER
+or
+ADMIN
+```
+
+A normal `USER` must receive `403 Forbidden`.
 
 ---
 
-## 15. Reconciliation
+## 8. Wallet Requirements
 
-Bastion must support reconciliation between internal and external transaction records.
+### 8.1 Wallet Creation
 
-Example:
+Each user must have at most one wallet.
 
-```text
-Bastion
-Rp100,000
-     │
-     │ compare
-     ▼
-External Provider
-Rp100,000
-     │
-     ▼
-MATCH
-```
+Wallet must maintain:
 
-Or:
+- Current balance
+- Maximum balance limit
+- Status
+- Creation timestamp
+- Update timestamp
 
-```text
-Bastion
-Rp100,000
+### 8.2 Top-Up
 
-External
-Rp95,000
+A user may increase their wallet balance through the top-up operation.
 
-     ↓
+Requirements:
 
-DISCREPANCY
-```
+- Amount must be positive
+- Wallet must be active
+- Maximum balance limit must be enforced atomically
+- Operation must be idempotent
+- Transaction record must be created
+- Ledger entry must be created
+- All financial changes must occur in one database transaction
 
-### Requirements
+### 8.3 Transfer
 
-* Create reconciliation run
-* Import external transaction records
-* Match transactions
-* Identify unmatched records
-* Identify amount discrepancies
-* Track reconciliation status
-* Generate reconciliation results
+A user may transfer funds from their wallet to another wallet.
 
----
+Requirements:
 
-## 16. Notifications
-
-Bastion should generate notifications for important financial events.
-
-Examples:
-
-* Payment completed
-* Payment failed
-* Payment refunded
-* Suspicious transaction
-* KYC approved
-* Transfer completed
-
-Notification delivery should not block the financial transaction.
+- Amount must be positive
+- Sender must have sufficient funds
+- Sender and receiver must exist
+- Sender and receiver must be different
+- Wallets must be active
+- Balance changes must be atomic
+- Sender must receive a debit ledger entry
+- Receiver must receive a credit ledger entry
+- Transaction must be recorded
+- Operation must support idempotency
+- Concurrent requests must not cause an invalid balance
 
 ---
 
-## 17. Event-Driven Architecture
+## 9. Wallet Invariants
 
-V2 introduces financial domain events.
-
-Examples:
-
-```text
-TransactionCreated
-TransactionCompleted
-TransactionFailed
-
-PaymentCreated
-PaymentCompleted
-PaymentFailed
-RefundCreated
-
-RiskAssessmentCompleted
-FraudCaseCreated
-
-KYCApproved
-```
-
-Events should be immutable.
-
-Consumers must be designed to safely process duplicate events.
-
----
-
-## 18. Go Responsibilities
-
-Go remains responsible for the **financial transaction core**.
-
-```text
-Go
-├── Authentication
-├── Wallet
-├── Balance
-├── Top-up
-├── Transfer
-├── Payment execution
-├── Ledger
-├── Idempotency
-└── Financial transaction integrity
-```
-
-Go is the authoritative component for financial state mutations.
-
-### Principle
-
-> **Go moves the money.**
-
----
-
-## 19. Java Responsibilities
-
-Java is responsible for **complex financial intelligence and workflows**.
-
-```text
-Java
-├── Risk Engine
-├── Fraud Detection
-├── Transaction Monitoring
-├── Merchant workflows
-├── Reconciliation
-├── Notification
-└── Financial workflow orchestration
-```
-
-### Principle
-
-> **Java decides what should happen around the money.**
-
-Java must not directly mutate the authoritative wallet balance.
-
----
-
-## 20. Service Communication
-
-Initial V2 communication should use synchronous HTTP APIs.
-
-```text
-Go
- │
- │ Risk Assessment
- ▼
-Java
- │
- ▼
-Risk Decision
- │
- ▼
-Go
-```
-
-Later, V2 will introduce asynchronous messaging.
-
-```text
-Go
- │
- ▼
-Message Broker
- │
- ├── Java Risk
- ├── Notification
- └── Reconciliation
-```
-
-The message broker should **not** be introduced until the synchronous domain flows are stable.
-
----
-
-## 21. Data Integrity Requirements
-
-V1's financial invariants remain mandatory in V2.
-
-### Balance integrity
+The following invariants must always hold:
 
 ```text
 balance >= 0
 ```
 
-### Ledger integrity
-
-For a transfer:
+and:
 
 ```text
-total debit = total credit
+balance <= max_balance_limit
 ```
 
-### Idempotency
-
-Repeated requests must not create duplicate financial operations.
-
-### Atomicity
-
-Financial mutations must be atomic.
-
-### Concurrency
-
-Concurrent transactions must not cause:
-
-* Double spending
-* Lost updates
-* Negative balances
-* Deadlocks
-
-### Immutability
-
-Completed financial transactions and ledger records must not be modified to change historical truth.
-
----
-
-## 22. Observability
-
-V2 must provide:
-
-* Structured logs
-* Request IDs
-* Transaction IDs
-* Event IDs
-* Health checks
-* Metrics
-* Error tracking
-
-Important metrics include:
+For a successful transfer:
 
 ```text
-payment_success_rate
-payment_failure_rate
-risk_review_rate
-fraud_case_rate
-transaction_latency
-reconciliation_discrepancies
+sender debit = transfer amount
+receiver credit = transfer amount
 ```
 
----
-
-## 23. Security Requirements
-
-V2 must preserve V1 security principles.
-
-Requirements include:
-
-* JWT authentication
-* Password hashing
-* Redis token blacklist
-* Input validation
-* Authorization
-* Rate limiting
-* Idempotency
-* Internal service authentication
-* Sensitive data protection
-* Audit logging
-
-Risk and fraud services must not expose sensitive internal APIs publicly.
-
----
-
-## 24. High-Level Architecture
+For a successful top-up:
 
 ```text
-                         CLIENT
-                           │
-                           ▼
-                    ┌─────────────┐
-                    │  Go / API   │
-                    │    Core     │
-                    └──────┬──────┘
-                           │
-              ┌────────────┼────────────┐
-              │            │            │
-              ▼            ▼            ▼
-           Wallet       Payment      Ledger
-              │            │            │
-              └────────────┼────────────┘
-                           │
-                           ▼
-                    Risk Assessment
-                           │
-                           ▼
-                  ┌─────────────────┐
-                  │ Java Platform   │
-                  │                 │
-                  │ Risk            │
-                  │ Fraud           │
-                  │ Reconciliation  │
-                  │ Workflow        │
-                  └────────┬────────┘
-                           │
-                           ▼
-                     Event System
-                           │
-                ┌──────────┼──────────┐
-                ▼          ▼          ▼
-             Notify     Monitor    Analytics
+wallet credit = top-up amount
 ```
 
----
-
-## 25. V2 Sprint Structure
-
-We'll implement V2 in **8 sprints**.
-
-### Sprint 2.1 — Foundation
-
-* V2 architecture
-* Java/Spring Boot service
-* Service boundaries
-* Internal API contracts
-* Docker integration
-* Service authentication
-* V2 documentation
-
-### Sprint 2.2 — Payment & Merchant
-
-* Merchant
-* Merchant wallet
-* Payment request
-* Payment execution
-* Payment reference
-* Payment history
-
-### Sprint 2.3 — Risk Engine
-
-* Risk service
-* Risk rules
-* Risk scoring
-* Risk decision
-* Go ↔ Java integration
-
-### Sprint 2.4 — Fraud Detection
-
-* Transaction monitoring
-* Velocity rules
-* Anomaly rules
-* Fraud cases
-* Review workflow
-
-### Sprint 2.5 — Payment Lifecycle & Refund
-
-* Payment state machine
-* Failed payments
-* Expiration
-* Full refund
-* Partial refund
-
-### Sprint 2.6 — Event-Driven Architecture
-
-* Domain events
-* Message broker
-* Producers
-* Consumers
-* Retry
-* Dead-letter handling
-* Event idempotency
-
-### Sprint 2.7 — Reconciliation
-
-* Reconciliation runs
-* External transaction import
-* Matching
-* Discrepancy detection
-* Reconciliation reports
-
-### Sprint 2.8 — Production Hardening
-
-* Load testing
-* Observability
-* Metrics
-* Distributed tracing
-* Security review
-* Performance tuning
-* Documentation
+No successful financial operation may produce only a partial set of records.
 
 ---
 
-## 26. V2 Success Criteria
+## 10. Idempotency Requirements
 
-V2 is considered successful when:
+Financial mutation endpoints must accept an idempotency key.
 
-1. Users can pay merchants using their Bastion wallet.
-2. Payments have a controlled lifecycle.
-3. Completed payments can be refunded.
-4. Transactions can be evaluated by the Java Risk Engine.
-5. Suspicious activity can generate fraud cases.
-6. Financial events can be processed asynchronously.
-7. Internal and external transactions can be reconciled.
-8. V1 financial invariants remain intact.
-9. Go remains authoritative for financial state.
-10. Java provides meaningful financial intelligence/workflows.
-11. The system can demonstrate concurrency and failure resilience.
-12. The architecture provides a clear foundation for V3.
+Initial scope:
 
----
+- Top-up
+- Transfer
 
-## 27. V2 → V3 Boundary
-
-V2 intentionally leaves room for future expansion.
-
-Potential V3 capabilities:
+The key must be scoped by:
 
 ```text
-External payment providers
-Bank integrations
-Payment links
-Subscriptions
-Payouts
-Multi-currency
-Developer API / SDK
-Advanced merchant platform
-Settlement
+user_id
+operation
+idempotency_key
 ```
 
-V2 should **not** implement these prematurely.
+Example:
+
+```text
+idempotency:{user_id}:transfer:{key}
+```
+
+The database remains the ultimate source of truth.
+
+Redis may accelerate idempotency lookups but must not be the only protection against duplicate financial operations.
 
 ---
 
-## 28. V2 Product Definition
+## 11. KYC Requirements
 
-The simplest definition is:
+Users may submit KYC information.
 
-> **Bastion V1 is a reliable digital wallet transaction core.**
-
-> **Bastion V2 is a financial platform built around that core, adding merchant payments, risk, fraud detection, refunds, reconciliation, and event-driven financial operations.**
-
-And the architecture philosophy is:
+KYC lifecycle:
 
 ```text
-V1
-↓
-Correct money movement
-
-V2
-↓
-Intelligent & reliable financial operations
-
-V3
-↓
-External financial ecosystem
-
-V4
-↓
-Intelligent financial infrastructure
+PENDING
+   ├── APPROVED
+   └── REJECTED
 ```
+
+Invalid state transitions must be rejected.
+
+KYC review must:
+
+- Require reviewer/admin authorization
+- Record reviewer identity
+- Record review timestamp
+- Record rejection reason where applicable
+- Generate an audit event
+
+---
+
+## 12. Ledger Requirements
+
+The ledger is an append-oriented financial history.
+
+Supported entry types:
+
+```text
+DEBIT
+CREDIT
+```
+
+Every successful financial transaction must produce its required ledger entries.
+
+Transfer:
+
+```text
+Sender   → DEBIT
+Receiver → CREDIT
+```
+
+Top-up:
+
+```text
+Wallet → CREDIT
+```
+
+Ledger entries must not be silently modified or deleted through normal application behavior.
+
+---
+
+## 13. API Error Requirements
+
+V2 must use consistent error responses.
+
+Example:
+
+```json
+{
+  "code": "INSUFFICIENT_FUNDS",
+  "message": "Insufficient wallet balance"
+}
+```
+
+Error codes must be stable enough for API clients to handle programmatically.
+
+Internal database or infrastructure errors must not leak implementation details.
+
+---
+
+## 14. Audit Requirements
+
+The system must audit security-sensitive and financial events.
+
+Initial events:
+
+```text
+AUTH_REGISTER
+AUTH_LOGIN_SUCCESS
+AUTH_LOGIN_FAILED
+AUTH_LOGOUT
+
+KYC_SUBMITTED
+KYC_APPROVED
+KYC_REJECTED
+
+WALLET_TOPUP
+WALLET_TRANSFER
+WALLET_TRANSFER_FAILED
+```
+
+Audit records should include, where applicable:
+
+- User ID
+- Action
+- Request ID
+- IP address
+- User agent
+- Relevant metadata
+- Timestamp
+
+---
+
+## 15. Observability Requirements
+
+The application must provide:
+
+- Structured logs
+- Request IDs
+- Error codes
+- Request latency
+- Basic application metrics
+- Database operation visibility
+- Redis operation visibility
+
+---
+
+## 16. Health Requirements
+
+The application must expose:
+
+- Liveness
+- Readiness
+
+Readiness must account for required dependencies such as PostgreSQL.
+
+---
+
+## 17. Testing Requirements
+
+V2 must include:
+
+**Unit tests**
+Service-level business rules.
+
+**Integration tests**
+Real PostgreSQL and Redis dependencies.
+
+**API tests**
+HTTP request/response behavior.
+
+**Concurrency tests**
+Concurrent financial mutations.
+
+**Security tests**
+Authentication, authorization, token revocation, and sensitive response validation.
+
+---
+
+## 18. Definition of Done
+
+Bastion V2 is complete when:
+
+- No API response exposes password hashes
+- JWT validation is hardened
+- RBAC protects privileged endpoints
+- Authentication endpoints are rate-limited
+- Top-up is atomic
+- Transfer is atomic
+- Idempotency is enforced
+- Ledger invariants are enforced
+- Concurrent operations are tested
+- Integration tests use real PostgreSQL and Redis
+- API errors are standardized
+- Health checks exist
+- Graceful shutdown exists
+- Structured logging exists
+- CI validates the project
+- Docker production configuration is hardened
+- V2 documentation matches implementation

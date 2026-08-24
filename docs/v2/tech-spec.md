@@ -1,1061 +1,1108 @@
 # Bastion V2 — Technical Specification
 
-> **Author:** Agam Latiff  
-> **Version:** 2.0  
-> **Status:** Draft  
-> **Previous Version:** V1 — Digital Wallet Transaction Core  
+> **Version:** 2.0
+> **Status:** Draft
+> **Product:** Bastion
 
 ---
 
-## 1. Technical Objective
+## 1. Technical Goals
 
-Bastion V2 extends the existing Go-based financial transaction core with a Java-based financial platform layer.
+Bastion V2 retains the V1 modular monolith architecture while improving:
 
-The architecture must preserve V1's financial correctness while introducing:
+- Security
+- Transaction correctness
+- Concurrency safety
+- Idempotency
+- Error handling
+- Testing
+- Observability
+- Operational reliability
 
-* Merchant payments
-* Payment lifecycle
-* Risk evaluation
-* Fraud detection
-* Refunds
-* Reconciliation
-* Notifications
-* Domain events
-* Asynchronous processing
-
-The primary architectural principle is:
-
-> **Go is authoritative for financial state and money movement. Java provides intelligence, workflows, and supporting financial operations.**
+The architecture should remain simple enough for a single service while establishing patterns that can support future V3 decomposition.
 
 ---
 
-## 2. Architecture Overview
+## 2. Technology Stack
 
-V2 uses a **modular service-oriented architecture**.
+### Application
+
+- Go
+- Gin
+- pgx / pgxpool
+- Redis client (`go-redis/v9`)
+- JWT library (`golang-jwt/jwt/v5`)
+- bcrypt (`golang.org/x/crypto/bcrypt`)
+
+### Infrastructure
+
+- PostgreSQL 16
+- Redis 7
+- Docker
+- Docker Compose for local development
+
+### Development
+
+- Go test
+- Go vet
+- golangci-lint
+- GitHub Actions
+
+---
+
+## 3. Architecture
+
+Bastion V2 remains a modular monolith.
 
 ```text
-                         ┌─────────────┐
-                         │   Client    │
-                         └──────┬──────┘
-                                │
-                                ▼
-                     ┌──────────────────┐
-                     │    Go Core API   │
-                     │      Gin         │
-                     └────────┬─────────┘
-                              │
-              ┌───────────────┼────────────────┐
-              │               │                │
-              ▼               ▼                ▼
-           Identity         Wallet          Payment
-              │               │                │
-              └───────────────┼────────────────┘
-                              │
-                              ▼
-                         Ledger/Core
-                              │
-                              ▼
-                    ┌──────────────────┐
-                    │  Java Platform   │
-                    │  Spring Boot     │
-                    └────────┬─────────┘
-                             │
-             ┌───────────────┼────────────────┐
-             │               │                │
-             ▼               ▼                ▼
-           Risk            Fraud        Reconciliation
+                    HTTP Client
+                        │
+                        ▼
+                  Gin Router
+                        │
+              ┌─────────┴─────────┐
+              │                   │
+        Middleware            Middleware
+              │                   │
+              └─────────┬─────────┘
+                        ▼
+                    Handler
+                        │
+                        ▼
+                     Service
+                        │
+              ┌─────────┼─────────┐
+              │         │         │
+              ▼         ▼         ▼
+         Repository   Redis    External
+              │                   │
+              ▼                   │
+          PostgreSQL              │
 ```
 
-The initial implementation remains relatively simple.
-
-We do **not** immediately split every domain into independent microservices.
+- Business rules belong in services.
+- Persistence belongs in repositories.
+- HTTP concerns belong in handlers/middleware.
 
 ---
 
-## 3. Service Architecture
-
-V2 consists of two primary applications.
+## 4. Package Responsibilities
 
 ```text
-services/
-├── core/
-│   └── Go
+services/auth/
+├── cmd/
+│   └── main.go
 │
-└── platform/
-    └── Java
+└── internal/
+    ├── config/
+    ├── domain/
+    ├── dto/
+    ├── handler/
+    ├── middleware/
+    ├── repository/
+    ├── service/
+    ├── auth/
+    ├── errors/
+    └── observability/
 ```
 
-### 3.1 Go Core
+### domain
 
-Go remains the primary financial system.
+Core business entities.
 
-Responsibilities:
+Examples:
 
-```text
-Go Core
-├── Authentication
-├── Users
-├── KYC
-├── Wallets
-├── Top-up
-├── P2P Transfer
-├── Merchant Payment Execution
-├── Refund Execution
-├── Transactions
-├── Ledger
-└── Idempotency
-```
+- `User`
+- `Wallet`
+- `Transaction`
+- `LedgerEntry`
+- `KYCVerification`
 
-Go owns all operations that directly mutate authoritative financial state.
+Domain models must not be used blindly as API responses.
+
+### dto
+
+External API request and response models.
+
+Examples:
+
+- `RegisterRequest`
+- `LoginRequest`
+- `UserResponse`
+- `WalletResponse`
+- `TopUpRequest`
+- `TransferRequest`
+- `TransactionResponse`
+- `KYCResponse`
+- `ErrorResponse`
+
+DTOs prevent persistence-only fields from leaking into API responses.
+
+### handler
+
+Responsible for:
+
+- HTTP request parsing
+- Request validation
+- Authentication context extraction
+- Service invocation
+- HTTP response mapping
+
+Handlers must not contain financial business logic.
+
+### service
+
+Responsible for:
+
+- Business rules
+- Authorization decisions where appropriate
+- Transaction orchestration
+- Idempotency behavior
+- Domain error generation
+
+### repository
+
+Responsible for:
+
+- SQL
+- PostgreSQL transactions
+- Row locking
+- Persistence
+- Query composition
+
+Repositories must not decide HTTP status codes.
 
 ---
 
-### 3.2 Java Platform
+## 5. Dependency Injection
 
-Java handles higher-level financial logic.
+Application startup should construct dependencies explicitly.
 
 ```text
-Java Platform
-├── Risk Engine
-├── Fraud Detection
-├── Transaction Monitoring
-├── Merchant Workflows
-├── Reconciliation
-├── Notification
-└── Financial Workflow
+Config
+ ↓
+Database
+ ↓
+Redis
+ ↓
+Repositories
+ ↓
+Services
+ ↓
+Handlers
+ ↓
+Router
 ```
 
-Java must **not directly modify wallet balances or ledger records**.
+`main.go` should remain the composition root.
 
-Instead:
+Future refactoring may move construction into an application bootstrap package, but V2 does not require a major dependency injection framework.
+
+---
+
+## 6. Authentication
+
+### 6.1 Password hashing
+
+bcrypt must use an explicit configured cost.
+
+Example configuration:
 
 ```text
-Java
-  │
-  │ decision
-  ▼
-Go Core
-  │
-  │ financial mutation
-  ▼
-PostgreSQL
+BCRYPT_COST=12
 ```
 
----
-
-## 4. Technology Stack
-
-### Go Core
-
-| Component      | Technology                 |
-| -------------- | -------------------------- |
-| Language       | Go                         |
-| HTTP           | Gin                        |
-| Database       | PostgreSQL 16              |
-| DB Driver      | pgx / pgxpool              |
-| Cache          | Redis 7                    |
-| Authentication | JWT                        |
-| Architecture   | Clean Architecture         |
-| API            | REST                       |
-| Testing        | Go testing + race detector |
-| Container      | Docker                     |
+Password hashes must never be returned through an API response.
 
 ---
 
-### Java Platform
+## 7. JWT
 
-| Component   | Technology      |
-| ----------- | --------------- |
-| Language    | Java            |
-| Framework   | Spring Boot     |
-| Persistence | Spring Data JPA |
-| Database    | PostgreSQL      |
-| Cache       | Redis           |
-| API         | REST            |
-| Testing     | JUnit           |
-| Container   | Docker          |
+JWT must use a typed claim structure.
 
-Kafka is introduced later in Sprint 2.6 rather than being required from day one.
+Required claims:
 
----
+- `sub`
+- `jti`
+- `iat`
+- `exp`
 
-## 5. Communication Model
+Optional application claims may include role/tier where appropriate.
 
-V2 uses two communication models.
+The signing algorithm must be explicitly validated.
 
-### Synchronous
-
-Used when an immediate decision is required.
+If Bastion uses HS256:
 
 ```text
-Go
- │
- │ HTTP
- ▼
-Java Risk API
- │
- ▼
-Risk Decision
- │
- ▼
-Go
+expected algorithm = HS256
+```
+
+Other signing algorithms must be rejected.
+
+---
+
+## 8. JWT Revocation
+
+JWT revocation uses Redis.
+
+Key:
+
+```text
+auth:revoked:{jti}
+```
+
+Value:
+
+```text
+1
+```
+
+TTL:
+
+```text
+token_expiration - current_time
+```
+
+The authentication middleware checks revocation before allowing authenticated access.
+
+Redis failure policy must be explicitly defined.
+
+For security-sensitive authentication paths, failure to verify revocation should fail closed unless an explicitly documented availability policy is adopted.
+
+---
+
+## 9. Authorization
+
+V2 introduces RBAC.
+
+Initial roles:
+
+```text
+USER
+KYC_REVIEWER
+ADMIN
+```
+
+Middleware:
+
+```text
+AuthMiddleware
+       ↓
+RequireRole(...)
 ```
 
 Example:
 
-```http
-POST /internal/v1/risk/assess
+```text
+POST /kyc/review
+        ↓
+AuthMiddleware
+        ↓
+RequireRole(KYC_REVIEWER, ADMIN)
+        ↓
+Handler
 ```
 
-Response:
-
-```json
-{
-  "risk_score": 72,
-  "decision": "REVIEW",
-  "reasons": [
-    "HIGH_AMOUNT",
-    "HIGH_VELOCITY"
-  ]
-}
-```
+Authentication proves identity.
+Authorization proves permission.
 
 ---
 
-### Asynchronous
+## 10. Rate Limiting
 
-Introduced in Sprint 2.6.
+Redis-backed rate limiting applies to sensitive endpoints.
+
+Initial targets:
+
+- `POST /auth/register`
+- `POST /auth/login`
+
+Key format:
 
 ```text
-Go
- │
- ▼
-Message Broker
- │
- ├── Risk
- ├── Fraud
- ├── Notification
- └── Reconciliation
+rate-limit:{operation}:{ip}
 ```
 
-Asynchronous processing is used for operations that do not need to block the financial transaction.
-
----
-
-## 6. Financial Source of Truth
-
-PostgreSQL remains the authoritative source of financial state.
+Optional authenticated dimensions may be added:
 
 ```text
-Wallet Balance
-       │
-       ▼
-PostgreSQL
-       │
-       ├── wallets
-       ├── transactions
-       └── ledger_entries
+rate-limit:{operation}:{user_id}
 ```
 
-Redis is **not** the source of truth for financial balances.
-
-Redis may be used for:
-
-* Idempotency
-* Caching
-* Token blacklist
-* Temporary risk data
-* Rate limiting
+The rate limiter must have deterministic expiration.
 
 ---
 
-## 7. Financial Transaction Boundary
+## 11. Wallet Concurrency
 
-All financial state mutations must execute inside appropriate database transactions.
+Wallet mutations are concurrency-sensitive.
 
-Example payment:
+PostgreSQL is the authority for wallet state.
+
+The application must not rely on:
+
+```text
+read balance
+→ validate
+→ update
+```
+
+without proper synchronization.
+
+---
+
+## 12. Atomic Top-Up
+
+Top-up must execute inside a database transaction.
+
+Conceptual flow:
 
 ```text
 BEGIN
   │
-  ├── Validate payment
-  ├── Lock wallet
-  ├── Validate balance
-  ├── Validate payment state
-  ├── Debit customer
-  ├── Credit merchant
-  ├── Create transaction
-  ├── Create ledger entries
+  ├── validate wallet
+  │
+  ├── atomically increase balance
+  │
+  ├── create transaction
+  │
+  ├── create ledger entry
+  │
   └── COMMIT
 ```
 
-If any step fails:
+The balance limit must be checked atomically.
 
-```text
-ROLLBACK
+Conceptual SQL:
+
+```sql
+UPDATE wallets
+SET balance = balance + $1,
+    updated_at = NOW()
+WHERE id = $2
+  AND status = 'ACTIVE'
+  AND balance + $1 <= max_balance_limit
+RETURNING id, balance;
 ```
 
-The financial transaction must never leave a partially updated state.
+If no row is returned, the operation must fail without creating a financial transaction.
 
 ---
 
-## 8. Payment Architecture
+## 13. Transfer Transaction
 
-Payment execution is owned by Go.
+Transfer must use one PostgreSQL transaction.
 
-The high-level flow is:
+Flow:
 
 ```text
-Client
-  │
-  ▼
-Go Payment API
-  │
-  ├── Validate request
-  ├── Validate payment status
-  ├── Validate wallet
-  │
-  ▼
-Java Risk Service
-  │
-  ├── APPROVE
-  ├── MONITOR
-  └── REVIEW
-  │
-  ▼
-Go
-  │
-  ├── Lock wallet(s)
-  ├── Execute financial mutation
-  ├── Create transaction
-  └── Create ledger
-  │
-  ▼
+BEGIN
+    │
+    ├── Resolve sender wallet
+    ├── Resolve receiver wallet
+    │
+    ├── Lock both wallets
+    │
+    ├── Lock in deterministic ID order
+    │
+    ├── Validate balances/status
+    │
+    ├── Debit sender
+    ├── Credit receiver
+    │
+    ├── Create transaction
+    ├── Create sender ledger entry
+    ├── Create receiver ledger entry
+    │
+    └── COMMIT
+```
+
+Wallets must be locked using deterministic ordering to reduce deadlock risk.
+
+---
+
+## 14. Financial Transaction Boundary
+
+A successful financial operation must atomically persist:
+
+- Wallet mutation
+- Transaction
+- Ledger entries
+
+No component may commit only one of these independently.
+
+---
+
+## 15. Transaction Status
+
+Transactions should have an explicit lifecycle.
+
+Recommended states:
+
+```text
+PENDING
 COMPLETED
+FAILED
 ```
 
-The exact treatment of `MONITOR` and `REVIEW` should be finalized during implementation.
+For V2, synchronous wallet operations may normally transition:
+
+```text
+PENDING → COMPLETED
+```
+
+or:
+
+```text
+PENDING → FAILED
+```
+
+The exact persisted behavior must remain consistent with database constraints and transaction semantics.
 
 ---
 
-## 9. Payment State Machine
+## 16. Idempotency
 
-Payment state transitions must be explicitly controlled.
+Idempotency applies to financial mutation endpoints.
 
-```text
-                  ┌────────────┐
-                  │  PENDING   │
-                  └─────┬──────┘
-                        │
-                 Risk evaluation
-                        │
-              ┌─────────┴─────────┐
-              ▼                   ▼
-         AUTHORIZED             FAILED
-              │
-              ▼
-          COMPLETED
-              │
-              ▼
-           REFUNDED
-```
+Initial endpoints:
 
-Invalid transitions must return an error.
+- `POST /wallet/top-up`
+- `POST /wallet/transfer`
 
-For example:
+Required request header:
 
 ```text
-COMPLETED → PENDING
-REFUNDED  → COMPLETED
-FAILED    → REFUNDED
+Idempotency-Key
 ```
 
-must not be allowed.
-
-The payment state transition logic should be centralized rather than duplicated across handlers.
-
----
-
-## 10. Risk Engine
-
-The Risk Engine is implemented in Java.
-
-### Input
-
-```json
-{
-  "transaction_id": "uuid",
-  "user_id": "uuid",
-  "amount": 8500000,
-  "receiver_id": "uuid"
-}
-```
-
-### Processing
+Key namespace:
 
 ```text
-Transaction
-    │
-    ▼
-Risk Engine
-    │
-    ├── Amount Rule
-    ├── Velocity Rule
-    ├── User History Rule
-    ├── Recipient Rule
-    └── Time Rule
-    │
-    ▼
-Risk Score
+idempotency:{user_id}:{operation}:{key}
 ```
 
-### Output
-
-```json
-{
-  "risk_score": 78,
-  "decision": "REVIEW",
-  "reasons": [
-    "HIGH_AMOUNT",
-    "NEW_RECIPIENT"
-  ]
-}
-```
-
-The first implementation uses deterministic rules.
-
-No machine learning is required for V2.
-
----
-
-## 11. Risk Rule Architecture
-
-Java should avoid hardcoding every rule inside one large service method.
-
-Recommended structure:
-
-```text
-RiskEngine
-    │
-    ├── AmountRule
-    ├── VelocityRule
-    ├── TimeRule
-    ├── RecipientRule
-    └── HistoryRule
-```
-
-Each rule evaluates a transaction and contributes to the risk score.
-
-Conceptually:
-
-```text
-RiskScore =
-    AmountRisk
-  + VelocityRisk
-  + TimeRisk
-  + RecipientRisk
-  + HistoryRisk
-```
-
-This allows future rules to be added without rewriting the entire engine.
-
----
-
-## 12. Fraud Detection
-
-Fraud detection builds on the Risk Engine.
-
-```text
-Transaction
-     │
-     ▼
-Risk Assessment
-     │
-     ▼
-High Risk?
-  │       │
- NO      YES
-  │       │
-  ▼       ▼
-Continue Fraud Case
-```
-
-Fraud cases are stored separately from financial transactions.
-
-A fraud investigation must never modify the historical transaction record.
-
----
-
-## 13. Refund Architecture
-
-Refunds are financial operations and therefore belong to Go's transaction core.
-
-Java may participate in the workflow, but Go executes the actual money movement.
-
-```text
-Refund Request
-      │
-      ▼
-Go
-      │
-      ├── Validate original payment
-      ├── Validate refundable amount
-      ├── Lock financial records
-      ├── Debit merchant
-      ├── Credit customer
-      ├── Create refund transaction
-      └── Create ledger entries
-```
-
-The original payment remains immutable.
-
----
-
-## 14. Reconciliation Architecture
-
-Reconciliation is primarily handled by Java.
-
-```text
-External Records
-      │
-      ▼
-Java Reconciliation
-      │
-      ├── Normalize
-      ├── Match
-      ├── Detect discrepancy
-      └── Generate result
-```
-
-Example:
-
-```text
-Internal Transaction
-       │
-       │ match
-       ▼
-External Transaction
-       │
-       ├── MATCH
-       ├── AMOUNT_MISMATCH
-       ├── MISSING_INTERNAL
-       └── MISSING_EXTERNAL
-```
-
-Java produces reconciliation results.
-
-It must not directly alter the historical financial ledger to hide discrepancies.
-
----
-
-## 15. Event Architecture
-
-Starting in Sprint 2.6, Bastion introduces domain events.
-
-Example:
-
-```json
-{
-  "event_id": "uuid",
-  "event_type": "PAYMENT_COMPLETED",
-  "occurred_at": "timestamp",
-  "aggregate_id": "uuid",
-  "payload": {}
-}
-```
-
-Events must contain:
-
-* Event ID
-* Event type
-* Aggregate ID
-* Timestamp
-* Payload
-* Schema/version information
-
----
-
-## 16. Event Idempotency
-
-Consumers must tolerate duplicate events.
-
-Example:
-
-```text
-PAYMENT_COMPLETED
-      │
-      ├── delivered once
-      └── delivered again
-```
-
-The consumer must not send two notifications or create two fraud records.
-
-A consumer may maintain:
-
-```text
-processed_events
-```
-
-or use an equivalent idempotency mechanism.
-
----
-
-## 17. Event Delivery
-
-The initial event architecture should prioritize reliability over complexity.
-
-Recommended flow:
-
-```text
-Go Transaction
-      │
-      ▼
-Database Transaction
-      │
-      ├── Financial State
-      └── Outbox Event
-              │
-              ▼
-          Publisher
-              │
-              ▼
-           Kafka
-```
-
-The **transactional outbox pattern** should be used when asynchronous processing is introduced.
-
-This prevents:
-
-```text
-DB COMMIT succeeded
-Kafka publish failed
-```
-
-from causing the financial event to disappear.
-
----
-
-## 18. Database Ownership
-
-Services must have clear ownership.
-
-### Go owns
-
-```text
-users
-wallets
-transactions
-ledger_entries
-kyc_verifications
-payments
-refunds
-idempotency records
-```
-
-### Java owns
-
-```text
-risk_assessments
-risk_rules
-fraud_cases
-reconciliation_runs
-reconciliation_items
-notifications
-```
-
-Java should not directly update:
-
-```text
-wallets.balance
-ledger_entries
-transactions
-```
-
----
-
-## 19. API Design
-
-Public APIs remain exposed through the Go API layer.
-
-Example:
-
-```text
-/api/v1/auth/*
-/api/v1/wallet/*
-/api/v1/payments/*
-/api/v1/merchants/*
-```
-
-Java APIs are internal.
-
-```text
-/internal/v1/risk/*
-/internal/v1/fraud/*
-/internal/v1/reconciliation/*
-```
-
-Internal APIs must require service authentication.
-
----
-
-## 20. Error Handling
-
-Both services should use consistent error semantics.
-
-Example:
-
-```json
-{
-  "status": "error",
-  "message": "Payment cannot be completed",
-  "data": null,
-  "error": {
-    "code": "INSUFFICIENT_BALANCE"
-  }
-}
-```
-
-Financial errors should use stable machine-readable error codes.
-
-Examples:
-
-```text
-INSUFFICIENT_BALANCE
-PAYMENT_EXPIRED
-PAYMENT_ALREADY_COMPLETED
-REFUND_EXCEEDS_PAYMENT
-RISK_REVIEW_REQUIRED
-MERCHANT_SUSPENDED
-DUPLICATE_REQUEST
-```
-
----
-
-## 21. Security
-
-### Go
-
-Responsible for:
-
-* Authentication
-* JWT validation
-* User authorization
-* Rate limiting
-* Input validation
-* Idempotency
-* Public API protection
-
-### Java
-
-Responsible for:
-
-* Internal service authentication
-* Secure processing of risk data
-* Access control for operator functions
-* Sensitive data protection
-
-Service-to-service communication must not rely solely on network location.
-
----
-
-## 22. Observability
-
-Every request and financial operation should have traceable identifiers.
-
-```text
-request_id
-transaction_id
-payment_id
-event_id
-user_id
-```
-
-Example:
+### 16.1 Idempotency lifecycle
 
 ```text
 Request
   │
-  ├── request_id
-  ├── payment_id
-  └── transaction_id
-       │
-       ├── Risk Assessment
-       ├── Ledger
-       ├── Event
-       └── Notification
+  ▼
+Validate key
+  │
+  ▼
+Check existing operation
+  │
+  ├── Found → return existing result
+  │
+  └── Not found
+          │
+          ▼
+      Begin DB transaction
+          │
+          ▼
+      Perform operation
+          │
+          ▼
+      Persist transaction + idempotency relation
+          │
+          ▼
+        COMMIT
 ```
 
-This allows a single payment to be traced across Go, Java, database, and messaging infrastructure.
+PostgreSQL remains the source of truth.
+
+Redis is an optimization layer.
 
 ---
 
-## 23. Testing Strategy
+## 17. Idempotency Database Design
 
-### Go
+Financial transactions should store the idempotency key and user ownership.
 
-Required tests:
+The uniqueness boundary must prevent collisions across users.
 
-* Unit tests
-* Repository integration tests
-* API tests
-* Transaction tests
-* Concurrent transfer tests
-* Race detector
-* Idempotency tests
-* Deadlock tests
+Conceptual uniqueness:
+
+```sql
+UNIQUE(user_id, operation, idempotency_key)
+```
+
+This allows:
+
+```text
+User A + transfer + abc
+User B + transfer + abc
+```
+
+to coexist.
+
+But prevents:
+
+```text
+User A + transfer + abc
+User A + transfer + abc
+```
+
+from creating two financial operations.
+
+---
+
+## 18. Idempotency Conflict
+
+If the same idempotency key is reused with a materially different request payload, the API must return:
+
+```text
+409 Conflict
+```
+
+Example error:
+
+```json
+{
+  "code": "IDEMPOTENCY_CONFLICT",
+  "message": "Idempotency key has already been used with a different request"
+}
+```
+
+Where practical, a request fingerprint/hash should be stored to detect payload mismatch.
+
+---
+
+## 19. Ledger
+
+Ledger entries are append-oriented.
+
+Entry types:
+
+```text
+DEBIT
+CREDIT
+```
+
+Transfer:
+
+```text
+Sender   DEBIT
+Receiver CREDIT
+```
+
+Top-up:
+
+```text
+Wallet CREDIT
+```
+
+Every ledger entry belongs to a transaction.
+
+Foreign keys must prevent orphan entries.
+
+---
+
+## 20. Ledger Invariants
+
+For every completed transfer:
+
+```text
+sender debit amount = transfer amount
+receiver credit amount = transfer amount
+```
+
+Therefore:
+
+```text
+total debit = total credit
+```
+
+For top-up:
+
+```text
+credit amount = top-up amount
+```
+
+Application and database constraints should cooperate to preserve these invariants.
+
+---
+
+## 21. Error Architecture
+
+V2 introduces typed domain errors.
+
+Example:
+
+```go
+var (
+    ErrUserNotFound        = errors.New("user not found")
+    ErrInvalidCredentials  = errors.New("invalid credentials")
+    ErrWalletNotFound      = errors.New("wallet not found")
+    ErrInsufficientFunds   = errors.New("insufficient funds")
+    ErrWalletLimitExceeded = errors.New("wallet limit exceeded")
+    ErrInvalidAmount       = errors.New("invalid amount")
+    ErrSelfTransfer        = errors.New("self transfer is not allowed")
+    ErrIdempotencyConflict = errors.New("idempotency conflict")
+    ErrKYCNotFound         = errors.New("kyc not found")
+    ErrUnauthorized        = errors.New("unauthorized")
+)
+```
+
+HTTP handlers map these errors to stable API error codes.
+
+Internal infrastructure errors must not be exposed directly.
+
+---
+
+## 22. API Error Format
+
+Standard format:
+
+```json
+{
+  "code": "ERROR_CODE",
+  "message": "Human-readable message"
+}
+```
+
+Optional metadata may be added later.
+
+Internal errors should map to:
+
+```text
+INTERNAL_ERROR
+```
+
+without exposing SQL, Redis, filesystem, or stack-trace details.
+
+---
+
+## 23. Database Transactions
+
+Repository methods that perform multiple financial mutations must receive or create a transaction boundary.
+
+The transfer transaction must include:
+
+- Wallet updates
+- Transaction insert
+- Ledger inserts
+
+The top-up transaction must include:
+
+- Wallet update
+- Transaction insert
+- Ledger insert
+
+Rollback must occur for any failure.
+
+---
+
+## 24. Database Constraints
+
+Important constraints include:
+
+```text
+users.email                            UNIQUE
+wallets.user_id                        UNIQUE
+transactions.idempotency scope         UNIQUE
+kyc_verifications.user_id              UNIQUE
+kyc_verifications.id_card_number       UNIQUE
+```
+
+Additional financial constraints:
+
+```text
+wallet.balance          >= 0
+wallet.max_balance_limit >= 0
+transaction.amount       > 0
+ledger.amount            > 0
+```
+
+Where PostgreSQL constraints can enforce invariants safely, they should be used.
+
+---
+
+## 25. Indexing
+
+Indexes must support:
+
+- User email lookup
+- Wallet user lookup
+- Transaction user lookup
+- Transaction wallet lookup
+- Idempotency lookup
+- Ledger transaction lookup
+- Ledger wallet lookup
+- KYC status filtering
+- Audit log user lookup
+- Audit log timestamp lookup
+
+Indexes must be reviewed against actual query patterns.
+
+---
+
+## 26. Sensitive Data
+
+Sensitive data must be minimized.
+
+Passwords:
+
+- Hashed
+- Never returned
+
+KYC identifiers:
+
+- Restricted access
+
+Future production implementation should consider encryption at rest and deterministic hashing for sensitive uniqueness checks where necessary.
+
+---
+
+## 27. DTO Mapping
+
+Persistence/domain models must not be serialized directly when they contain internal fields.
 
 Example:
 
 ```text
-100 concurrent transfers
+User
+├── ID
+├── Email
+├── PasswordHash    ← internal only
+├── Role
+├── Tier
+└── ...
+
+UserResponse
+├── ID
+├── Email
+├── Role
+├── Tier
+└── ...
+```
+
+`PasswordHash` must never exist in `UserResponse`.
+
+---
+
+## 28. Audit Logging
+
+Audit logging should use structured events.
+
+Example:
+
+```text
+AUTH_LOGIN_SUCCESS
+AUTH_LOGIN_FAILED
+AUTH_LOGOUT
+
+KYC_SUBMITTED
+KYC_APPROVED
+KYC_REJECTED
+
+WALLET_TOPUP
+WALLET_TRANSFER
+WALLET_TRANSFER_FAILED
+```
+
+Audit records should contain:
+
+- `id`
+- `user_id`
+- `action`
+- `request_id`
+- `ip_address`
+- `user_agent`
+- `metadata`
+- `created_at`
+
+Audit logs are append-oriented.
+
+---
+
+## 29. Request ID
+
+Every incoming request should receive a request ID.
+
+If a trusted request ID is supplied, the application may reuse it subject to validation.
+
+Otherwise:
+
+```text
+generate UUID
+```
+
+The request ID should appear in:
+
+- Response header
+- Structured logs
+- Audit metadata where applicable
+- Error logs
+
+---
+
+## 30. Logging
+
+Logs should be structured.
+
+Recommended fields:
+
+```text
+timestamp
+level
+service
+request_id
+user_id
+operation
+duration_ms
+status
+error_code
+```
+
+Sensitive information must not be logged.
+
+Never log:
+
+- Passwords
+- Password hashes
+- JWTs
+- KYC secrets
+- Full sensitive request bodies
+
+---
+
+## 31. Metrics
+
+Initial metrics:
+
+```text
+http_requests_total
+http_request_duration
+http_errors_total
+
+auth_login_success_total
+auth_login_failure_total
+
+wallet_topup_total
+wallet_transfer_total
+wallet_transfer_failure_total
+
+database_operation_duration
+redis_operation_duration
+```
+
+Metrics implementation may use a standard Prometheus-compatible approach.
+
+---
+
+## 32. Health Checks
+
+Two endpoints:
+
+```text
+GET /health/live
+GET /health/ready
+```
+
+Liveness verifies the process is running.
+
+Readiness verifies required dependencies are available.
+
+---
+
+## 33. Graceful Shutdown
+
+On shutdown signal:
+
+```text
+stop accepting new requests
         ↓
-Expected:
-No double spending
-No negative balance
-No duplicate transaction
-No deadlock
+wait for active requests
+        ↓
+close HTTP server
+        ↓
+close Redis
+        ↓
+close PostgreSQL
+        ↓
+exit
 ```
+
+Shutdown must have a configurable timeout.
 
 ---
 
-### Java
+## 34. Testing Architecture
 
-Required tests:
+### Unit
 
-* Unit tests
-* Risk rule tests
-* Risk engine tests
-* API tests
-* Integration tests
-* Event consumer tests
-* Duplicate event tests
+Use mocks/fakes for external dependencies where appropriate.
 
-Example:
+Test:
+
+- Business rules
+- Validation
+- Error mapping
+- JWT
+- Authorization
+- Idempotency decisions
+
+### Integration
+
+Use real PostgreSQL and Redis.
+
+Test:
+
+- SQL behavior
+- Transactions
+- Row locks
+- Constraints
+- Redis TTL
+- Repository behavior
+
+### API
+
+Test:
 
 ```text
-Transaction
-   ↓
-Risk Rules
-   ↓
-Expected score
-   ↓
-Expected decision
+HTTP request
+→ middleware
+→ handler
+→ service
+→ repository
 ```
+
+for critical workflows.
 
 ---
 
-## 24. Failure Handling
+## 35. Concurrency Tests
 
-V2 must explicitly handle partial failures.
-
-### Java unavailable
-
-If a risk assessment is mandatory:
+Required scenarios:
 
 ```text
-Go → Java
-       X
-       ↓
-Payment does NOT silently execute.
+100 concurrent top-ups
+100 concurrent transfers
+100 duplicate requests
 ```
 
-The transaction should fail or enter an appropriate pending state.
+Expected properties:
 
-### Notification unavailable
-
-Financial transaction should still succeed.
-
-```text
-Payment
-  ↓
-COMMIT
-  ↓
-Notification
-  ↓
-FAIL
-  ↓
-Retry asynchronously
-```
-
-### Kafka unavailable
-
-Financial database transaction must remain safe.
-
-The outbox record remains available for later publishing.
+- No negative balance
+- No duplicate transaction
+- No duplicate ledger
+- No wallet limit bypass
+- No lost update
+- No inconsistent final balance
 
 ---
 
-## 25. Performance Requirements
+## 36. CI Pipeline
 
-Initial targets:
+Every pull request should execute:
 
-| Operation            | Target |
-| -------------------- | -----: |
-| Wallet read          | <100ms |
-| Standard transaction | <300ms |
-| Risk assessment      | <200ms |
-| Internal API         | <200ms |
-| Event processing     |    <2s |
+- `gofmt`
+- `go vet`
+- `golangci-lint`
+- Unit tests
+- Integration tests
+- Build
 
-These are engineering targets rather than hard SLA commitments.
-
-The system must prioritize **financial correctness over raw throughput**.
+Docker build should also be validated.
 
 ---
 
-## 26. Deployment
+## 37. Docker
 
-Development environment:
+Production-oriented image requirements:
 
-```text
-Docker Compose
-│
-├── PostgreSQL
-├── Redis
-├── Go Core
-├── Java Platform
-└── Kafka
-```
+- Multi-stage build
+- Minimal runtime image
+- Non-root user
+- No hardcoded secrets
+- Healthcheck
+- Environment-based configuration
 
-Kafka is added only from the event-driven sprint onward.
-
-Production deployment can later evolve toward:
-
-```text
-                    Load Balancer
-                         │
-                  ┌──────┴──────┐
-                  ▼             ▼
-               Go Core       Go Core
-                  │             │
-                  └──────┬──────┘
-                         │
-                      Kafka
-                         │
-             ┌───────────┼───────────┐
-             ▼           ▼           ▼
-           Java        Java        Java
-           Risk        Fraud       Recon
-```
+Docker Compose remains primarily a local-development tool.
 
 ---
 
-## 27. Architecture Principles
+## 38. Configuration
 
-### Principle 1 — Financial truth stays in Go/PostgreSQL
-No secondary service becomes the authority for wallet balances.
+Required configuration categories:
 
-### Principle 2 — Java does not own money
-Java can recommend, evaluate, orchestrate, and analyze. Go commits financial state.
+- Application
+- Database
+- Redis
+- JWT
+- Password hashing
+- Rate limiting
+- HTTP server
+- Observability
 
-### Principle 3 — Transactions are immutable
-Historical financial records are not rewritten.
-
-### Principle 4 — Events are supplementary
-Events communicate what happened. They do not replace the financial database as the source of truth.
-
-### Principle 5 — Start synchronous, evolve asynchronous
-Don't introduce Kafka merely because V2 uses multiple languages.
-
-### Principle 6 — Correctness before scale
-Financial correctness is more important than maximizing throughput.
-
-### Principle 7 — Services have explicit ownership
-Avoid shared mutable domain ownership between Go and Java.
+Startup must fail fast when required configuration is missing or invalid.
 
 ---
 
-## 28. V2 Evolution Path
+## 39. Migration Strategy
 
-```text
-Sprint 2.1
-Foundation
-    ↓
-Sprint 2.2
-Payment + Merchant
-    ↓
-Sprint 2.3
-Risk
-    ↓
-Sprint 2.4
-Fraud
-    ↓
-Sprint 2.5
-Refund
-    ↓
-Sprint 2.6
-Events + Kafka
-    ↓
-Sprint 2.7
-Reconciliation
-    ↓
-Sprint 2.8
-Production Hardening
-```
+Database migrations must be:
+
+- Versioned
+- Ordered
+- Repeatable through migration tooling
+- Applied before application startup in deployment
+- Backward-compatible where required during rolling deployments
+
+V2 schema changes must not silently modify existing V1 data.
 
 ---
 
-## 29. Future Compatibility
+## 40. Backward Compatibility
 
-The V2 architecture must allow future versions to introduce:
+Non-breaking V1 endpoints should remain compatible unless explicitly documented.
 
-```text
-V3
-├── External Payment Providers
-├── Bank Integration
-├── Payouts
-├── Payment Links
-├── Subscriptions
-├── Multi-Currency
-└── Developer APIs
-```
+Breaking changes require:
 
-and potentially V4:
-
-```text
-V4
-├── Advanced Fraud Detection
-├── ML Risk Models
-├── Automated Financial Operations
-├── Intelligent Reconciliation
-└── Predictive Analytics
-```
-
-V2 must not tightly couple itself to these future features.
+- API versioning decision
+- OpenAPI update
+- Migration notes
+- Client impact documentation
 
 ---
 
-## 30. Final Architecture Decision
+## 41. Security Principles
 
-The fundamental architecture decision for Bastion V2 is:
+V2 follows:
 
-```text
-                 ┌──────────────────────┐
-                 │      BASTION V2      │
-                 └──────────┬───────────┘
-                            │
-             ┌──────────────┴──────────────┐
-             │                             │
-       ┌─────▼─────┐                 ┌─────▼─────┐
-       │  GO CORE  │                 │   JAVA    │
-       │            │                 │ PLATFORM  │
-       ├────────────┤                 ├───────────┤
-       │ Wallet     │                 │ Risk      │
-       │ Payment    │                 │ Fraud     │
-       │ Transfer   │                 │ Merchant  │
-       │ Ledger     │                 │ Workflow  │
-       │ Refund     │                 │ Recon     │
-       └─────┬──────┘                 └─────┬─────┘
-             │                              │
-             └──────────────┬───────────────┘
-                            │
-                         Events
-                            │
-                         Kafka
-                            │
-                     Async Processing
-```
+- Least privilege
+- Fail safely
+- Defense in depth
+- Database-enforced invariants
+- Never trust client state
+- Never expose internal models
 
-**Core rule:**
+Financial correctness must not depend solely on application-level validation.
 
-> **Go owns financial truth. Java owns financial intelligence.**
+---
+
+## 42. V2 Technical Definition of Done
+
+The implementation is technically complete when:
+
+- Application compiles
+- Unit tests pass
+- Integration tests pass
+- Concurrency tests pass
+- Linter passes
+- `go vet` passes
+- Docker build succeeds
+- Database migrations succeed
+- JWT validation is hardened
+- RBAC works
+- Rate limiting works
+- Financial operations are atomic
+- Idempotency is enforced
+- Ledger invariants hold
+- API errors are standardized
+- Health checks work
+- Graceful shutdown works
+- Structured logs exist
+- Documentation matches implementation

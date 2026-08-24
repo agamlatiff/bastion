@@ -1,494 +1,806 @@
-# Bastion V2 — Task Tracker
+# Bastion V2 — Full Task Breakdown
 
-> **Author:** Agam Latiff  
-> **Version:** 2.0  
-> **Status:** Active  
-> **Convention:** `[x]` completed, `[/]` in progress, `[ ]` not started  
-> **Architecture:** Go Core + Java Platform  
-> **Database:** PostgreSQL 16  
-> **Cache:** Redis 7  
-> **Messaging:** Kafka (Sprint 2.6+)  
+**Goal:** Transform Bastion V1 into a more **secure, correct, testable, and production-ready** financial backend without a total architecture rewrite.
+
+> **Convention:** `[x]` completed, `[/]` in progress, `[ ]` not started
 
 ---
 
-# Sprint 2.1 — Foundation & Java Platform Setup
+## Sprint 0 — V2 Foundation & Baseline
 
-**Primary:** Go + Java
+### 0.1 Repository baseline
 
-Establish the multi-service architecture, containerization, and inter-service communication baseline for Bastion V2.
+* [ ] Review all V1 endpoints and behavior
+* [ ] Document known bugs from V1
+* [ ] Freeze V1 behavior that remains valid
+* [ ] Create V2 branch
+* [ ] Create V2 changelog
+* [ ] Mark breaking vs non-breaking changes
 
-### Project & Service Structure
+### 0.2 Development tooling
 
-* [ ] Reorganize project into multi-service workspace:
-  ```text
-  services/
-  ├── core/        # Go (Gin, Clean Architecture)
-  └── platform/    # Java (Spring Boot)
-  ```
-* [ ] Initialize Spring Boot project (`services/platform/`)
-  * [ ] Configure Maven / Gradle dependencies
-  * [ ] Configure PostgreSQL datasource & connection pooling
-  * [ ] Configure Redis client
-  * [ ] Configure application properties & environment bindings
-* [ ] Docker & Local Infrastructure:
-  * [ ] Update `docker-compose.yml` to include Go Core and Java Platform containers
-  * [ ] Create multi-stage `Dockerfile` for Go Core
-  * [ ] Create multi-stage `Dockerfile` for Java Platform
+* [ ] Standardize Go version
+* [ ] Configure `gofmt`
+* [ ] Configure `go vet`
+* [ ] Add `golangci-lint`
+* [ ] Add Makefile commands
+* [ ] Add local development commands
+* [ ] Add test command
+* [ ] Add migration command
 
-### Inter-Service Communication & Security
+### 0.3 Configuration
 
-* [ ] Define internal REST API contracts (`/internal/v1/*`)
-* [ ] Implement internal service authentication (API key / shared secret / HMAC)
-* [ ] Standardize error response envelope across Go and Java
-* [ ] Implement `request_id` propagation middleware in both services
-* [ ] Implement health check endpoints (`/health`) in Go and Java
+* [ ] Centralize environment configuration
+* [ ] Validate required environment variables
+* [ ] Separate development/test configuration
+* [ ] Remove hardcoded secrets
+* [ ] Define JWT configuration
+* [ ] Define Redis configuration
+* [ ] Define PostgreSQL configuration
 
-### Testing
-
-* [ ] Spring Boot application context load test
-* [ ] Go $\leftrightarrow$ Java internal HTTP ping test
-* [ ] Docker Compose end-to-end service boot test
+**Deliverable:** V2 development baseline.
 
 ---
 
-# Sprint 2.2 — Merchant & Payment Requests
+## Sprint 1 — Security Hardening
 
-**Primary:** Go
+### 1.1 User/API data isolation
 
-Introduce merchant accounts and payment request lifecycle into Go Core.
+* [ ] Create `UserResponse` DTO
+* [ ] Ensure `PasswordHash` never appears in JSON
+* [ ] Review all user-related responses
+* [ ] Separate domain models from API DTOs
+* [ ] Add response mapping layer
+* [ ] Add regression test for password hash leakage
 
-### Database
-
-* [ ] Database migration: `merchants` table
-* [ ] Database migration: `payments` table
-* [ ] Indexes on `merchant_id`, `customer_id`, `reference`, `status`
-* [ ] Foreign keys and CHECK constraints (`status IN ('pending', 'active', 'suspended')`)
-
-### Domain Layer (Go)
-
-* [ ] `domain/merchant.go` — `Merchant` entity, `CreateMerchantRequest`, `MerchantResponse`
-* [ ] `domain/payment.go` — `Payment` entity, `CreatePaymentRequest`, `PaymentResponse`, status enums
-
-### Repository Layer (Go)
-
-* [ ] `MerchantRepository` interface + implementation:
-  * [ ] `Create` — Insert merchant profile linked to `user_id`
-  * [ ] `FindByID` — Query merchant by UUID
-  * [ ] `FindByUserID` — Query merchant by user UUID
-  * [ ] `UpdateStatus` — Update merchant status (`pending`, `active`, `suspended`)
-* [ ] `PaymentRepository` interface + implementation:
-  * [ ] `Create` — Insert payment request with unique `reference`
-  * [ ] `FindByID` — Query payment by UUID
-  * [ ] `FindByReference` — Query payment by reference code
-  * [ ] `UpdateStatus` — Update payment lifecycle status
-
-### Service Layer (Go)
-
-* [ ] `MerchantService`:
-  * [ ] Register merchant profile
-  * [ ] Activate / suspend merchant account
-  * [ ] Verify merchant status before accepting payments
-* [ ] `PaymentService`:
-  * [ ] Create payment request with amount, merchant ID, reference, and expiration timestamp
-  * [ ] Validate active merchant status and positive amount
-  * [ ] Check expiration on payment retrieval
-
-### API Layer (Go)
+Acceptance criteria:
 
 ```text
-POST /api/v1/merchants
-GET  /api/v1/merchants/me
-POST /api/v1/merchants/:id/activate
-POST /api/v1/merchants/:id/suspend
-
-POST /api/v1/payments
-GET  /api/v1/payments/:id
-POST /api/v1/payments/:id/cancel
+GET /profile must NEVER return:
+{
+  "password_hash": "..."
+}
 ```
 
-### Testing
+---
 
-* [ ] Merchant registration and activation flow
-* [ ] Duplicate merchant prevention per user
-* [ ] Suspended merchant blocked from creating payment requests
-* [ ] Payment request generation with unique reference and expiration check
+### 1.2 Password security
+
+* [ ] Make bcrypt cost explicit
+* [ ] Centralize password hashing
+* [ ] Centralize password comparison
+* [ ] Validate password requirements
+* [ ] Prevent obviously invalid passwords
+* [ ] Add password hashing tests
+* [ ] Add wrong-password tests
 
 ---
 
-# Sprint 2.3 — Risk Assessment Engine
+### 1.3 JWT hardening
 
-**Primary:** Java + Go Integration
+* [ ] Define typed JWT claims
+* [ ] Add `sub`
+* [ ] Add `jti`
+* [ ] Add `iat`
+* [ ] Add `exp`
+* [ ] Validate signing algorithm explicitly
+* [ ] Validate token expiration
+* [ ] Validate required claims
+* [ ] Reject malformed claims
+* [ ] Reject invalid signing method
+* [ ] Add JWT unit tests
+* [ ] Add expired-token tests
+* [ ] Add malformed-token tests
 
-Implement the deterministic Risk Engine in Java and integrate it synchronously into the Go payment flow.
-
-### Database
-
-* [ ] Database migration: `risk_assessments` table
-* [ ] Indexes on `transaction_id`, `user_id`, and `created_at`
-* [ ] CHECK constraints on `risk_score (0-100)` and `decision ('approve', 'monitor', 'review')`
-
-### Java Risk Platform (`services/platform/`)
-
-* [ ] Domain: `RiskAssessment`, `RiskDecision`, `RiskRule`, `RiskReason`
-* [ ] Composable Rule Pipeline:
-  * [ ] `AmountRule` — Flags high single-transaction amounts
-  * [ ] `VelocityRule` — Evaluates transaction frequency against Redis counters
-  * [ ] `TimeRule` — Evaluates unusual transaction hours
-  * [ ] `RecipientRule` — Flags first-time / new recipient interactions
-  * [ ] `HistoryRule` — Evaluates historical failure rates and KYC status
-* [ ] `RiskEngineService` — Aggregates rule scores and outputs decision:
-  * [ ] `0 – 30`: `APPROVE`
-  * [ ] `31 – 70`: `MONITOR`
-  * [ ] `71 – 100`: `REVIEW`
-* [ ] Internal Controller: `POST /internal/v1/risk/assess`
-
-### Go Core Integration
-
-* [ ] Implement `RiskClient` in Go Core to call Java `/internal/v1/risk/assess`
-* [ ] Integrate risk evaluation step before committing payment financial transactions
-* [ ] Handle Java service timeouts and fallback behavior (block/pending rather than silent execution)
-
-### Testing
-
-* [ ] Low-risk transaction $\rightarrow$ `APPROVE` (Score $\le 30$)
-* [ ] High-value transaction $\rightarrow$ `MONITOR` / `REVIEW`
-* [ ] High velocity spike $\rightarrow$ `REVIEW`
-* [ ] Multiple compounding risk factors scoring
-* [ ] Graceful failure handling when Java Risk service is unreachable
-
----
-
-# Sprint 2.4 — Fraud Detection & Case Management
-
-**Primary:** Java
-
-Implement transaction monitoring, velocity tracking, and fraud case management in Java.
-
-### Database
-
-* [ ] Database migration: `fraud_cases` table
-* [ ] Indexes on `transaction_id`, `user_id`, and `status`
-* [ ] CHECK constraints on `status IN ('open', 'under_review', 'confirmed', 'dismissed')`
-
-### Java Fraud Service (`services/platform/`)
-
-* [ ] Domain: `FraudCase`, `FraudStatus`, `FraudReason`
-* [ ] Automated Case Creation:
-  * [ ] Automatically trigger fraud cases when risk score $> 70$ or velocity threshold exceeded
-  * [ ] Link case to `risk_assessment_id`, `transaction_id`, and `user_id`
-* [ ] Fraud Case Lifecycle & State Machine:
-  ```text
-  OPEN ──► UNDER_REVIEW ──► CONFIRMED / DISMISSED
-  ```
-* [ ] Case Management APIs:
-  ```text
-  GET  /internal/v1/fraud/cases
-  GET  /internal/v1/fraud/cases/:id
-  POST /internal/v1/fraud/cases/:id/review
-  POST /internal/v1/fraud/cases/:id/confirm
-  POST /internal/v1/fraud/cases/:id/dismiss
-  ```
-
-### Testing
-
-* [ ] High-risk transaction automatically spawns `OPEN` fraud case
-* [ ] Operator workflow: `OPEN` $\rightarrow$ `UNDER_REVIEW` $\rightarrow$ `CONFIRMED`
-* [ ] Operator workflow: `OPEN` $\rightarrow$ `UNDER_REVIEW` $\rightarrow$ `DISMISSED`
-* [ ] Duplicate fraud case prevention for the same transaction
-
----
-
-# Sprint 2.5 — Payment Lifecycle & Refund Engine
-
-**Primary:** Go
-
-Complete the payment state machine and implement the atomic refund engine in Go Core.
-
-### Database
-
-* [ ] Database migration: `refunds` table
-* [ ] Indexes on `payment_id`, `transaction_id`, `status`
-* [ ] CHECK constraints on `amount > 0` and `status IN ('pending', 'completed', 'failed')`
-
-### Payment State Machine (Go)
+Target:
 
 ```text
-                  ┌────────────┐
-                  │  PENDING   │
-                  └─────┬──────┘
+JWT
+├── sub
+├── jti
+├── iat
+└── exp
+```
+
+---
+
+### 1.4 Token revocation
+
+* [ ] Change blacklist design from raw JWT to `jti`
+* [ ] Store revoked JTI in Redis
+* [ ] TTL blacklist entry based on token expiration
+* [ ] Check revocation in auth middleware
+* [ ] Add logout test
+* [ ] Add revoked-token test
+* [ ] Add expired blacklist cleanup behavior
+
+---
+
+### 1.5 Authentication abuse protection
+
+* [ ] Add login rate limiting
+* [ ] Add registration rate limiting
+* [ ] Define rate-limit policy
+* [ ] Define Redis key structure
+* [ ] Return consistent rate-limit error
+* [ ] Add rate-limit tests
+
+Example:
+
+```text
+rate-limit:login:{ip}
+rate-limit:register:{ip}
+```
+
+---
+
+## Sprint 2 — Authorization & KYC Security
+
+### 2.1 RBAC
+
+* [ ] Define application roles
+* [ ] Define role hierarchy/permissions
+* [ ] Add role to authenticated context
+* [ ] Create authorization middleware
+* [ ] Create `RequireRole`
+* [ ] Add unauthorized tests
+* [ ] Add forbidden tests
+
+Initial roles:
+
+```text
+USER
+ADMIN
+KYC_REVIEWER
+```
+
+---
+
+### 2.2 KYC authorization
+
+* [ ] Protect KYC review endpoint
+* [ ] Require reviewer/admin permission
+* [ ] Prevent normal users from reviewing KYC
+* [ ] Validate KYC state transition
+* [ ] Prevent double approval
+* [ ] Prevent invalid rejection
+* [ ] Add audit event for KYC review
+* [ ] Add authorization tests
+
+State machine:
+
+```text
+PENDING
+  ├── APPROVED
+  └── REJECTED
+```
+
+---
+
+### 2.3 KYC data protection
+
+* [ ] Review sensitive KYC fields
+* [ ] Minimize KYC data returned through API
+* [ ] Avoid exposing sensitive identifiers
+* [ ] Design future encryption strategy
+* [ ] Add authorization around KYC retrieval
+* [ ] Add KYC access audit logging
+
+---
+
+## Sprint 3 — Financial Correctness
+
+> This is the **core sprint** of V2.
+
+### 3.1 Wallet invariants
+
+Define:
+
+```text
+balance >= 0
+balance <= max_balance_limit
+```
+
+* [ ] Define wallet invariants
+* [ ] Enforce balance constraints
+* [ ] Enforce max balance atomically
+* [ ] Add DB constraints where appropriate
+* [ ] Add negative balance protection
+* [ ] Add invariant tests
+
+---
+
+### 3.2 Atomic Top-Up
+
+Current problem:
+
+```text
+SELECT balance
+      ↓
+check limit
+      ↓
+UPDATE
+```
+
+V2 target:
+
+```text
+Atomic DB operation
+```
+
+Tasks:
+
+* [ ] Move limit validation into DB transaction
+* [ ] Lock wallet where necessary
+* [ ] Perform atomic balance update
+* [ ] Insert transaction record
+* [ ] Insert ledger entry
+* [ ] Commit as one transaction
+* [ ] Rollback on failure
+* [ ] Test max balance
+* [ ] Test concurrent top-ups
+
+Acceptance:
+
+```text
+Concurrent top-ups MUST NOT exceed wallet limit.
+```
+
+---
+
+## Sprint 4 — Transfer Correctness
+
+### 4.1 Transfer validation
+
+* [ ] Validate sender wallet
+* [ ] Validate receiver wallet
+* [ ] Prevent self-transfer
+* [ ] Validate positive amount
+* [ ] Validate sufficient balance
+* [ ] Validate wallet limits
+* [ ] Validate user status
+* [ ] Validate KYC requirement if applicable
+
+---
+
+### 4.2 Transaction locking
+
+* [ ] Lock sender wallet
+* [ ] Lock receiver wallet
+* [ ] Lock wallets in deterministic order
+* [ ] Prevent deadlock
+* [ ] Update balances atomically
+* [ ] Insert transaction
+* [ ] Insert sender ledger entry
+* [ ] Insert receiver ledger entry
+* [ ] Commit transaction
+
+---
+
+### 4.3 Concurrent transfers
+
+Test scenarios:
+
+```text
+A → B
+A → C
+A → D
+```
+
+simultaneously.
+
+* [ ] Add concurrency test
+* [ ] Verify balance correctness
+* [ ] Verify no negative balance
+* [ ] Verify no lost update
+* [ ] Verify ledger consistency
+* [ ] Verify transaction count
+
+---
+
+## Sprint 5 — Idempotency
+
+### 5.1 Idempotency specification
+
+Define:
+
+```text
+same user
++
+same operation
++
+same idempotency key
+=
+same transaction/result
+```
+
+And:
+
+```text
+different user
++
+same key
+=
+independent operation
+```
+
+---
+
+### 5.2 Idempotency storage
+
+* [ ] Define idempotency key format
+* [ ] Namespace Redis keys by user
+* [ ] Add operation namespace
+* [ ] Define TTL
+* [ ] Define request/result storage
+* [ ] Define DB uniqueness strategy
+* [ ] Define conflict behavior
+
+Example:
+
+```text
+idempotency:{user_id}:{operation}:{key}
+```
+
+---
+
+### 5.3 Idempotent transaction behavior
+
+* [ ] Check existing transaction
+* [ ] Return existing transaction when applicable
+* [ ] Handle concurrent duplicate requests
+* [ ] Prevent duplicate balance mutation
+* [ ] Prevent duplicate ledger entries
+* [ ] Handle Redis miss
+* [ ] Handle Redis failure
+* [ ] Make PostgreSQL source of truth
+
+---
+
+### 5.4 Idempotency tests
+
+* [ ] Same key / same request
+* [ ] Same key / different request
+* [ ] Same key / different user
+* [ ] Concurrent duplicate requests
+* [ ] Redis unavailable
+* [ ] DB duplicate constraint
+* [ ] Retry after timeout
+
+---
+
+## Sprint 6 — Ledger Integrity
+
+### 6.1 Ledger model
+
+Define ledger semantics:
+
+```text
+DEBIT
+CREDIT
+```
+
+* [ ] Define ledger invariants
+* [ ] Define transaction-to-ledger relationship
+* [ ] Define balance-after semantics
+* [ ] Define append-only behavior
+
+---
+
+### 6.2 Ledger constraints
+
+* [ ] Prevent orphan ledger entries
+* [ ] Add foreign keys
+* [ ] Add appropriate indexes
+* [ ] Prevent invalid entry types
+* [ ] Prevent invalid amounts
+* [ ] Prevent ledger mutation where possible
+
+---
+
+### 6.3 Ledger consistency
+
+For transfer:
+
+```text
+sender  → DEBIT
+receiver → CREDIT
+```
+
+Tasks:
+
+* [ ] Verify debit == transfer amount
+* [ ] Verify credit == transfer amount
+* [ ] Verify transaction has required ledger entries
+* [ ] Verify successful transaction always has ledger
+* [ ] Add consistency tests
+
+---
+
+## Sprint 7 — Error Architecture
+
+### 7.1 Domain errors
+
+Create typed errors:
+
+```text
+ErrUserNotFound
+ErrInvalidCredentials
+ErrWalletNotFound
+ErrInsufficientFunds
+ErrWalletLimitExceeded
+ErrInvalidAmount
+ErrSelfTransfer
+ErrIdempotencyConflict
+ErrKYCNotFound
+ErrKYCUnauthorized
+ErrInvalidKYCState
+```
+
+---
+
+### 7.2 Error mapping
+
+Define:
+
+```text
+Domain Error
+      ↓
+HTTP Error Code
+      ↓
+API Response
+```
+
+Example:
+
+```json
+{
+  "code": "INSUFFICIENT_FUNDS",
+  "message": "Insufficient wallet balance"
+}
+```
+
+Tasks:
+
+* [ ] Define error response schema
+* [ ] Define error codes
+* [ ] Create centralized error handler
+* [ ] Map domain errors
+* [ ] Hide internal errors
+* [ ] Add error tests
+
+---
+
+## Sprint 8 — API Consistency
+
+### 8.1 Response format
+
+Standardize:
+
+```text
+success response
+error response
+pagination response
+```
+
+---
+
+### 8.2 Validation
+
+* [ ] Validate request body
+* [ ] Validate UUID
+* [ ] Validate email
+* [ ] Validate amount
+* [ ] Validate idempotency key
+* [ ] Validate enum values
+* [ ] Validate pagination
+* [ ] Normalize inputs
+
+---
+
+### 8.3 HTTP semantics
+
+Review every endpoint:
+
+* [ ] HTTP method
+* [ ] Status code
+* [ ] Request schema
+* [ ] Response schema
+* [ ] Error schema
+* [ ] Authentication requirement
+* [ ] Authorization requirement
+
+---
+
+## Sprint 9 — Unit Testing
+
+> This must be a **massive improvement** over V1.
+
+### Auth
+
+* [ ] Register success
+* [ ] Duplicate email
+* [ ] Invalid email
+* [ ] Weak password
+* [ ] Login success
+* [ ] Wrong password
+* [ ] Invalid token
+* [ ] Expired token
+* [ ] Revoked token
+
+### Wallet
+
+* [ ] Get wallet
+* [ ] Top-up
+* [ ] Invalid amount
+* [ ] Max limit
+* [ ] Transfer
+* [ ] Insufficient funds
+* [ ] Self-transfer
+* [ ] Invalid receiver
+* [ ] Idempotency
+
+### KYC
+
+* [ ] Submit
+* [ ] Duplicate submission
+* [ ] Approve
+* [ ] Reject
+* [ ] Invalid state
+* [ ] Unauthorized reviewer
+
+---
+
+## Sprint 10 — Integration Testing
+
+Use real:
+
+```text
+PostgreSQL
+Redis
+```
+
+Tasks:
+
+* [ ] PostgreSQL test environment
+* [ ] Redis test environment
+* [ ] Migration setup
+* [ ] Repository integration tests
+* [ ] Transaction rollback tests
+* [ ] Redis integration tests
+* [ ] Auth integration tests
+* [ ] Wallet integration tests
+* [ ] KYC integration tests
+
+---
+
+## Sprint 11 — Concurrency Testing
+
+> One of Bastion V2's key differentiators.
+
+Tests:
+
+```text
+100 concurrent top-ups
+100 concurrent transfers
+100 duplicate idempotency requests
+```
+
+Verify:
+
+* [ ] No negative balances
+* [ ] No lost updates
+* [ ] No duplicate transaction
+* [ ] No duplicate ledger
+* [ ] No balance limit violation
+* [ ] No deadlock
+* [ ] Correct final balance
+
+---
+
+## Sprint 12 — Middleware & HTTP Hardening
+
+* [ ] Request ID middleware
+* [ ] Structured request logging
+* [ ] Recovery middleware
+* [ ] Request timeout
+* [ ] Body size limit
+* [ ] CORS configuration
+* [ ] Security headers
+* [ ] Rate limiting
+* [ ] Authentication middleware
+* [ ] Authorization middleware
+
+---
+
+## Sprint 13 — Observability
+
+### Logging
+
+* [ ] Structured JSON logging
+* [ ] Request ID
+* [ ] User ID where safe
+* [ ] Transaction ID
+* [ ] Error code
+* [ ] Latency
+
+### Metrics
+
+* [ ] HTTP request count
+* [ ] HTTP latency
+* [ ] Error rate
+* [ ] Login failures
+* [ ] Transfer count
+* [ ] Transfer failures
+* [ ] Top-up count
+* [ ] DB latency
+* [ ] Redis latency
+
+---
+
+## Sprint 14 — Application Lifecycle
+
+* [ ] Graceful shutdown
+* [ ] DB connection cleanup
+* [ ] Redis connection cleanup
+* [ ] HTTP server shutdown
+* [ ] Startup validation
+* [ ] Readiness endpoint
+* [ ] Liveness endpoint
+* [ ] Timeout configuration
+
+---
+
+## Sprint 15 — Docker & Environment
+
+* [ ] Multi-stage Docker build
+* [ ] Smaller production image
+* [ ] Non-root container
+* [ ] Environment-based configuration
+* [ ] Remove development secrets
+* [ ] Docker healthchecks
+* [ ] PostgreSQL healthcheck
+* [ ] Redis healthcheck
+* [ ] Application healthcheck
+* [ ] Separate local/prod configuration
+
+---
+
+## Sprint 16 — CI/CD
+
+Pipeline:
+
+```text
+Push
+ ↓
+Format
+ ↓
+Vet
+ ↓
+Lint
+ ↓
+Unit Test
+ ↓
+Integration Test
+ ↓
+Build
+ ↓
+Docker Build
+```
+
+Tasks:
+
+* [ ] GitHub Actions
+* [ ] Go formatting check
+* [ ] Go vet
+* [ ] Linter
+* [ ] Unit tests
+* [ ] Integration tests
+* [ ] Build verification
+* [ ] Docker build verification
+* [ ] Migration verification
+
+---
+
+## Sprint 17 — Documentation
+
+Update:
+
+* [ ] V2 PRD
+* [ ] V2 Tech Spec
+* [ ] Database documentation
+* [ ] API documentation
+* [ ] Authentication documentation
+* [ ] Authorization documentation
+* [ ] Idempotency documentation
+* [ ] Transaction behavior
+* [ ] Ledger behavior
+* [ ] Error codes
+* [ ] Testing strategy
+* [ ] Deployment documentation
+* [ ] Architecture decision records
+
+---
+
+## Sprint 18 — V2 Final Audit
+
+Before declaring V2 complete:
+
+### Security
+
+* [ ] No password hash leakage
+* [ ] JWT hardened
+* [ ] RBAC enforced
+* [ ] KYC protected
+* [ ] Secrets removed
+* [ ] Rate limiting active
+
+### Financial
+
+* [ ] No negative balance
+* [ ] No wallet limit bypass
+* [ ] No duplicate transfer
+* [ ] No duplicate top-up
+* [ ] Ledger consistent
+* [ ] Transactions atomic
+
+### Reliability
+
+* [ ] Redis failure handled
+* [ ] DB failure handled
+* [ ] Transaction rollback verified
+* [ ] Graceful shutdown verified
+* [ ] Healthchecks working
+
+### Testing
+
+* [ ] Unit tests passing
+* [ ] Integration tests passing
+* [ ] API tests passing
+* [ ] Concurrency tests passing
+* [ ] Regression tests passing
+
+### Engineering
+
+* [ ] Linter clean
+* [ ] `go vet` clean
+* [ ] CI green
+* [ ] Docker build successful
+* [ ] Documentation synchronized
+
+---
+
+## Definition of Done — Bastion V2
+
+V2 is only considered complete when:
+
+```text
+                    BASTION V2
                         │
-                 Risk evaluation
+          ┌─────────────┼─────────────┐
+          │             │             │
+       SECURITY     CORRECTNESS    TESTING
+          │             │             │
+        RBAC       Atomic Tx       Unit
+        JWT        Idempotency     Integration
+        DTO        Ledger          Concurrency
+        Rate       Locking
+          │             │             │
+          └─────────────┼─────────────┘
                         │
-              ┌─────────┴─────────┐
-              ▼                   ▼
-         AUTHORIZED             FAILED
-              │
-              ▼
-          COMPLETED
-              │
-              ▼
-           REFUNDED
+                 PRODUCTION READY
 ```
 
-* [ ] Enforce valid state transitions; reject invalid transitions (`COMPLETED` $\rightarrow$ `PENDING`, `REFUNDED` $\rightarrow$ `COMPLETED`)
-* [ ] Atomic payment execution:
-  * [ ] Lock customer wallet and merchant wallet with `SELECT ... FOR UPDATE` (ascending UUID order)
-  * [ ] Validate customer balance and merchant wallet limit
-  * [ ] Debit customer balance, credit merchant balance
-  * [ ] Insert `transactions` record (`type = 'payment'`)
-  * [ ] Insert `ledger_entries` (debit + credit)
-  * [ ] Update `payments` status $\rightarrow$ `completed`
+---
 
-### Refund Engine (Go)
-
-* [ ] `domain/refund.go` — `Refund` entity, `CreateRefundRequest`, `RefundResponse`
-* [ ] `RefundRepository` — CRUD and aggregate query `GetTotalRefundedAmount(paymentID)`
-* [ ] `RefundService`:
-  * [ ] Validate original payment is in `completed` status
-  * [ ] Support full and partial refunds
-  * [ ] Prevent over-refund (`SUM(completed_refunds) + requested_amount <= payment.amount`)
-  * [ ] Atomic financial reversal:
-    * [ ] Lock merchant wallet and customer wallet (`SELECT ... FOR UPDATE`)
-    * [ ] Debit merchant wallet, credit customer wallet
-    * [ ] Insert `transactions` record (`type = 'refund'`)
-    * [ ] Insert `ledger_entries` (debit merchant + credit customer)
-    * [ ] Update payment status to `refunded` if fully refunded
-
-### API Layer (Go)
+## Implementation Order
 
 ```text
-POST /api/v1/payments/:id/pay
-POST /api/v1/payments/:id/refund
-GET  /api/v1/refunds/:id
+1. Finalize V2 Tasks          ← NOW
+2. API Architecture
+3. ERD + database changes
+4. Technical implementation plan
+5. Coding Sprint 0            🚀
 ```
 
-### Testing
-
-* [ ] Full payment execution end-to-end
-* [ ] Full refund execution (original payment marked `refunded`)
-* [ ] Multiple partial refunds (e.g., Rp 1,000,000 $\rightarrow$ Rp 300,000 + Rp 200,000)
-* [ ] Over-refund rejection (attempting to refund more than original payment amount)
-* [ ] Concurrent refund race condition protection
-
----
-
-# Sprint 2.6 — Event-Driven Architecture (Outbox + Kafka)
-
-**Primary:** Go + Java
-
-Introduce domain events and transactional outbox pattern to decouple asynchronous downstream processing.
-
-### Database
-
-* [ ] Database migration: `outbox_events` table
-* [ ] Index on `(status, created_at)`
-
-### Go Core (Producer & Outbox)
-
-* [ ] Domain event model (`EventID`, `AggregateType`, `AggregateID`, `EventType`, `Payload`, `Timestamp`)
-* [ ] Implement Transactional Outbox:
-  * [ ] Write `outbox_events` record inside the **same PostgreSQL transaction** as financial mutations
-* [ ] Background Outbox Worker:
-  * [ ] Polls pending events from `outbox_events`
-  * [ ] Publishes to Kafka topics
-  * [ ] Marks status $\rightarrow$ `published` with `published_at` timestamp
-  * [ ] Implements exponential backoff retry for failed publishing
-
-### Kafka Infrastructure
-
-* [ ] Add Kafka & Zookeeper / KRaft to `docker-compose.yml`
-* [ ] Define topics:
-  * [ ] `bastion.payments`
-  * [ ] `bastion.transfers`
-  * [ ] `bastion.kyc`
-
-### Java Platform (Consumer)
-
-* [ ] Configure Spring Kafka consumer
-* [ ] Implement Consumer Idempotency:
-  * [ ] Check against `processed_events` table / Redis before handling
-* [ ] Implement event listeners for asynchronous risk re-assessment and fraud triggers
-
-### Testing
-
-* [ ] Outbox event created atomically with payment transaction
-* [ ] Outbox publisher reliably delivers messages to Kafka
-* [ ] Kafka consumer processes events idempotently (duplicate message produces single effect)
-* [ ] Outbox worker recovers and retries when Kafka broker temporarily disconnects
-
----
-
-# Sprint 2.7 — Financial Reconciliation & Notifications
-
-**Primary:** Java
-
-Implement batch reconciliation against external provider statements and asynchronous notification dispatch.
-
-### Database
-
-* [ ] Database migration: `reconciliation_runs` table
-* [ ] Database migration: `reconciliation_items` table
-* [ ] Database migration: `notifications` table
-
-### Reconciliation Engine (`services/platform/`)
-
-* [ ] Domain: `ReconciliationRun`, `ReconciliationItem`, Discrepancy Enums
-* [ ] Workflow:
-  ```text
-  External Records ──► Ingest & Normalize ──► Match against Ledger ──► Discrepancy Report
-  ```
-* [ ] Matching Logic:
-  * [ ] `MATCHED` — Exact match on reference and amount
-  * [ ] `AMOUNT_MISMATCH` — Reference matches, amounts differ
-  * [ ] `MISSING_INTERNAL` — Present in external statement, missing in Bastion ledger
-  * [ ] `MISSING_EXTERNAL` — Present in Bastion ledger, missing in external statement
-* [ ] Discrepancy summary & reporting API (`/internal/v1/reconciliation/*`)
-
-### Notification Platform (`services/platform/`)
-
-* [ ] Domain: `Notification`, Channels (`email`, `in_app`)
-* [ ] Kafka event listener listening to `PAYMENT_COMPLETED`, `PAYMENT_FAILED`, `PAYMENT_REFUNDED`, `KYC_APPROVED`
-* [ ] Asynchronous notification sender with retry mechanism
-* [ ] Guarantee: Notification failure never impacts or rolls back financial state
-
-### Testing
-
-* [ ] Complete reconciliation run with 100% matched records
-* [ ] Reconciliation run detecting `AMOUNT_MISMATCH` and `MISSING_INTERNAL`
-* [ ] Notification listener successfully dispatches on Kafka payment events
-* [ ] Simulated notification failure does not corrupt financial transactions
-
----
-
-# Sprint 2.8 — Production Hardening & Observability
-
-**Primary:** Go + Java
-
-End-to-end stress testing, distributed tracing, metrics, and security audit.
-
-### Observability & Tracing
-
-* [ ] End-to-end trace ID propagation across Go, Java, PostgreSQL, Kafka, and Redis:
-  ```text
-  request_id ──► payment_id ──► transaction_id ──► event_id
-  ```
-* [ ] Structured JSON logging with unified log levels
-* [ ] Prometheus metrics export (`payment_latency`, `risk_score_distribution`, `fraud_cases_total`)
-* [ ] Health check and readiness probes
-
-### Security Audit
-
-* [ ] Internal service-to-service authentication enforcement
-* [ ] Rate limiting on public Go APIs using Redis token bucket
-* [ ] PII data masking in logs (passwords, card/NIK numbers)
-* [ ] Secure environment variable injection and secret management
-
-### Performance & Resilience Testing
-
-* [ ] 100 concurrent payments stress test (verifying no double-charging or race conditions)
-* [ ] 100 concurrent partial refunds stress test (verifying no over-refund)
-* [ ] Failure injection tests:
-  * [ ] Redis downtime handling
-  * [ ] Java Risk engine timeout handling
-  * [ ] Kafka broker temporary outage recovery
-* [ ] Finalize documentation and update API specs in `openapi.yml`
-
----
-
-# Sprint Dependency Graph
-
-```text
-Sprint 2.1: Foundation & Java Platform
-                  │
-                  ▼
-Sprint 2.2: Merchant & Payment Requests
-                  │
-                  ▼
-Sprint 2.3: Risk Assessment Engine
-                  │
-                  ▼
-Sprint 2.4: Fraud Detection & Monitoring
-                  │
-                  ▼
-Sprint 2.5: Payment Lifecycle & Refund Engine
-                  │
-                  ▼
-Sprint 2.6: Event-Driven Architecture (Outbox + Kafka)
-                  │
-         ┌────────┴────────┐
-         ▼                 ▼
-Sprint 2.7: Recon & Notify
-         │                 │
-         └────────┬────────┘
-                  ▼
-Sprint 2.8: Production Hardening
-```
-
----
-
-# Go vs Java Responsibility Matrix
-
-| Domain / Responsibility | Go Core | Java Platform | Notes |
-|---|:---:|:---:|---|
-| **User Authentication & KYC** | ✅ | ❌ | Auth, JWT, Redis Blacklist |
-| **Wallets & Balances** | ✅ | ❌ | Authoritative balance mutations |
-| **Top-up & P2P Transfers** | ✅ | ❌ | Core money movement |
-| **Double-Entry Ledger** | ✅ | ❌ | Append-only financial truth |
-| **Merchant Management** | ✅ | ❌ | Merchant profiles & wallets |
-| **Payment Execution** | ✅ | ❌ | Debit/credit atomic transaction |
-| **Refund Execution** | ✅ | ❌ | Ledger reversal & balance updates |
-| **Risk Scoring & Rule Pipeline** | ❌ | ✅ | Composable rule engine ($0-100$) |
-| **Fraud Case Management** | ❌ | ✅ | Investigative lifecycle & review |
-| **Reconciliation Engine** | ❌ | ✅ | Batch ledger comparison & discrepancy reports |
-| **Notification Dispatch** | ❌ | ✅ | Async email & in-app delivery |
-| **Domain Event Outbox** | ✅ | ❌ | Transactional outbox in PostgreSQL |
-| **Event Consumer & Workers** | ❌ | ✅ | Kafka async event processing |
-
----
-
-# V2 Definition of Done
-
-V2 is considered complete once this end-to-end flow is fully operational:
-
-```text
-                    CUSTOMER
-                       │
-                       ▼
-                  Create Payment
-                       │
-                       ▼
-                    GO CORE
-                       │
-              ┌────────┴────────┐
-              │                 │
-              ▼                 ▼
-           Payment          Risk Request
-              │                 │
-              │                 ▼
-              │              JAVA
-              │                 │
-              │        ┌────────┼────────┐
-              │        ▼        ▼        ▼
-              │      Risk     Fraud    Rules
-              │        │
-              │        ▼
-              │     Decision
-              │        │
-              └────────┘
-                       │
-                       ▼
-                GO FINANCIAL TX
-                       │
-              ┌────────┼────────┐
-              ▼        ▼        ▼
-            Wallet Transaction Ledger
-                       │
-                       ▼
-                  Outbox Event
-                       │
-                       ▼
-                     Kafka
-              ┌────────┼─────────┐
-              ▼        ▼         ▼
-            Fraud   Notification Recon
-```
+> **Note:** Do not treat all 18 sprints as 18 large PRs. During implementation planning, sprints will be broken down into realistic, incremental tasks/PRs that can be completed one by one.
