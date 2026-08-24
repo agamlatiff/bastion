@@ -159,13 +159,13 @@
   - [x] KYC Submission (record user, id_card_number)
 - [x] Endpoint & Handler: `GET /api/v1/auth/audit-logs`
 
-### Sprint 1.7 — Stress Testing & Race Condition Validation
+### Sprint 1.7 — Stress Testing & Race Condition Validation ✅
 
-- [ ] Write concurrent transfer test (simulate 100 simultaneous requests)
-- [ ] Verify no double-spending under load
-- [ ] Verify deadlock prevention works (A→B and B→A simultaneously)
-- [ ] Verify idempotency under concurrent duplicate requests
-- [ ] Document test results and findings
+- [x] Write concurrent transfer test (simulate 100 simultaneous requests)
+- [x] Verify no double-spending under load
+- [x] Verify deadlock prevention works (A→B and B→A simultaneously)
+- [x] Verify idempotency under concurrent duplicate requests
+- [x] Document test results and findings
 
 ---
 
