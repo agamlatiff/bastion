@@ -102,6 +102,3 @@ func (s *kycService) ReviewKYC(ctx context.Context, kycID string, req *domain.Re
 	// Return KYC new data after update
 	return s.kycRepo.FindByID(ctx, kycID)
 }
-
-
-

@@ -146,7 +146,6 @@ func (h *AuthHandler) GetAuditLogs(c *gin.Context) {
 		return
 	}
 
-	
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
 		"data": gin.H{

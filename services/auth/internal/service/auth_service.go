@@ -3,12 +3,12 @@ package service
 import (
 	"context"
 	"errors"
-	"time"
 	"github.com/agamlatiff/bastion/services/auth/internal/domain"
 	"github.com/agamlatiff/bastion/services/auth/internal/repository"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
+	"time"
 )
 
 type AuthService interface {
@@ -172,7 +172,7 @@ func (s *authService) Logout(ctx context.Context, tokenStr string) error {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("Unexpected signing method")
 		}
-		
+
 		return []byte(s.jwtSecret), nil
 	})
 
@@ -193,7 +193,6 @@ func (s *authService) Logout(ctx context.Context, tokenStr string) error {
 		return errors.New("Invalid exp claims")
 	}
 
-
 	// Checking is there expired date
 	expTime := time.Unix(int64(expFloat), 0)
 	remainingDuration := time.Until(expTime)
@@ -202,6 +201,6 @@ func (s *authService) Logout(ctx context.Context, tokenStr string) error {
 		return nil
 	}
 
-	// Set blacklist token if still have a time 
+	// Set blacklist token if still have a time
 	return s.rdb.Set(ctx, "blacklist:"+tokenStr, "true", remainingDuration).Err()
 }

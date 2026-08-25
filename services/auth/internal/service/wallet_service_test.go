@@ -246,5 +246,3 @@ func TestConcurrentTransfer_Idempotency(t *testing.T) {
 		t.Errorf("Idempotency leak! balance User B should be 50000, but got: %d", walletB.Balance)
 	}
 }
-
-
