@@ -70,8 +70,7 @@ func (s *authService) Register(ctx context.Context, req domain.RegisterRequest) 
 	}
 
 	// Create JWT Token for new user
-	tokenStr, err := s.generateToken(newUser)
-
+	tokenStr, _, err := security.GenerateToken(newUser.ID, newUser.Email, newUser.Tier, s.jwtSecret, s.jwtExpiryHours)
 	if err != nil {
 		return nil, err
 	}
@@ -80,23 +79,6 @@ func (s *authService) Register(ctx context.Context, req domain.RegisterRequest) 
 		Token: tokenStr,
 		User:  newUser.ToUserResponse(),
 	}, nil
-}
-
-func (s *authService) generateToken(user *domain.User) (string, error) {
-
-	// Create payload into JWT Token
-	claims := jwt.MapClaims{
-		"user_id": user.ID,
-		"email":   user.Email,
-		"tier":    user.Tier,
-		"exp":     time.Now().Add(time.Duration(s.jwtExpiryHours) * time.Hour).Unix(),
-	}
-
-	// Create token object with HS256 Algorithm
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Sign token with key secret from .env
-	return token.SignedString([]byte(s.jwtSecret))
 }
 
 func (s *authService) Login(ctx context.Context, req domain.LoginRequest) (*domain.AuthResponse, error) {
@@ -115,8 +97,7 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest) (*doma
 	}
 
 	// If password matches, create new JWT Token
-	tokenStr, err := s.generateToken(user)
-
+	tokenStr, _, err := security.GenerateToken(user.ID, user.Email, user.Tier, s.jwtSecret, s.jwtExpiryHours)
 	if err != nil {
 		return nil, err
 	}
@@ -134,33 +115,13 @@ func (s *authService) ValidateToken(ctx context.Context, tokenStr string) (*doma
 		return nil, errors.New("Token has been logged out")
 	}
 
-	// Parse & verification the stamp HS256 JWT Token
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("Unexpected signing method")
-		}
-		return []byte(s.jwtSecret), nil
-	})
-
-	if err != nil || !token.Valid {
-		return nil, errors.New("Invalid or expired token")
-	}
-
-	// Extract the fill of payload into JWT Token
-	claims, ok := token.Claims.(jwt.MapClaims)
-
-	if !ok {
-		return nil, errors.New("Invalid token claims")
-	}
-
-	userID, ok := claims["user_id"].(string)
-
-	if !ok {
-		return nil, errors.New("Invalid user_id in token")
+	claims, err := security.ParseAndValidateToken(tokenStr, s.jwtSecret)
+	if err != nil {
+		return nil, err
 	}
 
 	// Get profile new user data from database
-	return s.userRepo.FindByID(ctx, userID)
+	return s.userRepo.FindByID(ctx, claims.UserID)
 }
 
 func (s *authService) Logout(ctx context.Context, tokenStr string) error {

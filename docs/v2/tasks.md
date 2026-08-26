@@ -80,19 +80,19 @@ GET /profile must NEVER return:
 
 ### 1.3 JWT hardening
 
-* [ ] Define typed JWT claims
-* [ ] Add `sub`
-* [ ] Add `jti`
-* [ ] Add `iat`
-* [ ] Add `exp`
-* [ ] Validate signing algorithm explicitly
-* [ ] Validate token expiration
-* [ ] Validate required claims
-* [ ] Reject malformed claims
-* [ ] Reject invalid signing method
-* [ ] Add JWT unit tests
-* [ ] Add expired-token tests
-* [ ] Add malformed-token tests
+* [x] Define typed JWT claims
+* [x] Add `sub`
+* [x] Add `jti`
+* [x] Add `iat`
+* [x] Add `exp`
+* [x] Validate signing algorithm explicitly
+* [x] Validate token expiration
+* [x] Validate required claims
+* [x] Reject malformed claims
+* [x] Reject invalid signing method
+* [x] Add JWT unit tests
+* [x] Add expired-token tests
+* [x] Add malformed-token tests
 
 Target:
 
