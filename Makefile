@@ -23,9 +23,14 @@ test:
 	go test -v ./...
 
 # --- Migration Commands (Placeholder for now) ---
+# --- Migration Commands ---
+DB_URL="postgres://bastion:bastion_secret@localhost:5433/bastion_db?sslmode=disable"
+
 migrate-up:
 	@echo "Running database migrations UP..."
+	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path infra/postgres/migrations -database $(DB_URL) up
 
 migrate-down:
 	@echo "Running database migrations DOWN..."
-	
+	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path infra/postgres/migrations -database $(DB_URL) down
+

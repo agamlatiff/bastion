@@ -16,7 +16,10 @@ import (
 
 func main() {
 	// Load environment configuration
-	cfg := config.LoadConfig()
+	cfg,err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load cofiguration: %v", err)
+	}
 
 	// Connect to PostgreSQL database pool
 	ctx := context.Background()

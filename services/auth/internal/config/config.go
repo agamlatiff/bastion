@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -22,9 +23,26 @@ type Config struct {
 	JWTExpiryHours int
 }
 
-func LoadConfig() *Config {
-	if err := godotenv.Load(); err != nil {
-		log.Println("Warning: .env file not found, reading from environment variables")
+func LoadConfig() (*Config, error) {
+	env := getEnv("APP_ENV", "development")
+
+	envFile := ".env"
+	if env == "test" {
+		envFile = ".env.test"
+	}
+
+	if err := godotenv.Load(envFile); err != nil {
+		log.Printf("Info: %s file not found or already loaded from system environment\n", envFile)
+	}
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		return nil, errors.New("FATAL: JWT_SECRET environment variable is required and cannot be empty")
+	}
+
+	dbPassword := os.Getenv("DB_PASSWORD")
+	if dbPassword == "" && env == "production" {
+		return nil, errors.New("FATAL: DB_PASSWORD is required in production environment")
 	}
 
 	expiryHours, err := strconv.Atoi(getEnv("JWT_EXPIRY_HOURS", "24"))
@@ -33,7 +51,7 @@ func LoadConfig() *Config {
 		expiryHours = 24
 	}
 
-	return &Config{
+	cfg := &Config{
 		AppPort:        getEnv("APP_PORT", "8080"),
 		DBHost:         getEnv("DB_HOST", "localhost"),
 		DBPort:         getEnv("DB_PORT", "5433"),
@@ -42,9 +60,11 @@ func LoadConfig() *Config {
 		DBName:         getEnv("DB_NAME", "bastion_db"),
 		RedisHost:      getEnv("REDIS_HOST", "localhost"),
 		RedisPort:      getEnv("REDIS_PORT", "6379"),
-		JWTSecret:      getEnv("JWT_SECRET", "super_secret_default_key"),
+		JWTSecret:      jwtSecret,
 		JWTExpiryHours: expiryHours,
 	}
+
+	return cfg, nil
 }
 
 func getEnv(key, defaultValue string) string {

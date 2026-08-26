@@ -20,24 +20,25 @@
 
 ### 0.2 Development tooling
 
-* [ ] Standardize Go version
-* [ ] Configure `gofmt`
-* [ ] Configure `go vet`
-* [ ] Add `golangci-lint`
-* [ ] Add Makefile commands
-* [ ] Add local development commands
-* [ ] Add test command
-* [ ] Add migration command
+* [x] Standardize Go version
+* [x] Configure `gofmt`
+* [x] Configure `go vet`
+* [x] Add `golangci-lint`
+* [x] Add Makefile commands
+* [x] Add local development commands
+* [x] Add test command
+* [x] Add migration command
 
 ### 0.3 Configuration
 
-* [ ] Centralize environment configuration
-* [ ] Validate required environment variables
-* [ ] Separate development/test configuration
-* [ ] Remove hardcoded secrets
-* [ ] Define JWT configuration
-* [ ] Define Redis configuration
-* [ ] Define PostgreSQL configuration
+* [x] Centralize environment configuration
+* [x] Validate required environment variables 
+* [x] Separate development/test configuration 
+* [x] Remove hardcoded secrets                
+* [x] Define JWT configuration
+* [x] Define Redis configuration
+* [x] Define PostgreSQL configuration
+
 
 **Deliverable:** V2 development baseline.
 
