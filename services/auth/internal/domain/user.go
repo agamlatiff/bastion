@@ -40,5 +40,28 @@ type LoginRequest struct {
 
 type AuthResponse struct {
 	Token string `json:"token"`
-	User  *User  `json:"user"`
+	User  *UserResponse  `json:"user"`
+}
+
+
+type UserResponse struct {
+	ID         string    `json:"id"`
+	Email      string    `json:"email"`
+	FullName   string    `json:"full_name"`
+	Tier       string    `json:"tier"`
+	IsVerified bool      `json:"is_verified"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+func (u *User) ToUserResponse() *UserResponse {
+	return &UserResponse{
+		ID:         u.ID,
+		Email:      u.Email,
+		FullName:   u.FullName,
+		Tier:       u.Tier,
+		IsVerified: u.IsVerified,
+		CreatedAt:  u.CreatedAt,
+		UpdatedAt:  u.UpdatedAt,
+	}
 }

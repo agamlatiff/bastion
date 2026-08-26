@@ -79,7 +79,7 @@ func (s *authService) Register(ctx context.Context, req domain.RegisterRequest) 
 
 	return &domain.AuthResponse{
 		Token: tokenStr,
-		User:  newUser,
+		User:  newUser.ToUserResponse(),
 	}, nil
 }
 
@@ -125,7 +125,7 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest) (*doma
 
 	return &domain.AuthResponse{
 		Token: tokenStr,
-		User:  user,
+		User:  user.ToUserResponse(),
 	}, nil
 }
 

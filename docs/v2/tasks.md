@@ -48,12 +48,12 @@
 
 ### 1.1 User/API data isolation
 
-* [ ] Create `UserResponse` DTO
-* [ ] Ensure `PasswordHash` never appears in JSON
-* [ ] Review all user-related responses
-* [ ] Separate domain models from API DTOs
-* [ ] Add response mapping layer
-* [ ] Add regression test for password hash leakage
+* [x] Create `UserResponse` DTO
+* [x] Ensure `PasswordHash` never appears in JSON
+* [x] Review all user-related responses
+* [x] Separate domain models from API DTOs
+* [x] Add response mapping layer
+* [x] Add regression test for password hash leakage
 
 Acceptance criteria:
 

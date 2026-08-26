@@ -91,8 +91,11 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 		return
 	}
 
+	
+	currentUser := user.(*domain.User)
+
 	// Return 200 OK with user profile
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, currentUser.ToUserResponse())
 }
 
 // TODO: Optimize JWT validation to avoud double-parsing and redundant DB Query during logout
