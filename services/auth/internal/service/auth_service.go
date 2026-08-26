@@ -5,9 +5,9 @@ import (
 	"errors"
 	"github.com/agamlatiff/bastion/services/auth/internal/domain"
 	"github.com/agamlatiff/bastion/services/auth/internal/repository"
+	"github.com/agamlatiff/bastion/services/auth/internal/security"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
-	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -46,8 +46,7 @@ func (s *authService) Register(ctx context.Context, req domain.RegisterRequest) 
 	}
 
 	// Hash real password user used bcrypt library
-	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-
+	hashedPassword, err := security.HashPassword(req.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +54,7 @@ func (s *authService) Register(ctx context.Context, req domain.RegisterRequest) 
 	// Create new object user
 	newUser := &domain.User{
 		Email:        req.Email,
-		PasswordHash: string(hashedBytes),
+		PasswordHash: string(hashedPassword),
 		FullName:     req.FullName,
 		Tier:         "tier_1",
 	}
@@ -111,8 +110,7 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest) (*doma
 	}
 
 	// Compare password input with password database (hash)
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
-	if err != nil {
+	if err := security.ComparePassword(user.PasswordHash, req.Password); err != nil {
 		return nil, errors.New(errMessage)
 	}
 

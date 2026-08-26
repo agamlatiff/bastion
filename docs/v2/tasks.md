@@ -68,13 +68,13 @@ GET /profile must NEVER return:
 
 ### 1.2 Password security
 
-* [ ] Make bcrypt cost explicit
-* [ ] Centralize password hashing
-* [ ] Centralize password comparison
-* [ ] Validate password requirements
-* [ ] Prevent obviously invalid passwords
-* [ ] Add password hashing tests
-* [ ] Add wrong-password tests
+* [x] Make bcrypt cost explicit
+* [x] Centralize password hashing
+* [x] Centralize password comparison
+* [x] Validate password requirements
+* [x] Prevent obviously invalid passwords
+* [x] Add password hashing tests
+* [x] Add wrong-password tests
 
 ---
 
