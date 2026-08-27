@@ -23,20 +23,21 @@ func NewUserRepository(db *pgxpool.Pool) UserRepository {
 }
 
 func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
-	query := `INSERT INTO users (email, password_hash, full_name, tier, is_verified) VALUES ($1, $2, $3, $4,  $5) RETURNING id, created_at, updated_at`
+	query := `INSERT INTO users (email, password_hash, full_name, role, tier, is_verified) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, created_at, updated_at`
 
 	return r.db.QueryRow(
 		ctx, query,
 		user.Email,
 		user.PasswordHash,
 		user.FullName,
+		user.Role,
 		user.Tier,
 		user.IsVerified,
 	).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 }
 
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
-	query := `SELECT id, email, password_hash, full_name, tier, is_verified, created_at, updated_at FROM users WHERE email = $1`
+	query := `SELECT id, email, password_hash, full_name, role, tier, is_verified, created_at, updated_at FROM users WHERE email = $1`
 
 	user := &domain.User{}
 	err := r.db.QueryRow(
@@ -48,6 +49,7 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain
 		&user.Email,
 		&user.PasswordHash,
 		&user.FullName,
+		&user.Role,
 		&user.Tier,
 		&user.IsVerified,
 		&user.CreatedAt,
@@ -62,7 +64,7 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain
 }
 
 func (r *userRepository) FindByID(ctx context.Context, id string) (*domain.User, error) {
-	query := `SELECT id, email, password_hash, full_name, tier, is_verified, created_at, updated_at FROM users WHERE id = $1`
+	query := `SELECT id, email, password_hash, full_name,role, tier, is_verified, created_at, updated_at FROM users WHERE id = $1`
 
 	user := &domain.User{}
 	err := r.db.QueryRow(ctx, query, id).Scan(
@@ -70,6 +72,7 @@ func (r *userRepository) FindByID(ctx context.Context, id string) (*domain.User,
 		&user.Email,
 		&user.PasswordHash,
 		&user.FullName,
+		&user.Role,
 		&user.Tier,
 		&user.IsVerified,
 		&user.CreatedAt,

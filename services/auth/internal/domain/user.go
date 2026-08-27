@@ -2,12 +2,19 @@ package domain
 
 import "time"
 
+const (
+	RoleUser        = "USER"
+	RoleAdmin       = "ADMIN"
+	RoleKYCReviewer = "KYC_REVIEWER"
+)
+
 // Entity database
 type User struct {
 	ID           string `json:"id"`
 	Email        string `json:"email"`
 	PasswordHash string `json:"-"`
 	FullName     string `json:"full_name"`
+	Role         string `json:"role"`
 	Tier         string `json:"tier"`
 	IsVerified   bool   `json:"is_verified"`
 
@@ -39,15 +46,15 @@ type LoginRequest struct {
 }
 
 type AuthResponse struct {
-	Token string `json:"token"`
-	User  *UserResponse  `json:"user"`
+	Token string        `json:"token"`
+	User  *UserResponse `json:"user"`
 }
-
 
 type UserResponse struct {
 	ID         string    `json:"id"`
 	Email      string    `json:"email"`
 	FullName   string    `json:"full_name"`
+	Role       string    `json:"role"`
 	Tier       string    `json:"tier"`
 	IsVerified bool      `json:"is_verified"`
 	CreatedAt  time.Time `json:"created_at"`
@@ -59,6 +66,7 @@ func (u *User) ToUserResponse() *UserResponse {
 		ID:         u.ID,
 		Email:      u.Email,
 		FullName:   u.FullName,
+		Role:       u.Role,
 		Tier:       u.Tier,
 		IsVerified: u.IsVerified,
 		CreatedAt:  u.CreatedAt,

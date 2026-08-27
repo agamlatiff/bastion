@@ -140,13 +140,13 @@ rate-limit:register:{ip}
 
 ### 2.1 RBAC
 
-* [ ] Define application roles
-* [ ] Define role hierarchy/permissions
-* [ ] Add role to authenticated context
-* [ ] Create authorization middleware
-* [ ] Create `RequireRole`
-* [ ] Add unauthorized tests
-* [ ] Add forbidden tests
+* [x] Define application roles
+* [x] Define role hierarchy/permissions
+* [x] Add role to authenticated context
+* [x] Create authorization middleware
+* [x] Create `RequireRole`
+* [x] Add unauthorized tests
+* [x] Add forbidden tests
 
 Initial roles:
 

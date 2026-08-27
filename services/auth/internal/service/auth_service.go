@@ -55,6 +55,7 @@ func (s *authService) Register(ctx context.Context, req domain.RegisterRequest) 
 		Email:        req.Email,
 		PasswordHash: string(hashedPassword),
 		FullName:     req.FullName,
+		Role:         domain.RoleUser,
 		Tier:         "tier_1",
 	}
 
