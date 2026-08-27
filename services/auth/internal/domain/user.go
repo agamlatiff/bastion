@@ -62,6 +62,10 @@ type UserResponse struct {
 }
 
 func (u *User) ToUserResponse() *UserResponse {
+	if u == nil {
+		return nil
+	}
+	
 	return &UserResponse{
 		ID:         u.ID,
 		Email:      u.Email,

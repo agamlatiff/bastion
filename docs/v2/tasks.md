@@ -181,12 +181,12 @@ PENDING
 
 ### 2.3 KYC data protection
 
-* [ ] Review sensitive KYC fields
-* [ ] Minimize KYC data returned through API
-* [ ] Avoid exposing sensitive identifiers
-* [ ] Design future encryption strategy
-* [ ] Add authorization around KYC retrieval
-* [ ] Add KYC access audit logging
+* [x] Review sensitive KYC fields
+* [x] Minimize KYC data returned through API
+* [x] Avoid exposing sensitive identifiers
+* [x] Design future encryption strategy
+* [x] Add authorization around KYC retrieval
+* [x] Add KYC access audit logging
 
 ---
 

@@ -69,7 +69,7 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "KYC application submitted successfully",
-		"data":    kyc,
+		"data":    kyc.ToKYCResponse(),
 	})
 }
 
@@ -99,7 +99,7 @@ func (h *KYCHandler) GetKYCStatus(c *gin.Context) {
 	// Return 200 if it's qualify
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
-		"data":   kyc,
+		"data":   kyc.ToKYCResponse(),
 	})
 }
 
