@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/agamlatiff/bastion/services/auth/internal/config"
+	"github.com/agamlatiff/bastion/services/auth/internal/domain"
 	"github.com/agamlatiff/bastion/services/auth/internal/handler"
 	"github.com/agamlatiff/bastion/services/auth/internal/middleware"
 	"github.com/agamlatiff/bastion/services/auth/internal/repository"
@@ -90,7 +91,7 @@ func main() {
 	{
 		kycRoutes.POST("", kycHandler.SubmitKYC)
 		kycRoutes.GET("/status", kycHandler.GetKYCStatus)
-		kycRoutes.POST("/review", kycHandler.ReviewKYC)
+		kycRoutes.POST("/review",middleware.RequireRole(domain.RoleAdmin, domain.RoleKYCReviewer), kycHandler.ReviewKYC)
 	}
 
 	// Start HTTP Server

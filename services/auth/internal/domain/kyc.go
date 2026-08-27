@@ -2,6 +2,12 @@ package domain
 
 import "time"
 
+const (
+	KYCStatusPending  = "pending"
+	KYCStatusApproved = "approved"
+	KYCStatusRejected = "rejected"
+)
+
 type KYCVerification struct {
 	ID              string     `json:"id"`
 	UserID          string     `json:"user_id"`
@@ -21,6 +27,7 @@ type SubmitKYCRequest struct {
 }
 
 type ReviewKYCRequest struct {
+	KYCID           string `json:"kyc_id" binding:"required"`
 	Status          string `json:"status"`
 	RejectionReason string `json:"rejection_reason"`
 }

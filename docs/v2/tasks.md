@@ -160,14 +160,14 @@ KYC_REVIEWER
 
 ### 2.2 KYC authorization
 
-* [ ] Protect KYC review endpoint
-* [ ] Require reviewer/admin permission
-* [ ] Prevent normal users from reviewing KYC
-* [ ] Validate KYC state transition
-* [ ] Prevent double approval
-* [ ] Prevent invalid rejection
-* [ ] Add audit event for KYC review
-* [ ] Add authorization tests
+* [x] Protect KYC review endpoint
+* [x] Require reviewer/admin permission
+* [x] Prevent normal users from reviewing KYC
+* [x] Validate KYC state transition
+* [x] Prevent double approval
+* [x] Prevent invalid rejection
+* [x] Add audit event for KYC review
+* [x] Add authorization tests
 
 State machine:
 

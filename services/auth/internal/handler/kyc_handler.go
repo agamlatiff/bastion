@@ -126,18 +126,8 @@ func (h *KYCHandler) ReviewKYC(c *gin.Context) {
 		return
 	}
 
-	// Get KYCID User
-	kyc, err := h.kycService.GetKYCStatus(c.Request.Context(), currentUser.ID)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"status": "error",
-			"error":  "unauthorized",
-		})
-		return
-	}
-
 	// Call service layer
-	kycData, err := h.kycService.ReviewKYC(c.Request.Context(), kyc.ID, &req)
+	kycData, err := h.kycService.ReviewKYC(c.Request.Context(), req.KYCID, &req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
@@ -145,6 +135,16 @@ func (h *KYCHandler) ReviewKYC(c *gin.Context) {
 		})
 		return
 	}
+
+	h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
+		UserID: &currentUser.ID,
+		Action: "KYC_REVIEW",
+		Metadata: map[string]any{
+			"kyc_id": req.KYCID,
+			"status": req.Status,
+			"reviewer_id": currentUser.ID,
+		},
+	})
 
 	// Return 200 if all of the validation passed
 	c.JSON(http.StatusOK, gin.H{
