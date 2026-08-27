@@ -120,12 +120,12 @@ JWT
 
 ### 1.5 Authentication abuse protection
 
-* [ ] Add login rate limiting
-* [ ] Add registration rate limiting
-* [ ] Define rate-limit policy
-* [ ] Define Redis key structure
-* [ ] Return consistent rate-limit error
-* [ ] Add rate-limit tests
+* [x] Add login rate limiting
+* [x] Add registration rate limiting
+* [x] Define rate-limit policy
+* [x] Define Redis key structure
+* [x] Return consistent rate-limit error
+* [x] Add rate-limit tests
 
 Example:
 

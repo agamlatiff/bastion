@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/agamlatiff/bastion/services/auth/internal/config"
 	"github.com/agamlatiff/bastion/services/auth/internal/handler"
@@ -16,7 +17,7 @@ import (
 
 func main() {
 	// Load environment configuration
-	cfg,err := config.LoadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("Failed to load cofiguration: %v", err)
 	}
@@ -63,8 +64,8 @@ func main() {
 	// Public Routes
 	publicRoutes := r.Group("/api/v1/auth")
 	{
-		publicRoutes.POST("/register", authHandler.Register)
-		publicRoutes.POST("/login", authHandler.Login)
+		publicRoutes.POST("/register", middleware.RateLimitMiddleware(rdb, "register", 3, 1*time.Minute), authHandler.Register)
+		publicRoutes.POST("/login", middleware.RateLimitMiddleware(rdb, "register", 3, 1*time.Minute), authHandler.Login)
 	}
 
 	protectedRoutes := r.Group("/api/v1/auth")
