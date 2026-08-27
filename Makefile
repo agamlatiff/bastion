@@ -16,7 +16,7 @@ lint:
 # --- Development Commands ---
 run:
 	@echo "Starting Bastion API..."
-	go run services/auth/cmd/main.go
+	go run cmd/main.go
 
 test:
 	@echo "Running tests..."
