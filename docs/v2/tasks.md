@@ -108,13 +108,13 @@ JWT
 
 ### 1.4 Token revocation
 
-* [ ] Change blacklist design from raw JWT to `jti`
-* [ ] Store revoked JTI in Redis
-* [ ] TTL blacklist entry based on token expiration
-* [ ] Check revocation in auth middleware
-* [ ] Add logout test
-* [ ] Add revoked-token test
-* [ ] Add expired blacklist cleanup behavior
+* [x] Change blacklist design from raw JWT to `jti`
+* [x] Store revoked JTI in Redis
+* [x] TTL blacklist entry based on token expiration
+* [x] Check revocation in auth middleware
+* [x] Add logout test
+* [x] Add revoked-token test
+* [x] Add expired blacklist cleanup behavior
 
 ---
 

@@ -6,7 +6,6 @@ import (
 	"github.com/agamlatiff/bastion/services/auth/internal/domain"
 	"github.com/agamlatiff/bastion/services/auth/internal/repository"
 	"github.com/agamlatiff/bastion/services/auth/internal/security"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
@@ -109,15 +108,15 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest) (*doma
 }
 
 func (s *authService) ValidateToken(ctx context.Context, tokenStr string) (*domain.User, error) {
-	// Checking is token already ever to logout (blacklist)
-	blacklisted, _ := s.rdb.Get(ctx, "blacklist:"+tokenStr).Result()
-	if blacklisted != "" {
-		return nil, errors.New("Token has been logged out")
-	}
-
 	claims, err := security.ParseAndValidateToken(tokenStr, s.jwtSecret)
 	if err != nil {
 		return nil, err
+	}
+
+	// Checking is token already ever to logout (blacklist)
+	blacklisted, _ := s.rdb.Get(ctx, "blacklist:jti:"+claims.ID).Result()
+	if blacklisted != "" {
+		return nil, errors.New("Token has been logged out")
 	}
 
 	// Get profile new user data from database
@@ -125,41 +124,17 @@ func (s *authService) ValidateToken(ctx context.Context, tokenStr string) (*doma
 }
 
 func (s *authService) Logout(ctx context.Context, tokenStr string) error {
-
-	// Checking JWT Secret and parsing them with that
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("Unexpected signing method")
-		}
-
-		return []byte(s.jwtSecret), nil
-	})
-
-	// Validation token from JWT Token
-	if err != nil || !token.Valid {
-		return errors.New("Invalid or expired token")
+	claims, err := security.ParseAndValidateToken(tokenStr, s.jwtSecret)
+	if err != nil {
+		return err
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-
-	if !ok {
-		return errors.New("Invalid token claims")
-	}
-
-	// Convert exp MapClaims from JWT Token and Checking is it still valid
-	expFloat, ok := claims["exp"].(float64)
-	if !ok {
-		return errors.New("Invalid exp claims")
-	}
-
-	// Checking is there expired date
-	expTime := time.Unix(int64(expFloat), 0)
-	remainingDuration := time.Until(expTime)
+	remainingDuration := time.Until(claims.ExpiresAt.Time)
 
 	if remainingDuration <= 0 {
 		return nil
 	}
 
 	// Set blacklist token if still have a time
-	return s.rdb.Set(ctx, "blacklist:"+tokenStr, "true", remainingDuration).Err()
+	return s.rdb.Set(ctx, "blacklist:jti:"+claims.ID, "revoked", remainingDuration).Err()
 }
