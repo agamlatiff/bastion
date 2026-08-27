@@ -243,3 +243,82 @@ func TestConcurrentTransfer_Idempotency(t *testing.T) {
 		t.Errorf("Idempotency leak! User B balance should be 50000, got: %d", finalB.Balance)
 	}
 }
+
+func TestConcurrentTopUp_NoOverLimit(t *testing.T) {
+	pool, _, walletService, _, walletRepo := setupTestEnv(t)
+	defer pool.Close()
+	ctx := context.Background()
+
+	uniqueEmail := fmt.Sprintf("topup_race_%d@bastion.com", time.Now().UnixNano())
+	user, _ := createTestUser(ctx, t, pool, uniqueEmail, "TopUpRacer", "tier_1", 1500000)
+
+	_, err := pool.Exec(ctx, "UPDATE wallets SET max_balance_limit = 2000000 WHERE user_id = $1", user.ID)
+
+	if err != nil {
+		t.Fatalf("Failed to update wallet limit: %v", err)
+	}
+
+	var wg sync.WaitGroup
+	var successCount int64
+	var failCount int64
+
+	totalRequests := 10
+	topUpAmount := int64(500000)
+
+	for i := 0; i < totalRequests; i++ {
+		wg.Add(1)
+		go func(iteration int) {
+			defer wg.Done()
+
+			idmKey := fmt.Sprintf("idm_topup_%d_%d", time.Now().UnixNano(), iteration)
+
+			req := &wallet.TopUpRequest{
+				Amount:         topUpAmount,
+				IdempotencyKey: idmKey,
+				Description:    "Concurrent Top Up Test",
+			}
+
+			_, err := walletService.TopUp(ctx, user.ID, req)
+
+			if err != nil {
+				atomic.AddInt64(&failCount, 1)
+			} else {
+				atomic.AddInt64(&successCount, 1)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+
+	if successCount != 1 {
+		t.Errorf("CRITICAL SRCURITY FLAW!, Expected exactly 1 successful top-up. but got: %d", successCount)
+	}
+
+	if failCount != 9 {
+		t.Errorf("Expected 9 rejected top-ups due to limit cap got: %d", failCount)
+	}
+
+	finalWallet, _ := walletRepo.FindByUserID(ctx, user.ID)
+	if finalWallet.Balance != 2000000 {
+		t.Errorf("OVER-LIMIT EXPLOIT! Final balance exceeded limit: got Rp %d, expected Rp 2.000.000", finalWallet.Balance)
+	}
+}
+
+func TestWalletInvariants_DatabaseLevelConstraint(t *testing.T) {
+	pool, _, _, _, _ := setupTestEnv(t)
+	defer pool.Close()	
+	ctx := context.Background()
+
+	uniqueEmail := fmt.Sprintf("invariant_%d@bastion.com", time.Now().UnixNano())
+	_, w := createTestUser(ctx, t, pool, uniqueEmail, "Invariant User", "tier_1", 100000)
+
+	_, err := pool.Exec(ctx, "UPDATE wallets SET balance = -50000 WHERE id = $1", w.ID)
+	if err == nil {
+		t.Errorf("DATABASE INVARIANT FLAW! Database allowed negative balance!")
+	}
+
+	_, err = pool.Exec(ctx, "UPDATE wallets SET balance = 15000000 WHERE id = $1", w.ID)
+	if err == nil {
+		t.Errorf("DATABASE INVARIANT FLAW! Database allowed balance to exceed max_balance_limit!")
+	}
+}

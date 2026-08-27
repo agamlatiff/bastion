@@ -1,6 +1,16 @@
 package wallet
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+var (
+	ErrInsufficientBalance = errors.New("insufficient balance")
+	ErrExceedsMaxLimit = errors.New("balance exceeds maximum wallet limit")
+	ErrInvalidAmount = errors.New("amount must be greater than zero")
+	ErrSelfTransfer = errors.New("cannot transfer to your own account")
+)
 
 type Wallet struct {
 	ID              string    `json:"id"`

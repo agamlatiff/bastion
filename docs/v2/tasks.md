@@ -195,52 +195,24 @@ PENDING
 > This is the **core sprint** of V2.
 
 ### 3.1 Wallet invariants
-
-Define:
-
-```text
-balance >= 0
-balance <= max_balance_limit
-```
-
-* [ ] Define wallet invariants
-* [ ] Enforce balance constraints
-* [ ] Enforce max balance atomically
-* [ ] Add DB constraints where appropriate
-* [ ] Add negative balance protection
-* [ ] Add invariant tests
-
----
+* [x] Define wallet invariants
+* [x] Enforce balance constraints
+* [x] Enforce max balance atomically
+* [x] Add DB constraints where appropriate
+* [x] Add negative balance protection
+* [x] Add invariant tests
 
 ### 3.2 Atomic Top-Up
+* [x] Move limit validation into DB transaction
+* [x] Lock wallet where necessary
+* [x] Perform atomic balance update
+* [x] Insert transaction record
+* [x] Insert ledger entry
+* [x] Commit as one transaction
+* [x] Rollback on failure
+* [x] Test max balance
+* [x] Test concurrent top-ups
 
-Current problem:
-
-```text
-SELECT balance
-      ↓
-check limit
-      ↓
-UPDATE
-```
-
-V2 target:
-
-```text
-Atomic DB operation
-```
-
-Tasks:
-
-* [ ] Move limit validation into DB transaction
-* [ ] Lock wallet where necessary
-* [ ] Perform atomic balance update
-* [ ] Insert transaction record
-* [ ] Insert ledger entry
-* [ ] Commit as one transaction
-* [ ] Rollback on failure
-* [ ] Test max balance
-* [ ] Test concurrent top-ups
 
 Acceptance:
 

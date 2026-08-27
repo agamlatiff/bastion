@@ -46,6 +46,11 @@ func (s *service) GetBalance(ctx context.Context, userID string) (*WalletBalance
 }
 
 func (s *service) TopUp(ctx context.Context, userID string, req *TopUpRequest) (*Transaction, error) {
+
+	if req.Amount <= 0 {
+		return nil, ErrInvalidAmount
+	}
+
 	wallet, err := s.walletRepo.FindByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -70,6 +75,10 @@ func (s *service) TopUp(ctx context.Context, userID string, req *TopUpRequest) (
 }
 
 func (s *service) Transfer(ctx context.Context, senderUserID string, req *TransferRequest) (*Transaction, error) {
+	if req.Amount <= 0 {
+		return nil, ErrInvalidAmount
+	}
+
 	senderWallet, err := s.walletRepo.FindByUserID(ctx, senderUserID)
 	if err != nil {
 		return nil, err
@@ -81,7 +90,7 @@ func (s *service) Transfer(ctx context.Context, senderUserID string, req *Transf
 	}
 
 	if receiverUser.ID == senderUserID {
-		return nil, errors.New("cannot transfer to your own account")
+		return nil, ErrSelfTransfer
 	}
 
 	receiverWallet, err := s.walletRepo.FindByUserID(ctx, receiverUser.ID)

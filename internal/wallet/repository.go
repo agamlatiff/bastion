@@ -2,8 +2,6 @@ package wallet
 
 import (
 	"context"
-	"errors"
-
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -96,7 +94,7 @@ func (r *repository) ExecuteTopUp(ctx context.Context, walletID string, amount i
 
 	newBalance := currentBalance + amount
 	if newBalance > maxLimit {
-		return nil, errors.New("balance exceeds maximum wallet limit")
+		return nil, ErrExceedsMaxLimit
 	}
 
 	updateWalletQuery := `UPDATE wallets SET balance = $1, updated_at = NOW() WHERE id = $2`
@@ -199,14 +197,14 @@ func (r *repository) ExecuteTransfer(ctx context.Context, senderWalletID string,
 	}
 
 	if senderBalance < amount {
-		return nil, errors.New("insufficient balance")
+		return nil, ErrInsufficientBalance
 	}
 
 	newSenderBalance := senderBalance - amount
 	newReceiverBalance := receiverBalance + amount
 
 	if newReceiverBalance > receiverLimit {
-		return nil, errors.New("receiver balance exceeds maximum wallet limit")
+		return nil, ErrExceedsMaxLimit
 	}
 
 	updateSenderQuery := `UPDATE wallets SET balance = $1, updated_at = NOW() WHERE id = $2`
