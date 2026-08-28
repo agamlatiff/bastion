@@ -306,7 +306,7 @@ func TestConcurrentTopUp_NoOverLimit(t *testing.T) {
 
 func TestWalletInvariants_DatabaseLevelConstraint(t *testing.T) {
 	pool, _, _, _, _ := setupTestEnv(t)
-	defer pool.Close()	
+	defer pool.Close()
 	ctx := context.Background()
 
 	uniqueEmail := fmt.Sprintf("invariant_%d@bastion.com", time.Now().UnixNano())
@@ -321,4 +321,86 @@ func TestWalletInvariants_DatabaseLevelConstraint(t *testing.T) {
 	if err == nil {
 		t.Errorf("DATABASE INVARIANT FLAW! Database allowed balance to exceed max_balance_limit!")
 	}
+}
+
+func TestConcurrentTransfer_SingleSenderMultipleReceivers(t *testing.T) {
+	pool, _, walletService, _, walletRepo := setupTestEnv(t)
+	defer pool.Close()
+
+	ctx := context.Background()
+
+	userA, _ := createTestUser(ctx, t, pool, fmt.Sprintf("sender_%d@bastion.com", time.Now().UnixNano()), "User A", "tier_1", 1000000)
+	userB, _ := createTestUser(ctx, t, pool, fmt.Sprintf("recvB_%d@bastion.com", time.Now().UnixNano()), "User B", "tier_1", 0)
+	userC, _ := createTestUser(ctx, t, pool, fmt.Sprintf("recvC_%d@bastion.com", time.Now().UnixNano()), "User C", "tier_1", 0)
+	userD, _ := createTestUser(ctx, t, pool, fmt.Sprintf("recvD_%d@bastion.com", time.Now().UnixNano()), "User D", "tier_1", 0)
+
+	var wg sync.WaitGroup
+	var successCount int64
+
+	receivers := []string{userB.Email, userC.Email, userD.Email}
+	transferAmount := int64(10000)
+	iterationsPerReceiver := 5
+
+	for _, receiverEmail := range receivers {
+		for i := 0; i < iterationsPerReceiver; i++ {
+			wg.Add(1)
+			go func(recv string, it int) {
+				defer wg.Done()
+				idmKey := fmt.Sprintf("idm_multi_%s_%d_%d", recv, time.Now().UnixNano(), it)
+
+				req := &wallet.TransferRequest{
+					ReceiverEmail:  recv,
+					Amount:         transferAmount,
+					IdempotencyKey: idmKey,
+					Description:    "Concurrent Single Sender",
+				}
+
+				_, err := walletService.Transfer(ctx, userA.ID, req)
+				if err == nil {
+					atomic.AddInt64(&successCount, 1)
+				}
+			}(receiverEmail, i)
+		}
+	}
+
+	wg.Wait()
+
+	if successCount != 15 {
+		t.Errorf("Expected 15 successful transfers, got: %d", successCount)
+	}
+
+	finalA, _ := walletRepo.FindByUserID(ctx, userA.ID)
+	finalB, _ := walletRepo.FindByUserID(ctx, userB.ID)
+	finalC, _ := walletRepo.FindByUserID(ctx, userC.ID)
+	finalD, _ := walletRepo.FindByUserID(ctx, userD.ID)
+
+	expectedBalanceA := int64(1000000 - (15 * transferAmount))
+	if finalA.Balance != expectedBalanceA {
+		t.Errorf("LOST UPDATE DETECTED! Expected User A final balance to be %d, got: %d", expectedBalanceA, finalA.Balance)
+	}
+
+	if finalB.Balance != 50000 || finalC.Balance != 50000 || finalD.Balance != 50000 {
+		t.Errorf("LOST UPDATE DETECTED! Expected each receiver to have 50000. Got B: %d, C: %d, D: %d", finalB.Balance, finalC.Balance, finalD.Balance)
+	}
+
+	var txCount int
+	pool.QueryRow(ctx, "SELECT COUNT(*) FROM transactions WHERE sender_wallet_id = $1", finalA.ID).Scan(&txCount)
+	if txCount != 15 {
+		t.Errorf("TRANSACTION INCONSISTENCY! Expected 15 transactions, got: %d", txCount)
+	}
+
+	var debitSum, creditSum int64
+	pool.QueryRow(ctx, "SELECT COALESCE(SUM(amount), 0) FROM ledger_entries WHERE wallet_id = $1 AND entry_type = 'DEBIT'", finalA.ID).Scan(&debitSum)
+	pool.QueryRow(ctx, "SELECT COALESCE(SUM(amount), 0) FROM ledger_entries WHERE wallet_id IN ($1, $2, $3) AND entry_type = 'CREDIT'", finalB.ID, finalC.ID, finalD.ID).Scan(&creditSum)
+
+	if debitSum != 150000 {
+		t.Errorf("LEDGER INCONSISTENCY! Total debit A should be 150000, got: %d", debitSum)
+	}
+	if creditSum != 150000 {
+		t.Errorf("LEDGER INCONSISTENCY! Total credit B,C,D should be 150000, got: %d", creditSum)
+	}
+	if debitSum != creditSum {
+		t.Errorf("LEDGER INCONSISTENCY! Debit (%d) does not match Credit (%d)", debitSum, creditSum)
+	}
+
 }

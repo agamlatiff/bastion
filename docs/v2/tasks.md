@@ -263,12 +263,12 @@ A → D
 
 simultaneously.
 
-* [ ] Add concurrency test
-* [ ] Verify balance correctness
-* [ ] Verify no negative balance
-* [ ] Verify no lost update
-* [ ] Verify ledger consistency
-* [ ] Verify transaction count
+* [x] Add concurrency test
+* [x] Verify balance correctness
+* [x] Verify no negative balance
+* [x] Verify no lost update
+* [x] Verify ledger consistency
+* [x] Verify transaction count
 
 ---
 
