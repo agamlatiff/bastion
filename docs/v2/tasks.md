@@ -354,21 +354,21 @@ DEBIT
 CREDIT
 ```
 
-* [ ] Define ledger invariants
-* [ ] Define transaction-to-ledger relationship
-* [ ] Define balance-after semantics
-* [ ] Define append-only behavior
+* [x] Define ledger invariants
+* [x] Define transaction-to-ledger relationship
+* [x] Define balance-after semantics
+* [x] Define append-only behavior
 
 ---
 
 ### 6.2 Ledger constraints
 
-* [ ] Prevent orphan ledger entries
-* [ ] Add foreign keys
-* [ ] Add appropriate indexes
-* [ ] Prevent invalid entry types
-* [ ] Prevent invalid amounts
-* [ ] Prevent ledger mutation where possible
+* [x] Prevent orphan ledger entries
+* [x] Add foreign keys
+* [x] Add appropriate indexes
+* [x] Prevent invalid entry types
+* [x] Prevent invalid amounts
+* [x] Prevent ledger mutation where possible
 
 ---
 
@@ -383,11 +383,11 @@ receiver → CREDIT
 
 Tasks:
 
-* [ ] Verify debit == transfer amount
-* [ ] Verify credit == transfer amount
-* [ ] Verify transaction has required ledger entries
-* [ ] Verify successful transaction always has ledger
-* [ ] Add consistency tests
+* [x] Verify debit == transfer amount
+* [x] Verify credit == transfer amount
+* [x] Verify transaction has required ledger entries
+* [x] Verify successful transaction always has ledger
+* [x] Add consistency tests
 
 ---
 
