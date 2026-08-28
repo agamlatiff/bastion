@@ -302,13 +302,13 @@ independent operation
 
 ### 5.2 Idempotency storage
 
-* [ ] Define idempotency key format
-* [ ] Namespace Redis keys by user
-* [ ] Add operation namespace
-* [ ] Define TTL
-* [ ] Define request/result storage
-* [ ] Define DB uniqueness strategy
-* [ ] Define conflict behavior
+* [x] Define idempotency key format
+* [x] Namespace Redis keys by user
+* [x] Add operation namespace
+* [x] Define TTL
+* [x] Define request/result storage
+* [x] Define DB uniqueness strategy
+* [x] Define conflict behavior
 
 Example:
 
@@ -320,26 +320,26 @@ idempotency:{user_id}:{operation}:{key}
 
 ### 5.3 Idempotent transaction behavior
 
-* [ ] Check existing transaction
-* [ ] Return existing transaction when applicable
-* [ ] Handle concurrent duplicate requests
-* [ ] Prevent duplicate balance mutation
-* [ ] Prevent duplicate ledger entries
-* [ ] Handle Redis miss
-* [ ] Handle Redis failure
-* [ ] Make PostgreSQL source of truth
+* [x] Check existing transaction
+* [x] Return existing transaction when applicable
+* [x] Handle concurrent duplicate requests
+* [x] Prevent duplicate balance mutation
+* [x] Prevent duplicate ledger entries
+* [x] Handle Redis miss
+* [x] Handle Redis failure
+* [x] Make PostgreSQL source of truth
 
 ---
 
 ### 5.4 Idempotency tests
 
-* [ ] Same key / same request
-* [ ] Same key / different request
-* [ ] Same key / different user
-* [ ] Concurrent duplicate requests
-* [ ] Redis unavailable
-* [ ] DB duplicate constraint
-* [ ] Retry after timeout
+* [x] Same key / same request
+* [x] Same key / different request
+* [x] Same key / different user
+* [x] Concurrent duplicate requests
+* [x] Redis unavailable
+* [x] DB duplicate constraint
+* [x] Retry after timeout
 
 ---
 

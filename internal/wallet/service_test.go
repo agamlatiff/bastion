@@ -404,3 +404,47 @@ func TestConcurrentTransfer_SingleSenderMultipleReceivers(t *testing.T) {
 	}
 
 }
+
+func TestConcurrentTransfer_IdempotencyNamespace(t *testing.T) {
+	pool, _, walletService, _, _ := setupTestEnv(t)
+	defer pool.Close()
+	ctx := context.Background()
+
+	// 1. Setup 2 pengirim yang berbeda, 1 penerima
+	userA, _ := createTestUser(ctx, t, pool, fmt.Sprintf("idmNS_A_%d@bastion.com", time.Now().UnixNano()), "User A", "tier_1", 50000)
+	userB, _ := createTestUser(ctx, t, pool, fmt.Sprintf("idmNS_B_%d@bastion.com", time.Now().UnixNano()), "User B", "tier_1", 50000)
+	userC, _ := createTestUser(ctx, t, pool, fmt.Sprintf("idmNS_C_%d@bastion.com", time.Now().UnixNano()), "User C", "tier_1", 0)
+
+	sharedIdmKey := "global_duplicate_key_123"
+
+	reqA := &wallet.TransferRequest{
+		ReceiverEmail:  userC.Email,
+		Amount:         10000,
+		IdempotencyKey: sharedIdmKey,
+		Description:    "Transfer from A",
+	}
+
+	reqB := &wallet.TransferRequest{
+		ReceiverEmail:  userC.Email,
+		Amount:         20000,
+		IdempotencyKey: sharedIdmKey,
+		Description:    "Transfer from B",
+	}
+
+	txA, err := walletService.Transfer(ctx, userA.ID, reqA)
+	if err != nil {
+		t.Fatalf("Transfer A failed: %v", err)
+	}
+
+	txB, err := walletService.Transfer(ctx, userB.ID, reqB)
+	if err != nil {
+		t.Fatalf("Transfer B failed despite namespace isolation: %v", err)
+	}
+
+	if txA.ID == txB.ID {
+		t.Errorf("SECURITY FLAW! Transaction ID for A and B should be different, got same ID: %s", txA.ID)
+	}
+}
+
+
+

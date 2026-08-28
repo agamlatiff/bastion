@@ -3,6 +3,7 @@ package wallet
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/agamlatiff/bastion/internal/auth"
@@ -56,22 +57,22 @@ func (s *service) TopUp(ctx context.Context, userID string, req *TopUpRequest) (
 		return nil, err
 	}
 
-	lockKey := "lock:idempotency:" + req.IdempotencyKey
-	locked, err := s.rdb.SetNX(ctx, lockKey, "locked", 5*time.Second).Result()
+	fullIdmKey := fmt.Sprintf("idempotency:%s:topup:%s", userID, req.IdempotencyKey)
+	locked, err := s.rdb.SetNX(ctx, fullIdmKey, "locked", 5*time.Second).Result()
 	if err != nil {
 		return nil, err
 	}
 	if !locked {
 		return nil, errors.New("concurrent request detected for the same idempotency key")
 	}
-	defer s.rdb.Del(ctx, lockKey)
+	defer s.rdb.Del(ctx, fullIdmKey)
 
 	desc := req.Description
 	if desc == "" {
 		desc = "Top Up Balance"
 	}
 
-	return s.walletRepo.ExecuteTopUp(ctx, wallet.ID, req.Amount, req.IdempotencyKey, desc)
+	return s.walletRepo.ExecuteTopUp(ctx, wallet.ID, req.Amount, fullIdmKey, desc)
 }
 
 func (s *service) Transfer(ctx context.Context, senderUserID string, req *TransferRequest) (*Transaction, error) {
@@ -107,17 +108,17 @@ func (s *service) Transfer(ctx context.Context, senderUserID string, req *Transf
 		return nil, errors.New("receiver wallet not found")
 	}
 
-	lockKey := "lock:idempotency:" + req.IdempotencyKey
-	locked, err := s.rdb.SetNX(ctx, lockKey, "locked", 5*time.Second).Result()
+	fullIdmKey := fmt.Sprintf("idempotency:%s:transfer:%s", senderUserID, req.IdempotencyKey)
+	locked, err := s.rdb.SetNX(ctx, fullIdmKey, "locked", 5*time.Second).Result()
 	if err != nil {
 		return nil, err
 	}
 	if !locked {
 		return nil, errors.New("concurrent request detected for the same idempotency key")
 	}
-	defer s.rdb.Del(ctx, lockKey)
+	defer s.rdb.Del(ctx, fullIdmKey)
 
-	return s.walletRepo.ExecuteTransfer(ctx, senderWallet.ID, receiverWallet.ID, req.Amount, req.IdempotencyKey, req.Description)
+	return s.walletRepo.ExecuteTransfer(ctx, senderWallet.ID, receiverWallet.ID, req.Amount, fullIdmKey, req.Description)
 }
 
 func (s *service) GetTransaction(ctx context.Context, userID string, limit int, offset int) ([]*Transaction, error) {
