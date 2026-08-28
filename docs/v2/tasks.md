@@ -436,12 +436,12 @@ Example:
 
 Tasks:
 
-* [ ] Define error response schema
-* [ ] Define error codes
-* [ ] Create centralized error handler
-* [ ] Map domain errors
-* [ ] Hide internal errors
-* [ ] Add error tests
+* [x] Define error response schema
+* [x] Define error codes
+* [x] Error format (code, message, details)
+* [x] HTTP status codes (400, 403, 404, 409, 422)
+* [x] Hide internal errors (500)
+* [x] Add error tests
 
 ---
 
@@ -456,8 +456,6 @@ success response
 error response
 pagination response
 ```
-
----
 
 ### 8.2 Validation
 
@@ -509,10 +507,12 @@ Review every endpoint:
 * [ ] Invalid amount
 * [ ] Max limit
 * [ ] Transfer
-* [ ] Insufficient funds
-* [ ] Self-transfer
-* [ ] Invalid receiver
-* [ ] Idempotency
+* [x] Insufficient balance
+* [x] Daily limit exceeded
+* [x] Monthly limit exceeded
+* [x] Tier limit exceeded
+* [x] Invalid receiver
+* [x] Same user transferncy
 
 ### KYC
 

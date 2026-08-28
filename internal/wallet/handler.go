@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -21,6 +22,62 @@ func NewHandler(walletService Service, auditRepo audit.Repository) *Handler {
 	}
 }
 
+// handleError maps domain errors to proper HTTP responses
+func handleError(c *gin.Context, err error) {
+	if err == nil {
+		return
+	}
+
+	statusCode := http.StatusInternalServerError
+	errorCode := "INTERNAL_SERVER_ERROR"
+	message := "An unexpected error occurred"
+
+	switch {
+	case errors.Is(err, ErrInsufficientBalance):
+		statusCode = http.StatusUnprocessableEntity // 422
+		errorCode = "INSUFFICIENT_BALANCE"
+		message = err.Error()
+	case errors.Is(err, ErrExceedsMaxLimit):
+		statusCode = http.StatusUnprocessableEntity // 422
+		errorCode = "EXCEEDS_MAX_LIMIT"
+		message = err.Error()
+	case errors.Is(err, ErrInvalidAmount):
+		statusCode = http.StatusBadRequest // 400
+		errorCode = "INVALID_AMOUNT"
+		message = err.Error()
+	case errors.Is(err, ErrSelfTransfer):
+		statusCode = http.StatusConflict // 409
+		errorCode = "SELF_TRANSFER"
+		message = err.Error()
+	case errors.Is(err, ErrKYCRequired):
+		statusCode = http.StatusForbidden // 403
+		errorCode = "KYC_REQUIRED"
+		message = err.Error()
+	case errors.Is(err, ErrInvalidReceiver) || err.Error() == "receiver wallet not found":
+		statusCode = http.StatusNotFound // 404
+		errorCode = "INVALID_RECEIVER"
+		message = "receiver wallet not found"
+	case errors.Is(err, ErrConcurrentRequest) || err.Error() == "concurrent request detected for the same idempotency key":
+		statusCode = http.StatusConflict // 409
+		errorCode = "CONCURRENT_REQUEST"
+		message = "concurrent request detected for the same idempotency key"
+	}
+
+	if statusCode >= 500 {
+		message = "An unexpected error occurred on our end"
+	}
+
+	c.JSON(statusCode, gin.H{
+		"status": "error",
+		"error": gin.H{
+			"code":    errorCode,
+			"message": message,
+			"details": nil,
+		},
+	})
+}
+
+
 func (h *Handler) GetBalance(c *gin.Context) {
 	user, exists := c.Get("currentUser")
 	if !exists {
@@ -30,10 +87,11 @@ func (h *Handler) GetBalance(c *gin.Context) {
 
 	currentUser := user.(*auth.User)
 	balance, err := h.walletService.GetBalance(c.Request.Context(), currentUser.ID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "error": err.Error()})
+		if err != nil {
+		handleError(c, err)
 		return
 	}
+
 
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
@@ -57,10 +115,11 @@ func (h *Handler) TopUp(c *gin.Context) {
 	}
 
 	tx, err := h.walletService.TopUp(c.Request.Context(), currentUser.ID, &req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "error": err.Error()})
+		if err != nil {
+		handleError(c, err)
 		return
 	}
+
 
 	_ = h.auditRepo.Create(c.Request.Context(), &audit.AuditLog{
 		UserID:    &currentUser.ID,
@@ -97,10 +156,11 @@ func (h *Handler) Transfer(c *gin.Context) {
 	}
 
 	tx, err := h.walletService.Transfer(c.Request.Context(), currentUser.ID, &req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "error": err.Error()})
+		if err != nil {
+		handleError(c, err)
 		return
 	}
+
 
 	_ = h.auditRepo.Create(c.Request.Context(), &audit.AuditLog{
 		UserID:    &currentUser.ID,
@@ -135,9 +195,10 @@ func (h *Handler) GetTransaction(c *gin.Context) {
 
 	transactions, err := h.walletService.GetTransaction(c.Request.Context(), currentUser.ID, limit, offset)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "error": err.Error()})
+		handleError(c, err)
 		return
 	}
+
 
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
