@@ -79,6 +79,15 @@ func (s *service) Transfer(ctx context.Context, senderUserID string, req *Transf
 		return nil, ErrInvalidAmount
 	}
 
+	senderUser, err := s.userRepo.FindByID(ctx, senderUserID)
+	if err != nil {
+		return nil, errors.New("sender user not found")
+	}
+
+	if !senderUser.IsVerified {
+		return nil, ErrKYCRequired
+	}
+
 	senderWallet, err := s.walletRepo.FindByUserID(ctx, senderUserID)
 	if err != nil {
 		return nil, err

@@ -10,6 +10,7 @@ var (
 	ErrExceedsMaxLimit = errors.New("balance exceeds maximum wallet limit")
 	ErrInvalidAmount = errors.New("amount must be greater than zero")
 	ErrSelfTransfer = errors.New("cannot transfer to your own account")
+	ErrKYCRequired = errors.New("sender must be KYC verified to perform transfer")
 )
 
 type Wallet struct {

@@ -226,28 +226,28 @@ Concurrent top-ups MUST NOT exceed wallet limit.
 
 ### 4.1 Transfer validation
 
-* [ ] Validate sender wallet
-* [ ] Validate receiver wallet
-* [ ] Prevent self-transfer
-* [ ] Validate positive amount
-* [ ] Validate sufficient balance
-* [ ] Validate wallet limits
-* [ ] Validate user status
-* [ ] Validate KYC requirement if applicable
+* [x] Validate sender wallet
+* [x] Validate receiver wallet
+* [x] Prevent self-transfer
+* [x] Validate positive amount
+* [x] Validate sufficient balance
+* [x] Validate wallet limits
+* [x] Validate user status
+* [x] Validate KYC requirement if applicable
 
 ---
 
 ### 4.2 Transaction locking
 
-* [ ] Lock sender wallet
-* [ ] Lock receiver wallet
-* [ ] Lock wallets in deterministic order
-* [ ] Prevent deadlock
-* [ ] Update balances atomically
-* [ ] Insert transaction
-* [ ] Insert sender ledger entry
-* [ ] Insert receiver ledger entry
-* [ ] Commit transaction
+* [x] Lock sender wallet
+* [x] Lock receiver wallet
+* [x] Lock wallets in deterministic order
+* [x] Prevent deadlock
+* [x] Update balances atomically
+* [x] Insert transaction
+* [x] Insert sender ledger entry
+* [x] Insert receiver ledger entry
+* [x] Commit transaction
 
 ---
 
