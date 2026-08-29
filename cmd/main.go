@@ -60,6 +60,12 @@ func main() {
 	// Initialize Gin router engine
 	r := gin.Default()
 
+	r.Use(middleware.RequestIDMiddleware())
+	r.Use(middleware.SecurityHeaderMiddleware())
+	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.TimeoutMiddleware(10 * time.Second))
+	r.Use(middleware.MaxBodySizeMiddleware(1 * 1024 * 1024))
+
 	// Public Routes
 	publicRoutes := r.Group("/api/v1/auth")
 	{

@@ -574,16 +574,16 @@ Verify:
 
 ## Sprint 12 — Middleware & HTTP Hardening
 
-* [ ] Request ID middleware
-* [ ] Structured request logging
-* [ ] Recovery middleware
-* [ ] Request timeout
-* [ ] Body size limit
-* [ ] CORS configuration
-* [ ] Security headers
-* [ ] Rate limiting
-* [ ] Authentication middleware
-* [ ] Authorization middleware
+* [x] Request ID middleware
+* [x] Structured request logging
+* [x] Recovery middleware
+* [x] Request timeout
+* [x] Body size limit
+* [x] CORS configuration
+* [x] Security headers
+* [x] Rate limiting
+* [x] Authentication middleware
+* [x] Authorization middleware
 
 ---
 
