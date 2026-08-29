@@ -17,6 +17,7 @@ import (
 	"github.com/agamlatiff/bastion/internal/wallet"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -73,7 +74,7 @@ func main() {
 
 	r.Use(gin.Recovery())
 	r.Use(middleware.JSONLoggerMiddleware())
-
+	r.Use(middleware.MetricsMiddleware())
 
 	publicRoutes := r.Group("/api/v1")
 	{
@@ -83,6 +84,8 @@ func main() {
 				"message": "Healthcheck",
 			})
 		})
+
+		publicRoutes.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	}
 
 	// Auth Routes
@@ -127,7 +130,7 @@ func main() {
 
 	go func ()  {
 		log.Printf("Bastion API is running on port %s", cfg.AppPort)
-		
+
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to start server: %v", err)
 		}
