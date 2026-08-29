@@ -3,11 +3,10 @@ package wallet
 import (
 	"errors"
 	"net/http"
-	"strconv"
-
 	"github.com/agamlatiff/bastion/internal/audit"
 	"github.com/agamlatiff/bastion/internal/auth"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 type Handler struct {
@@ -25,6 +24,20 @@ func NewHandler(walletService Service, auditRepo audit.Repository) *Handler {
 // handleError maps domain errors to proper HTTP responses
 func handleError(c *gin.Context, err error) {
 	if err == nil {
+		return
+	}
+
+	var validationErrs validator.ValidationErrors
+	if errors.As(err, &validationErrs) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status" : "error",
+			"error": gin.H{
+				"code": "VALIDATION_ERROR",
+				"message": "Invalid input data format",
+				"details": validationErrs.Error(),
+			},
+		})
+
 		return
 	}
 
@@ -190,8 +203,19 @@ func (h *Handler) GetTransaction(c *gin.Context) {
 	}
 
 	currentUser := user.(*auth.User)
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	var req GetTransactionRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		handleError(c, err)
+		return
+	}
+
+	limit := 20
+	if req.Limit > 0 {
+		limit = req.Limit
+	}
+
+	offset := req.Offset
 
 	transactions, err := h.walletService.GetTransaction(c.Request.Context(), currentUser.ID, limit, offset)
 	if err != nil {

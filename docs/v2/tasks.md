@@ -459,14 +459,14 @@ pagination response
 
 ### 8.2 Validation
 
-* [ ] Validate request body
-* [ ] Validate UUID
-* [ ] Validate email
-* [ ] Validate amount
-* [ ] Validate idempotency key
-* [ ] Validate enum values
-* [ ] Validate pagination
-* [ ] Normalize inputs
+* [x] Validate request body
+* [x] Validate UUID
+* [x] Validate email
+* [x] Validate amount
+* [x] Validate idempotency key
+* [x] Validate enum values
+* [x] Validate pagination
+* [x] Normalize inputs
 
 ---
 

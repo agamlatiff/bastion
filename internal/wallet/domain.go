@@ -6,11 +6,11 @@ import (
 )
 
 var (
-	ErrInsufficientBalance = errors.New("insufficient balance")
-	ErrExceedsMaxLimit = errors.New("balance exceeds maximum wallet limit")
-	ErrInvalidAmount = errors.New("amount must be greater than zero")
-	ErrSelfTransfer = errors.New("cannot transfer to your own account")
-	ErrKYCRequired = errors.New("sender must be KYC verified to perform transfer")
+	ErrInsufficientBalance  = errors.New("insufficient balance")
+	ErrExceedsMaxLimit      = errors.New("balance exceeds maximum wallet limit")
+	ErrInvalidAmount        = errors.New("amount must be greater than zero")
+	ErrSelfTransfer         = errors.New("cannot transfer to your own account")
+	ErrKYCRequired          = errors.New("sender must be KYC verified to perform transfer")
 	ErrDailyLimitExceeded   = errors.New("daily transaction limit exceeded")
 	ErrMonthlyLimitExceeded = errors.New("monthly transaction limit exceeded")
 	ErrInvalidReceiver      = errors.New("invalid receiver wallet")
@@ -53,14 +53,19 @@ type LedgerEntry struct {
 type TransferRequest struct {
 	ReceiverEmail  string `json:"receiver_email" binding:"required,email"`
 	Amount         int64  `json:"amount" binding:"required,gt=0"`
-	IdempotencyKey string `json:"idempotency_key" binding:"required"`
-	Description    string `json:"description" binding:"required"`
+	IdempotencyKey string `json:"idempotency_key" binding:"required,max=100"`
+	Description    string `json:"description" binding:"required,max=255"`
 }
 
 type TopUpRequest struct {
 	Amount         int64  `json:"amount" binding:"required,gt=0"`
-	IdempotencyKey string `json:"idempotency_key" binding:"required"`
-	Description    string `json:"description"`
+	IdempotencyKey string `json:"idempotency_key" binding:"required,max=100"`
+	Description    string `json:"description" binding:"omitempty,max=255"`
+}
+
+type GetTransactionRequest struct {
+	Limit  int `form:"limit" binding:"omitempty,min=1,max=100"`
+	Offset int `form:"offset" binding:"omitempty,min=0"`
 }
 
 type WalletBalanceResponse struct {
