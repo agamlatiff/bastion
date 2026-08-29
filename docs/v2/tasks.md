@@ -474,13 +474,13 @@ pagination response
 
 Review every endpoint:
 
-* [ ] HTTP method
-* [ ] Status code
-* [ ] Request schema
-* [ ] Response schema
-* [ ] Error schema
-* [ ] Authentication requirement
-* [ ] Authorization requirement
+* [x] HTTP method
+* [x] Status code
+* [x] Request schema
+* [x] Response schema
+* [x] Error schema
+* [x] Authentication requirement
+* [x] Authorization requirement
 
 ---
 
@@ -490,23 +490,23 @@ Review every endpoint:
 
 ### Auth
 
-* [ ] Register success
-* [ ] Duplicate email
-* [ ] Invalid email
-* [ ] Weak password
-* [ ] Login success
-* [ ] Wrong password
-* [ ] Invalid token
-* [ ] Expired token
-* [ ] Revoked token
+* [x] Register success
+* [x] Duplicate email
+* [x] Invalid email
+* [x] Weak password
+* [x] Login success
+* [x] Wrong password
+* [x] Invalid token
+* [x] Expired token
+* [x] Revoked token
 
 ### Wallet
 
-* [ ] Get wallet
-* [ ] Top-up
-* [ ] Invalid amount
-* [ ] Max limit
-* [ ] Transfer
+* [x] Get wallet
+* [x] Top-up
+* [x] Invalid amount
+* [x] Max limit
+* [x] Transfer
 * [x] Insufficient balance
 * [x] Daily limit exceeded
 * [x] Monthly limit exceeded
@@ -516,12 +516,12 @@ Review every endpoint:
 
 ### KYC
 
-* [ ] Submit
-* [ ] Duplicate submission
-* [ ] Approve
-* [ ] Reject
-* [ ] Invalid state
-* [ ] Unauthorized reviewer
+* [x] Submit
+* [x] Duplicate submission
+* [x] Approve
+* [x] Reject
+* [x] Invalid state
+* [x] Unauthorized reviewer
 
 ---
 
@@ -536,15 +536,15 @@ Redis
 
 Tasks:
 
-* [ ] PostgreSQL test environment
-* [ ] Redis test environment
-* [ ] Migration setup
-* [ ] Repository integration tests
-* [ ] Transaction rollback tests
-* [ ] Redis integration tests
-* [ ] Auth integration tests
-* [ ] Wallet integration tests
-* [ ] KYC integration tests
+* [x] PostgreSQL test environment
+* [x] Redis test environment
+* [x] Migration setup
+* [x] Repository integration tests
+* [x] Transaction rollback tests
+* [x] Redis integration tests
+* [x] Auth integration tests
+* [x] Wallet integration tests
+* [x] KYC integration tests
 
 ---
 
@@ -562,13 +562,13 @@ Tests:
 
 Verify:
 
-* [ ] No negative balances
-* [ ] No lost updates
-* [ ] No duplicate transaction
-* [ ] No duplicate ledger
-* [ ] No balance limit violation
-* [ ] No deadlock
-* [ ] Correct final balance
+* [x] No negative balances
+* [x] No lost updates
+* [x] No duplicate transaction
+* [x] No duplicate ledger
+* [x] No balance limit violation
+* [x] No deadlock
+* [x] Correct final balance
 
 ---
 

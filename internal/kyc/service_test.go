@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/agamlatiff/bastion/internal/auth"
 	"github.com/agamlatiff/bastion/internal/kyc"
+	"github.com/agamlatiff/bastion/internal/platform/security"
 )
 
 type mockKYCRepo struct {
@@ -124,3 +126,73 @@ func TestKYCService_ReviewStateTransitions(t *testing.T) {
 		}
 	})
 }
+
+func TestKYCService_SubmitKYC(t *testing.T) {
+	ctx := context.Background()
+	repo := newMockKYCRepo()
+	svc := kyc.NewService(repo)
+	hashedPw, _ := security.HashPassword("KEY1234556!")
+
+	existingUser := &auth.User{
+		ID:           "usr_123",
+		Email:        "existing@bastion.com",
+		PasswordHash: string(hashedPw),
+		Tier:         "tier_1",
+	}
+	t.Run("Success - Submit KYC", func(t *testing.T) {
+		req := &kyc.SubmitKYCRequest{
+			IDCardNumber:   "1234567890123456",
+			IDCardImageURL: "https://storage.bastion.com/ktp.jpg",
+			SelfieImageURL: "https://storage.bastion.com/selfie.jpg",
+		}
+		res, err := svc.SubmitKYC(ctx, existingUser, req)
+		if err != nil {
+			t.Fatalf("Expected success, got: %v", err)
+		}
+		if res.Status != kyc.KYCStatusPending {
+			t.Errorf("Expected status %s, got %s", kyc.KYCStatusPending, res.Status)
+		}
+	})
+
+	t.Run("Duplicate Submission", func(t *testing.T) {
+		repo.kycMap["kyc_existing"] = &kyc.KYCVerification{
+			ID:     "kyc_existing",
+			UserID: "usr_duplikat",
+			Status: kyc.KYCStatusPending,
+		}
+		req := &kyc.SubmitKYCRequest{
+			IDCardNumber:   "0987654321098765",
+		}
+		
+		_, err := svc.SubmitKYC(ctx, existingUser, req)
+		if err == nil {
+			t.Errorf("Expected error for duplicate KYC submission, got nil")
+		}
+	})
+}
+
+
+func TestKYCService_RejectKYC(t *testing.T) {
+	ctx := context.Background()
+	repo := newMockKYCRepo()
+	
+	repo.kycMap["kyc_reject"] = &kyc.KYCVerification{
+		ID:     "kyc_reject",
+		UserID: "usr_reject",
+		Status: kyc.KYCStatusPending,
+	}
+	svc := kyc.NewService(repo)
+	
+	res, err := svc.ReviewKYC(ctx, "kyc_reject", &kyc.ReviewKYCRequest{
+		KYCID:           "kyc_reject",
+		Status:          kyc.KYCStatusRejected,
+		RejectionReason: "Foto KTP terlalu buram dan silau",
+	})
+	if err != nil {
+		t.Fatalf("Expected reject to succeed, got: %v", err)
+	}
+	if res.Status != kyc.KYCStatusRejected {
+		t.Errorf("Expected status %s, got %s", kyc.KYCStatusRejected, res.Status)
+	}
+}
+

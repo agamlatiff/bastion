@@ -446,5 +446,52 @@ func TestConcurrentTransfer_IdempotencyNamespace(t *testing.T) {
 	}
 }
 
+func TestWalletService_GetWallet(t *testing.T) {
 
+	pool, _, walletService, _, _ := setupTestEnv(t)
+	defer pool.Close()
+	ctx := context.Background()
+	
+	uniqueEmail := fmt.Sprintf("getwallet_%d@bastion.com", time.Now().UnixNano())
+	user, _ := createTestUser(ctx, t, pool, uniqueEmail, "Get Wallet User", "tier_1", 75000)
+	
+	fetchedWallet, err := walletService.GetBalance(ctx, user.ID)
+	if err != nil {
+		t.Fatalf("Expected to get wallet, got error: %v", err)
+	}
 
+	if fetchedWallet.Balance != 75000 {
+		t.Errorf("Expected balance 75000, got %d", fetchedWallet.Balance)
+	}
+}
+
+func TestWalletService_TopUp_Validation(t *testing.T) {
+	pool, _, walletService, _, _ := setupTestEnv(t)
+	defer pool.Close()
+	ctx := context.Background()
+
+	uniqueEmail := fmt.Sprintf("topup_val_%d@bastion.com", time.Now().UnixNano())
+	user, _ := createTestUser(ctx, t, pool, uniqueEmail, "TopUp Validation", "tier_1", 0)
+
+	t.Run("Invalid Amount (Negative)", func(t *testing.T) {
+		req := &wallet.TopUpRequest{
+			Amount:         -50000, 
+			IdempotencyKey: fmt.Sprintf("idm_%d", time.Now().UnixNano()),
+		}
+		_, err := walletService.TopUp(ctx, user.ID, req)
+		if err == nil {
+			t.Error("Expected error for negative top-up amount, got nil")
+		}
+	})
+	t.Run("Max Balance Limit Exceeded", func(t *testing.T) {
+		req := &wallet.TopUpRequest{
+			Amount:         25000000, 
+			IdempotencyKey: fmt.Sprintf("idm_%d", time.Now().UnixNano()),
+		}
+		_, err := walletService.TopUp(ctx, user.ID, req)
+		if err == nil {
+			t.Error("Expected error for exceeding max balance limit, got nil")
+		}
+	})
+
+}
