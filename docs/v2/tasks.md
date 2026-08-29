@@ -591,12 +591,12 @@ Verify:
 
 ### Logging
 
-* [ ] Structured JSON logging
-* [ ] Request ID
-* [ ] User ID where safe
-* [ ] Transaction ID
-* [ ] Error code
-* [ ] Latency
+* [x] Structured JSON logging
+* [x] Request ID
+* [x] User ID where safe
+* [x] Transaction ID
+* [x] Error code
+* [x] Latency
 
 ### Metrics
 
@@ -614,14 +614,14 @@ Verify:
 
 ## Sprint 14 — Application Lifecycle
 
-* [ ] Graceful shutdown
-* [ ] DB connection cleanup
-* [ ] Redis connection cleanup
-* [ ] HTTP server shutdown
-* [ ] Startup validation
-* [ ] Readiness endpoint
-* [ ] Liveness endpoint
-* [ ] Timeout configuration
+* [x] Graceful shutdown
+* [x] DB connection cleanup
+* [x] Redis connection cleanup
+* [x] HTTP server shutdown
+* [x] Startup validation
+* [x] Readiness endpoint
+* [x] Liveness endpoint
+* [x] Timeout configuration
 
 ---
 

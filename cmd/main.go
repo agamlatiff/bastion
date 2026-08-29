@@ -3,6 +3,10 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/agamlatiff/bastion/internal/audit"
@@ -58,19 +62,34 @@ func main() {
 	kycHandler := kyc.NewHandler(kycService, auditRepo)
 
 	// Initialize Gin router engine
-	r := gin.Default()
+	r := gin.New()
 
+	// Middleware
 	r.Use(middleware.RequestIDMiddleware())
 	r.Use(middleware.SecurityHeaderMiddleware())
 	r.Use(middleware.CORSMiddleware())
 	r.Use(middleware.TimeoutMiddleware(10 * time.Second))
 	r.Use(middleware.MaxBodySizeMiddleware(1 * 1024 * 1024))
 
-	// Public Routes
-	publicRoutes := r.Group("/api/v1/auth")
+	r.Use(gin.Recovery())
+	r.Use(middleware.JSONLoggerMiddleware())
+
+
+	publicRoutes := r.Group("/api/v1")
 	{
-		publicRoutes.POST("/register", middleware.RateLimitMiddleware(rdb, "register", 3, 1*time.Minute), authHandler.Register)
-		publicRoutes.POST("/login", middleware.RateLimitMiddleware(rdb, "login", 5, 1*time.Minute), authHandler.Login)
+		publicRoutes.GET("/healthz", func(c *gin.Context) {
+			c.JSON(200, gin.H{
+				"status": "ok",
+				"message": "Healthcheck",
+			})
+		})
+	}
+
+	// Auth Routes
+	authPublicRoutes := r.Group("/api/v1/auth")
+	{
+		authPublicRoutes.POST("/register", middleware.RateLimitMiddleware(rdb, "register", 3, 1*time.Minute), authHandler.Register)
+		authPublicRoutes.POST("/login", middleware.RateLimitMiddleware(rdb, "login", 5, 1*time.Minute), authHandler.Login)
 	}
 
 	// Protected Auth Routes
@@ -101,9 +120,31 @@ func main() {
 		kycRoutes.POST("/review", middleware.RequireRole(auth.RoleAdmin, auth.RoleKYCReviewer), kycHandler.ReviewKYC)
 	}
 
-	// Start HTTP Server
-	log.Printf("Bastion API is running on port %s", cfg.AppPort)
-	if err := r.Run(":" + cfg.AppPort); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	srv := &http.Server{
+		Addr: ":" + cfg.AppPort,
+		Handler: r,
 	}
+
+	go func ()  {
+		log.Printf("Bastion API is running on port %s", cfg.AppPort)
+		
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	<-quit
+	log.Println("Shutting down server... Giving 5 seconds for pending transactions to finish")
+
+	ctxShutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctxShutdown); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	log.Println("Server exiting gracefully. Goodbye!")
 }
