@@ -1,0 +1,52 @@
+name: Bastion V2 CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: bastion
+          POSTGRES_PASSWORD: bastion_secret
+          POSTGRES_DB: bastion_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bastion"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.26.x'
+
+    - name: Download Dependencies
+      run: go mod download
+
+    - name: Run Tests with Race Detector
+      env:
+        DATABASE_URL: postgres://bastion:bastion_secret@localhost:5432/bastion_db?sslmode=disable
+        REDIS_ADDR: localhost:6379
+      run: go test -v -race ./...
+
+    - name: Verify Build
+      run: CGO_ENABLED=0 GOOS=linux go build -o bastion-api cmd/main.go
