@@ -600,15 +600,15 @@ Verify:
 
 ### Metrics
 
-* [ ] HTTP request count
-* [ ] HTTP latency
-* [ ] Error rate
-* [ ] Login failures
-* [ ] Transfer count
-* [ ] Transfer failures
-* [ ] Top-up count
-* [ ] DB latency
-* [ ] Redis latency
+* [x] HTTP request count
+* [x] HTTP latency
+* [x] Error rate
+* [x] Login failures
+* [x] Transfer count
+* [x] Transfer failures
+* [x] Top-up count
+* [x] DB latency
+* [x] Redis latency
 
 ---
 
