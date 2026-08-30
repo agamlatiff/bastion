@@ -627,16 +627,16 @@ Verify:
 
 ## Sprint 15 — Docker & Environment
 
-* [ ] Multi-stage Docker build
-* [ ] Smaller production image
-* [ ] Non-root container
-* [ ] Environment-based configuration
-* [ ] Remove development secrets
-* [ ] Docker healthchecks
-* [ ] PostgreSQL healthcheck
-* [ ] Redis healthcheck
-* [ ] Application healthcheck
-* [ ] Separate local/prod configuration
+* [x] Multi-stage Docker build
+* [x] Smaller production image
+* [x] Non-root container
+* [x] Environment-based configuration
+* [x] Remove development secrets
+* [x] Docker healthchecks
+* [x] PostgreSQL healthcheck
+* [x] Redis healthcheck
+* [x] Application healthcheck
+* [x] Separate local/prod configuration
 
 ---
 
