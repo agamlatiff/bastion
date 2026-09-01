@@ -1,8 +1,6 @@
 package domain
 
-import (
-	"time"
-)
+import "time"
 
 type Wallet struct {
 	ID              string    `json:"id"`
@@ -12,27 +10,4 @@ type Wallet struct {
 	MaxBalanceLimit int64     `json:"max_balance_limit"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
-}
-
-type Transaction struct {
-	ID               string    `json:"id"`
-	IdempotencyKey   string    `json:"idempotency_key"`
-	SenderWalletID   *string   `json:"sender_wallet_id,omitempty"`
-	ReceiverWalletID *string   `json:"receiver_wallet_id,omitempty"`
-	Amount           int64     `json:"amount"`
-	FeeAmount        int64     `json:"fee_amount"`
-	Type             string    `json:"type"`
-	Status           string    `json:"status"`
-	Description      string    `json:"description"`
-	CreatedAt        time.Time `json:"created_at"`
-}
-
-type LedgerEntry struct {
-	ID            string    `json:"id"`
-	TransactionID string    `json:"transaction_id"`
-	WalletID      string    `json:"wallet_id"`
-	EntryType     string    `json:"entry_type"`
-	Amount        int64     `json:"amount"`
-	BalanceAfter  int64     `json:"balance_after"`
-	CreatedAt     time.Time `json:"created_at"`
 }

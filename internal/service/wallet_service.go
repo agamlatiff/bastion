@@ -113,8 +113,8 @@ func (s *walletService) TopUp(ctx context.Context, userID string, req *dto.TopUp
 			ReceiverWalletID: &wallet.ID,
 			Amount:           req.Amount,
 			FeeAmount:        0,
-			Type:             "TOPUP",
-			Status:           "SUCCESS",
+			Type:             domain.TxTypeTopUp,
+			Status:           domain.TxStatusSuccess,
 			Description:      desc,
 		}
 		if insertErr := s.txRepo.Insert(ctx, db, tx); insertErr != nil {
@@ -124,7 +124,7 @@ func (s *walletService) TopUp(ctx context.Context, userID string, req *dto.TopUp
 		entry := &domain.LedgerEntry{
 			TransactionID: tx.ID,
 			WalletID:      wallet.ID,
-			EntryType:     "CREDIT",
+			EntryType:     domain.EntryTypeCredit,
 			Amount:        req.Amount,
 			BalanceAfter:  newBalance,
 		}
@@ -233,8 +233,8 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 			ReceiverWalletID: &receiverWallet.ID,
 			Amount:           req.Amount,
 			FeeAmount:        0,
-			Type:             "TRANSFER",
-			Status:           "SUCCESS",
+			Type:             domain.TxTypeTransfer,
+			Status:           domain.TxStatusSuccess,
 			Description:      req.Description,
 		}
 		if err := s.txRepo.Insert(ctx, db, tx); err != nil {
@@ -244,7 +244,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 		if err := s.ledgerRepo.Insert(ctx, db, &domain.LedgerEntry{
 			TransactionID: tx.ID,
 			WalletID:      senderWallet.ID,
-			EntryType:     "DEBIT",
+			EntryType:     domain.EntryTypeDebit,
 			Amount:        req.Amount,
 			BalanceAfter:  newSenderBalance,
 		}); err != nil {
@@ -253,7 +253,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 		if err := s.ledgerRepo.Insert(ctx, db, &domain.LedgerEntry{
 			TransactionID: tx.ID,
 			WalletID:      receiverWallet.ID,
-			EntryType:     "CREDIT",
+			EntryType:     domain.EntryTypeCredit,
 			Amount:        req.Amount,
 			BalanceAfter:  newReceiverBalance,
 		}); err != nil {
