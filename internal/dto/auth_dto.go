@@ -20,7 +20,7 @@ func (r *RegisterRequest) ToUser(hashedPassword string) *domain.User {
 		PasswordHash: hashedPassword,
 		FullName:     r.FullName,
 		Role:         domain.RoleUser,
-		Tier:         "tier_1",
+		Tier:         domain.Tier1,
 	}
 }
 
@@ -32,8 +32,8 @@ type LoginRequest struct {
 
 // AuthResponse represents the JSON response returned after successful login or registration.
 type AuthResponse struct {
-	Token string        `json:"token"` // Signed JWT bearer token
-	User  *UserResponse `json:"user"`  // Sanitized user profile
+	Token string        `json:"token"`
+	User  *UserResponse `json:"user"`
 }
 
 // UserResponse represents the safe public user profile excluding sensitive fields.

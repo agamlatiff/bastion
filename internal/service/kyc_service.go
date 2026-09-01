@@ -38,7 +38,7 @@ func NewKYCService(
 
 func (s *kycService) SubmitKYC(ctx context.Context, user *domain.User, req *dto.SubmitKYCRequest) (*domain.KYCVerification, error) {
 	// Step 1: Check if user is already tier 2 / verified
-	if user.Tier == "tier_2" || user.IsVerified {
+	if user.Tier == domain.Tier2 || user.IsVerified {
 		return nil, errors.New("user is already verified as tier 2")
 	}
 
@@ -98,12 +98,12 @@ func (s *kycService) ReviewKYC(ctx context.Context, kycID string, req *dto.Revie
 			if err := s.kycRepo.UpdateStatus(ctx, db, kycID, domain.KYCStatusApproved, nil); err != nil {
 				return err
 			}
-			// (ii) Upgrade user tier to tier_2 and mark as verified
-			if err := s.userRepo.UpdateTierAndVerification(ctx, db, existingKYC.UserID, "tier_2", true); err != nil {
+			// (ii) Upgrade user tier to Tier2 and mark as verified
+			if err := s.userRepo.UpdateTierAndVerification(ctx, db, existingKYC.UserID, domain.Tier2, true); err != nil {
 				return err
 			}
-			// (iii) Increase wallet maximum balance limit to 10,000,000 IDR
-			if err := s.walletRepo.UpdateMaxLimit(ctx, db, existingKYC.UserID, 10000000); err != nil {
+			// (iii) Increase wallet maximum balance limit according to Tier2 limit constant
+			if err := s.walletRepo.UpdateMaxLimit(ctx, db, existingKYC.UserID, domain.Tier2MaxBalanceLimit); err != nil {
 				return err
 			}
 			return nil

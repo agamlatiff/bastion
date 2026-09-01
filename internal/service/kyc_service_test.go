@@ -65,7 +65,7 @@ func TestKYCService_SubmitKYC(t *testing.T) {
 
 	user := &domain.User{
 		ID:         "usr_123",
-		Tier:       "tier_1",
+		Tier:       domain.Tier1,
 		IsVerified: false,
 	}
 

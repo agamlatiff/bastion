@@ -79,8 +79,8 @@ func (m *mockWalletRepo) Create(ctx context.Context, db repository.DBTX, userID 
 		ID:              "wal_" + userID,
 		UserID:          userID,
 		Balance:         0,
-		Currency:        "IDR",
-		MaxBalanceLimit: 2000000,
+		Currency:        domain.DefaultCurrency,
+		MaxBalanceLimit: domain.Tier1MaxBalanceLimit,
 	}
 	return nil
 }
