@@ -185,3 +185,87 @@ func (h *AuthHandler) GetAuditLogs(c *gin.Context) {
 		"data":   logs,
 	})
 }
+
+func (h *AuthHandler) SetPIN(c *gin.Context) {
+	user, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
+			"error":  "unauthorized",
+		})
+		return
+	}
+
+	currentUser := user.(*domain.User)
+
+	var req dto.SetPINRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	if err := h.authService.SetPIN(c.Request.Context(), currentUser.ID, req.PIN); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
+		UserID:    &currentUser.ID,
+		Action:    "USER_PIN_SET",
+		IPAddress: c.ClientIP(),
+		UserAgent: c.Request.UserAgent(),
+	})
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Transaction PIN has been successfully set",
+	})
+}
+
+func (h *AuthHandler) ChangePIN(c *gin.Context) {
+	user, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
+			"error":  "unauthorized",
+		})
+		return
+	}
+
+	currentUser := user.(*domain.User)
+
+	var req dto.ChangePINRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	if err := h.authService.ChangePIN(c.Request.Context(), currentUser.ID, req.OldPIN, req.NewPIN); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
+		UserID:    &currentUser.ID,
+		Action:    "USER_PIN_CHANGED",
+		IPAddress: c.ClientIP(),
+		UserAgent: c.Request.UserAgent(),
+	})
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Transaction PIN has been successfully changed",
+	})
+}

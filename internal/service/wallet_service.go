@@ -8,6 +8,7 @@ import (
 
 	"github.com/agamlatiff/bastion/internal/domain"
 	"github.com/agamlatiff/bastion/internal/dto"
+	"github.com/agamlatiff/bastion/internal/platform/security"
 	"github.com/agamlatiff/bastion/internal/repository"
 )
 
@@ -163,13 +164,21 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 		return nil, domain.ErrKYCRequired
 	}
 
-	// Step 3: Fetch sender's wallet
+	// Step 3: Verify sender's transaction PIN
+	if senderUser.PINHash == nil || *senderUser.PINHash == "" {
+		return nil, domain.ErrPINNotSet
+	}
+	if err := security.ComparePIN(*senderUser.PINHash, req.PIN); err != nil {
+		return nil, domain.ErrInvalidPIN
+	}
+
+	// Step 4: Fetch sender's wallet
 	senderWallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.DB(), senderUserID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Step 4: Validate receiver exists and is not the sender themselves
+	// Step 5: Validate receiver exists and is not the sender themselves
 	receiverUser, err := s.userRepo.FindByEmail(ctx, s.transactor.DB(), req.ReceiverEmail)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
@@ -181,7 +190,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 		return nil, domain.ErrSelfTransfer
 	}
 
-	// Step 5: Fetch receiver's wallet
+	// Step 6: Fetch receiver's wallet
 	receiverWallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.DB(), receiverUser.ID)
 	if err != nil {
 		if errors.Is(err, domain.ErrWalletNotFound) {
@@ -190,7 +199,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 		return nil, err
 	}
 
-	// Step 6: Acquire distributed lock to prevent race conditions on idempotency key
+	// Step 7: Acquire distributed lock to prevent race conditions on idempotency key
 	fullIdmKey := fmt.Sprintf("idempotency:%s:transfer:%s", senderUserID, req.IdempotencyKey)
 	locked, err := s.locker.AcquireLock(ctx, fullIdmKey, 5*time.Second)
 	if err != nil {
@@ -201,23 +210,23 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 	}
 	defer s.locker.ReleaseLock(ctx, fullIdmKey)
 
-	// Step 7: Execute atomic transfer in a database transaction with deadlock prevention
+	// Step 8: Execute atomic transfer in a database transaction with deadlock prevention
 	var result *domain.Transaction
 	err = s.transactor.WithTx(ctx, func(db repository.DBTX) error {
-		// 7a. Check if this transfer was already processed
+		// 8a. Check if this transfer was already processed
 		existing, idmErr := s.txRepo.CheckIdempotency(ctx, db, fullIdmKey)
 		if idmErr == nil {
 			result = existing
 			return nil
 		}
 
-		// 7b. Deadlock Prevention: Order wallet locks lexicographically by UUID
+		// 8b. Deadlock Prevention: Order wallet locks lexicographically by UUID
 		firstID, secondID := senderWallet.ID, receiverWallet.ID
 		if senderWallet.ID > receiverWallet.ID {
 			firstID, secondID = receiverWallet.ID, senderWallet.ID
 		}
 
-		// 7c. Lock both wallet rows with `SELECT ... FOR UPDATE`
+		// 8c. Lock both wallet rows with `SELECT ... FOR UPDATE`
 		b1, _, lockErr := s.walletRepo.GetBalanceForUpdate(ctx, db, firstID)
 		if lockErr != nil {
 			return lockErr
@@ -227,7 +236,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 			return lockErr
 		}
 
-		// 7d. Assign locked balance variables back to sender and receiver
+		// 8d. Assign locked balance variables back to sender and receiver
 		var senderBalance, receiverBalance, receiverLimit int64
 		if senderWallet.ID == firstID {
 			senderBalance, receiverBalance, receiverLimit = b1, b2, l2
@@ -235,19 +244,19 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 			senderBalance, receiverBalance, receiverLimit = b2, b1, l2
 		}
 
-		// 7e. Check sender's sufficient balance
+		// 8e. Check sender's sufficient balance
 		if senderBalance < req.Amount {
 			return domain.ErrInsufficientBalance
 		}
 
-		// 7f. Calculate new balances and check receiver's wallet limit
+		// 8f. Calculate new balances and check receiver's wallet limit
 		newSenderBalance := senderBalance - req.Amount
 		newReceiverBalance := receiverBalance + req.Amount
 		if newReceiverBalance > receiverLimit {
 			return domain.ErrExceedsMaxLimit
 		}
 
-		// 7g. Update balances for both sender and receiver wallets
+		// 8g. Update balances for both sender and receiver wallets
 		if err := s.walletRepo.UpdateBalance(ctx, db, senderWallet.ID, newSenderBalance); err != nil {
 			return err
 		}
@@ -255,7 +264,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 			return err
 		}
 
-		// 7h. Record the transaction in `transactions` table
+		// 8h. Record the transaction in `transactions` table
 		tx := &domain.Transaction{
 			IdempotencyKey:   fullIdmKey,
 			SenderWalletID:   &senderWallet.ID,
@@ -270,7 +279,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 			return err
 		}
 
-		// 7i. Insert double-entry ledger records (DEBIT on sender, CREDIT on receiver)
+		// 8i. Insert double-entry ledger records (DEBIT on sender, CREDIT on receiver)
 		if err := s.ledgerRepo.Insert(ctx, db, &domain.LedgerEntry{
 			TransactionID: tx.ID,
 			WalletID:      senderWallet.ID,

@@ -64,3 +64,12 @@ func ToUserResponse(u *domain.User) *UserResponse {
 		UpdatedAt:  u.UpdatedAt,
 	}
 }
+
+type SetPINRequest struct {
+	PIN string `json:"pin" binding:"required,len=6"`
+}
+
+type ChangePINRequest struct {
+	OldPIN string `json:"old_pin" binding:"required,len=6"`
+	NewPIN string `json:"new_pin" binding:"required,len=6"`
+}

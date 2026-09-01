@@ -103,6 +103,8 @@ func main() {
 		protectedRoutes.GET("/profile", authHandler.GetProfile)
 		protectedRoutes.POST("/logout", authHandler.Logout)
 		protectedRoutes.GET("/audit-logs", authHandler.GetAuditLogs)
+		protectedRoutes.POST("/pin", authHandler.SetPIN)
+		protectedRoutes.PUT("/pin", authHandler.ChangePIN)
 	}
 
 	// Protected Wallet Routes

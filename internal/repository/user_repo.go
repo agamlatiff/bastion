@@ -14,6 +14,7 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, db DBTX, email string) (*domain.User, error)
 	FindByID(ctx context.Context, db DBTX, id string) (*domain.User, error)
 	UpdateTierAndVerification(ctx context.Context, db DBTX, userID string, tier string, isVerified bool) error
+	UpdatePIN(ctx context.Context, db DBTX, userID string, pinHash string) error
 }
 
 type userRepo struct{}
@@ -26,14 +27,15 @@ func NewUserRepository() UserRepository {
 // Create inserts a new user record into the `users` table and populates generated ID and timestamps.
 func (r *userRepo) Create(ctx context.Context, db DBTX, user *domain.User) error {
 	query := `
-		INSERT INTO users (email, password_hash, full_name, role, tier, is_verified) 
-		VALUES ($1, $2, $3, $4, $5, $6) 
+		INSERT INTO users (email, password_hash, pin_hash, full_name, role, tier, is_verified) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7) 
 		RETURNING id, created_at, updated_at
 	`
 	return db.QueryRow(
 		ctx, query,
 		user.Email,
 		user.PasswordHash,
+		user.PINHash,
 		user.FullName,
 		user.Role,
 		user.Tier,
@@ -44,7 +46,7 @@ func (r *userRepo) Create(ctx context.Context, db DBTX, user *domain.User) error
 // FindByEmail retrieves a user by their unique email address.
 func (r *userRepo) FindByEmail(ctx context.Context, db DBTX, email string) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, full_name, role, tier, is_verified, created_at, updated_at 
+		SELECT id, email, password_hash, pin_hash, full_name, role, tier, is_verified, created_at, updated_at 
 		FROM users 
 		WHERE email = $1
 	`
@@ -53,6 +55,7 @@ func (r *userRepo) FindByEmail(ctx context.Context, db DBTX, email string) (*dom
 		&user.ID,
 		&user.Email,
 		&user.PasswordHash,
+		&user.PINHash,
 		&user.FullName,
 		&user.Role,
 		&user.Tier,
@@ -72,7 +75,7 @@ func (r *userRepo) FindByEmail(ctx context.Context, db DBTX, email string) (*dom
 // FindByID retrieves a user by their primary key UUID string.
 func (r *userRepo) FindByID(ctx context.Context, db DBTX, id string) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, full_name, role, tier, is_verified, created_at, updated_at 
+		SELECT id, email, password_hash, pin_hash, full_name, role, tier, is_verified, created_at, updated_at 
 		FROM users 
 		WHERE id = $1
 	`
@@ -81,6 +84,7 @@ func (r *userRepo) FindByID(ctx context.Context, db DBTX, id string) (*domain.Us
 		&user.ID,
 		&user.Email,
 		&user.PasswordHash,
+		&user.PINHash,
 		&user.FullName,
 		&user.Role,
 		&user.Tier,
@@ -105,5 +109,16 @@ func (r *userRepo) UpdateTierAndVerification(ctx context.Context, db DBTX, userI
 		WHERE id = $3
 	`
 	_, err := db.Exec(ctx, query, tier, isVerified, userID)
+	return err
+}
+
+// UpdatePIN updates a user's hashed transaction PIN in the `users` table.
+func (r *userRepo) UpdatePIN(ctx context.Context, db DBTX, userID string, pinHash string) error {
+	query := `
+		UPDATE users
+		SET pin_hash = $1, updated_at = NOW()
+		WHERE id = $2
+	`
+	_, err := db.Exec(ctx, query, pinHash, userID)
 	return err
 }

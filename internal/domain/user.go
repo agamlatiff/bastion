@@ -20,6 +20,7 @@ type User struct {
 	ID           string    `json:"id"`
 	Email        string    `json:"email"`
 	PasswordHash string    `json:"-"`
+	PINHash      *string   `json:"-"`
 	FullName     string    `json:"full_name"`
 	Role         string    `json:"role"`
 	Tier         string    `json:"tier"`

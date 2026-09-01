@@ -70,6 +70,16 @@ func (m *mockUserRepo) UpdateTierAndVerification(ctx context.Context, db reposit
 	return domain.ErrUserNotFound
 }
 
+func (m *mockUserRepo) UpdatePIN(ctx context.Context, db repository.DBTX, userID string, pinHash string) error {
+	for _, u := range m.users {
+		if u.ID == userID {
+			u.PINHash = &pinHash
+			return nil
+		}
+	}
+	return domain.ErrUserNotFound
+}
+
 type mockWalletRepo struct {
 	wallets map[string]*domain.Wallet
 }
@@ -180,6 +190,53 @@ func TestAuthService_Register(t *testing.T) {
 
 		if err == nil {
 			t.Errorf("expected error weak password, got nil")
+		}
+	})
+}
+
+func TestAuthService_PIN(t *testing.T) {
+	usersMap := make(map[string]*domain.User)
+	user := &domain.User{
+		ID:    "usr_pin_1",
+		Email: "pinuser@bastion.com",
+	}
+	usersMap[user.Email] = user
+
+	userRepo := &mockUserRepo{users: usersMap}
+	walletRepo := &mockWalletRepo{wallets: make(map[string]*domain.Wallet)}
+	blacklistRepo := &mockTokenBlacklistRepo{revokedTokens: make(map[string]bool)}
+	transactor := &mockTransactor{}
+
+	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, "secret", 24)
+
+	t.Run("SetPIN Success", func(t *testing.T) {
+		err := svc.SetPIN(context.Background(), "usr_pin_1", "123456")
+		if err != nil {
+			t.Fatalf("expected set pin success, got error: %v", err)
+		}
+		if user.PINHash == nil {
+			t.Errorf("expected pin hash to be set")
+		}
+	})
+
+	t.Run("SetPIN Already Set Error", func(t *testing.T) {
+		err := svc.SetPIN(context.Background(), "usr_pin_1", "654321")
+		if err != domain.ErrPINAlreadySet {
+			t.Errorf("expected ErrPINAlreadySet, got %v", err)
+		}
+	})
+
+	t.Run("ChangePIN Success", func(t *testing.T) {
+		err := svc.ChangePIN(context.Background(), "usr_pin_1", "123456", "654321")
+		if err != nil {
+			t.Fatalf("expected change pin success, got error: %v", err)
+		}
+	})
+
+	t.Run("ChangePIN Invalid Old PIN Error", func(t *testing.T) {
+		err := svc.ChangePIN(context.Background(), "usr_pin_1", "999999", "111111")
+		if err != domain.ErrInvalidPIN {
+			t.Errorf("expected ErrInvalidPIN, got %v", err)
 		}
 	})
 }

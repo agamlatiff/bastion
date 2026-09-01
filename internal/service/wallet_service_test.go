@@ -8,6 +8,7 @@ import (
 
 	"github.com/agamlatiff/bastion/internal/domain"
 	"github.com/agamlatiff/bastion/internal/dto"
+	"github.com/agamlatiff/bastion/internal/platform/security"
 	"github.com/agamlatiff/bastion/internal/repository"
 )
 
@@ -215,9 +216,11 @@ func TestWalletService_Transfer(t *testing.T) {
 
 	svc := NewWalletService(transactor, walletRepo, txRepo, ledgerRepo, userRepo, locker)
 
+	senderPinHash, _ := security.HashPIN("123456")
 	senderUser := &domain.User{
 		ID:         "usr_sender",
 		Email:      "sender@bastion.com",
+		PINHash:    &senderPinHash,
 		Tier:       domain.Tier2,
 		IsVerified: true,
 	}
@@ -257,6 +260,7 @@ func TestWalletService_Transfer(t *testing.T) {
 		req := &dto.TransferRequest{
 			ReceiverEmail:  "receiver@bastion.com",
 			Amount:         100000,
+			PIN:            "123456",
 			IdempotencyKey: "idm_tf_1",
 			Description:    "Transfer to receiver",
 		}
@@ -281,10 +285,26 @@ func TestWalletService_Transfer(t *testing.T) {
 		}
 	})
 
+	t.Run("Invalid PIN Error", func(t *testing.T) {
+		req := &dto.TransferRequest{
+			ReceiverEmail:  "receiver@bastion.com",
+			Amount:         50000,
+			PIN:            "999999",
+			IdempotencyKey: "idm_tf_wrong_pin",
+			Description:    "Transfer wrong pin",
+		}
+
+		_, err := svc.Transfer(context.Background(), "usr_sender", req)
+		if !errors.Is(err, domain.ErrInvalidPIN) {
+			t.Errorf("expected ErrInvalidPIN, got %v", err)
+		}
+	})
+
 	t.Run("Insufficient Balance", func(t *testing.T) {
 		req := &dto.TransferRequest{
 			ReceiverEmail:  "receiver@bastion.com",
 			Amount:         1000000, // Sender only has 400k
+			PIN:            "123456",
 			IdempotencyKey: "idm_tf_insufficient",
 			Description:    "Transfer too much",
 		}
@@ -299,6 +319,7 @@ func TestWalletService_Transfer(t *testing.T) {
 		req := &dto.TransferRequest{
 			ReceiverEmail:  "sender@bastion.com",
 			Amount:         50000,
+			PIN:            "123456",
 			IdempotencyKey: "idm_tf_self",
 			Description:    "Self transfer",
 		}
@@ -313,6 +334,7 @@ func TestWalletService_Transfer(t *testing.T) {
 		unverifiedUser := &domain.User{
 			ID:         "usr_unverified",
 			Email:      "unverified@bastion.com",
+			PINHash:    &senderPinHash,
 			Tier:       domain.Tier1,
 			IsVerified: false,
 		}
@@ -322,6 +344,7 @@ func TestWalletService_Transfer(t *testing.T) {
 		req := &dto.TransferRequest{
 			ReceiverEmail:  "receiver@bastion.com",
 			Amount:         50000,
+			PIN:            "123456",
 			IdempotencyKey: "idm_tf_unverified",
 			Description:    "Transfer from unverified",
 		}

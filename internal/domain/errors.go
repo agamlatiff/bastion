@@ -12,6 +12,13 @@ var (
 	ErrInvalidCredentials   = errors.New("invalid email or password")
 	ErrTokenRevoked         = errors.New("token has been logged out")
 
+	// --- PIN Errors ---
+	ErrPINNotSet            = errors.New("transaction pin has not been set, please set up your pin first")
+	ErrPINAlreadySet        = errors.New("transaction pin is already set, use change pin instead")
+	ErrInvalidPINFormat     = errors.New("pin must be exactly 6 numeric digits")
+	ErrInvalidPIN           = errors.New("invalid transaction pin")
+	ErrSameOldAndNewPIN     = errors.New("new pin cannot be the same as old pin")
+
 	// --- KYC Errors ---
 	ErrKYCNotFound          = errors.New("kyc application not found")
 	ErrKYCRequired          = errors.New("sender must be KYC verified to perform transfer")

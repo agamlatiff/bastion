@@ -6,6 +6,7 @@ import "github.com/agamlatiff/bastion/internal/domain"
 type TransferRequest struct {
 	ReceiverEmail  string `json:"receiver_email" binding:"required,email"`
 	Amount         int64  `json:"amount" binding:"required,gt=0"`
+	PIN            string `json:"pin" binding:"required,len=6"`
 	IdempotencyKey string `json:"idempotency_key" binding:"required,max=100"`
 	Description    string `json:"description" binding:"required,max=255"`
 }

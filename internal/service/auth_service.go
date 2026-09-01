@@ -16,6 +16,8 @@ type AuthService interface {
 	Login(ctx context.Context, req *dto.LoginRequest) (*dto.AuthResponse, error)
 	ValidateToken(ctx context.Context, tokenStr string) (*domain.User, error)
 	Logout(ctx context.Context, tokenStr string) error
+	SetPIN(ctx context.Context, userID string, pin string) error
+	ChangePIN(ctx context.Context, userID string, oldPIN, newPIN string) error
 }
 
 type authService struct {
@@ -163,4 +165,63 @@ func (s *authService) Logout(ctx context.Context, tokenStr string) error {
 
 	// Step 3: Revoke token in blacklist repository
 	return s.blacklistRepo.Revoke(ctx, claims.ID, remainingDuration)
+}
+
+func (s *authService) SetPIN(ctx context.Context, userID, pin string) error {
+	// Step 1: Validate PIN is strictly 6 numeric digits
+	if err := security.ValidatePIN(pin); err != nil {
+		return domain.ErrInvalidPINFormat
+	}
+
+	// Step 2: Retrieve user and ensure PIN has not been previously set
+	user, err := s.userRepo.FindByID(ctx, s.transactor.DB(), userID)
+	if err != nil {
+		return err
+	}
+	if user.PINHash != nil && *user.PINHash != "" {
+		return domain.ErrPINAlreadySet
+	}
+
+	// Step 3: Hash PIN using Bcrypt
+	pinHash, err := security.HashPIN(pin)
+	if err != nil {
+		return err
+	}
+
+	// Step 4: Persist PIN hash into `users` table
+	return s.userRepo.UpdatePIN(ctx, s.transactor.DB(), userID, pinHash)
+}
+
+func (s *authService) ChangePIN(ctx context.Context, userID, oldPIN, newPIN string) error {
+	// Step 1: Validate new PIN format
+	if err := security.ValidatePIN(newPIN); err != nil {
+		return domain.ErrInvalidPINFormat
+	}
+
+	// Step 2: Prevent using the exact same PIN
+	if oldPIN == newPIN {
+		return domain.ErrSameOldAndNewPIN
+	}
+
+	// Step 3: Retrieve user and ensure PIN exists
+	user, err := s.userRepo.FindByID(ctx, s.transactor.DB(), userID)
+	if err != nil {
+		return err
+	}
+	if user.PINHash == nil || *user.PINHash == "" {
+		return domain.ErrPINNotSet
+	}
+
+	// Step 4: Verify existing old PIN matches stored hash
+	if err := security.ComparePIN(*user.PINHash, oldPIN); err != nil {
+		return domain.ErrInvalidPIN
+	}
+
+	// Step 5: Hash new PIN and update
+	newPINHash, err := security.HashPIN(newPIN)
+	if err != nil {
+		return err
+	}
+
+	return s.userRepo.UpdatePIN(ctx, s.transactor.DB(), userID, newPINHash)
 }
