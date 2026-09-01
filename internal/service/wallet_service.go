@@ -173,7 +173,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 	receiverUser, err := s.userRepo.FindByEmail(ctx, s.transactor.DB(), req.ReceiverEmail)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
-			return nil, errors.New("receiver user not found")
+			return nil, domain.ErrReceiverNotFound
 		}
 		return nil, err
 	}
@@ -185,7 +185,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 	receiverWallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.DB(), receiverUser.ID)
 	if err != nil {
 		if errors.Is(err, domain.ErrWalletNotFound) {
-			return nil, errors.New("receiver wallet not found")
+			return nil, domain.ErrReceiverWalletNotFound
 		}
 		return nil, err
 	}

@@ -39,12 +39,12 @@ func NewKYCService(
 func (s *kycService) SubmitKYC(ctx context.Context, user *domain.User, req *dto.SubmitKYCRequest) (*domain.KYCVerification, error) {
 	// Step 1: Check if user is already tier 2 / verified
 	if user.Tier == domain.Tier2 || user.IsVerified {
-		return nil, errors.New("user is already verified as tier 2")
+		return nil, domain.ErrAlreadyVerified
 	}
 
 	// Step 2: Validate Indonesian NIK length format (strictly 16 digits)
 	if len(req.IDCardNumber) != 16 {
-		return nil, errors.New("id card number (NIK) must be exactly 16 digits")
+		return nil, domain.ErrInvalidNIKLength
 	}
 
 	// Step 3: Check for existing pending or approved KYC submissions to avoid duplicate reviews
@@ -57,7 +57,7 @@ func (s *kycService) SubmitKYC(ctx context.Context, user *domain.User, req *dto.
 			return nil, domain.ErrKYCAlreadyPending
 		}
 		if existingKYC.Status == domain.KYCStatusApproved {
-			return nil, errors.New("your KYC is already approved")
+			return nil, domain.ErrKYCAlreadyApproved
 		}
 	}
 
@@ -86,7 +86,7 @@ func (s *kycService) ReviewKYC(ctx context.Context, kycID string, req *dto.Revie
 
 	// Step 2: Ensure the application is currently in PENDING state
 	if existingKYC.Status != domain.KYCStatusPending {
-		return nil, errors.New("only pending KYC applications can be reviewed")
+		return nil, domain.ErrKYCNotPending
 	}
 
 	// Step 3: Handle approval or rejection logic
@@ -125,7 +125,7 @@ func (s *kycService) ReviewKYC(ctx context.Context, kycID string, req *dto.Revie
 		}
 
 	default:
-		return nil, errors.New("invalid status: must be either 'approved' or 'rejected'")
+		return nil, domain.ErrInvalidKYCStatus
 	}
 
 	// Step 4: Return updated KYC verification record

@@ -141,7 +141,7 @@ func (s *authService) ValidateToken(ctx context.Context, tokenStr string) (*doma
 		return nil, err
 	}
 	if isRevoked {
-		return nil, errors.New("token has been logged out")
+		return nil, domain.ErrTokenRevoked
 	}
 
 	// Step 3: Fetch active user record from repository
