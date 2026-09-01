@@ -1,4 +1,4 @@
-package wallet
+package domain
 
 import (
 	"errors"
@@ -75,3 +75,4 @@ type WalletBalanceResponse struct {
 	Currency        string `json:"currency"`
 	MaxBalanceLimit int64  `json:"max_balance_limit"`
 }
+

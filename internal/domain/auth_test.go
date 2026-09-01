@@ -1,21 +1,19 @@
-package auth_test
+package domain
 
 import (
 	"encoding/json"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/agamlatiff/bastion/internal/auth"
 )
 
 func TestUserResponse_NeverLeaksPasswordHash(t *testing.T) {
-	user := &auth.User{
+	user := &User{
 		ID:           "usr_12345",
 		Email:        "user@example.com",
 		PasswordHash: "superSecretBcryptPasswordHash",
 		FullName:     "John Doe",
-		Role:         auth.RoleUser,
+		Role:         RoleUser,
 		Tier:         "tier_1",
 		IsVerified:   false,
 		CreatedAt:    time.Now(),

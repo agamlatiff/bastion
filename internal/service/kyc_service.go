@@ -1,27 +1,28 @@
-package kyc
+package service
 
 import (
 	"context"
 	"errors"
 
-	"github.com/agamlatiff/bastion/internal/auth"
+	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/repository"
 )
 
-type Service interface {
-	SubmitKYC(ctx context.Context, user *auth.User, req *SubmitKYCRequest) (*KYCVerification, error)
-	GetKYCStatus(ctx context.Context, userID string) (*KYCVerification, error)
-	ReviewKYC(ctx context.Context, kycID string, req *ReviewKYCRequest) (*KYCVerification, error)
+type KYCService interface {
+	SubmitKYC(ctx context.Context, user *domain.User, req *domain.SubmitKYCRequest) (*domain.KYCVerification, error)
+	GetKYCStatus(ctx context.Context, userID string) (*domain.KYCVerification, error)
+	ReviewKYC(ctx context.Context, kycID string, req *domain.ReviewKYCRequest) (*domain.KYCVerification, error)
 }
 
-type service struct {
-	kycRepo Repository
+type kycService struct {
+	kycRepo repository.KYCRepository
 }
 
-func NewService(kycRepo Repository) Service {
-	return &service{kycRepo: kycRepo}
+func NewKYCService(kycRepo repository.KYCRepository) KYCService {
+	return &kycService{kycRepo: kycRepo}
 }
 
-func (s *service) SubmitKYC(ctx context.Context, user *auth.User, req *SubmitKYCRequest) (*KYCVerification, error) {
+func (s *kycService) SubmitKYC(ctx context.Context, user *domain.User, req *domain.SubmitKYCRequest) (*domain.KYCVerification, error) {
 	if user.Tier == "tier_2" || user.IsVerified {
 		return nil, errors.New("user is already verified as tier 2")
 	}
@@ -32,20 +33,20 @@ func (s *service) SubmitKYC(ctx context.Context, user *auth.User, req *SubmitKYC
 
 	existingKYC, err := s.kycRepo.FindByUserID(ctx, user.ID)
 	if err == nil && existingKYC != nil {
-		if existingKYC.Status == KYCStatusPending {
+		if existingKYC.Status == domain.KYCStatusPending {
 			return nil, errors.New("you already have a pending KYC application under review")
 		}
-		if existingKYC.Status == KYCStatusApproved {
+		if existingKYC.Status == domain.KYCStatusApproved {
 			return nil, errors.New("your KYC is already approved")
 		}
 	}
 
-	kyc := &KYCVerification{
+	kyc := &domain.KYCVerification{
 		UserID:         user.ID,
 		IDCardNumber:   req.IDCardNumber,
 		IDCardImageURL: req.IDCardImageURL,
 		SelfieImageURL: req.SelfieImageURL,
-		Status:         KYCStatusPending,
+		Status:         domain.KYCStatusPending,
 	}
 
 	if err := s.kycRepo.Create(ctx, kyc); err != nil {
@@ -55,27 +56,27 @@ func (s *service) SubmitKYC(ctx context.Context, user *auth.User, req *SubmitKYC
 	return kyc, nil
 }
 
-func (s *service) GetKYCStatus(ctx context.Context, userID string) (*KYCVerification, error) {
+func (s *kycService) GetKYCStatus(ctx context.Context, userID string) (*domain.KYCVerification, error) {
 	return s.kycRepo.FindByUserID(ctx, userID)
 }
 
-func (s *service) ReviewKYC(ctx context.Context, kycID string, req *ReviewKYCRequest) (*KYCVerification, error) {
+func (s *kycService) ReviewKYC(ctx context.Context, kycID string, req *domain.ReviewKYCRequest) (*domain.KYCVerification, error) {
 	existingKYC, err := s.kycRepo.FindByID(ctx, kycID)
 	if err != nil {
 		return nil, err
 	}
 
-	if existingKYC.Status != KYCStatusPending {
+	if existingKYC.Status != domain.KYCStatusPending {
 		return nil, errors.New("only pending KYC applications can be reviewed")
 	}
 
 	switch req.Status {
-	case KYCStatusApproved:
+	case domain.KYCStatusApproved:
 		err := s.kycRepo.ApproveKYC(ctx, kycID, existingKYC.UserID)
 		if err != nil {
 			return nil, err
 		}
-	case KYCStatusRejected:
+	case domain.KYCStatusRejected:
 		reason := req.RejectionReason
 		if reason == "" {
 			reason = "ID card photo is blurry or information does not match"

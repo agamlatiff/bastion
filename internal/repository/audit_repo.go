@@ -1,26 +1,27 @@
-package audit
+package repository
 
 import (
+	"github.com/agamlatiff/bastion/internal/domain"
 	"context"
 	"encoding/json"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type Repository interface {
-	Create(ctx context.Context, log *AuditLog) error
-	FindByUserID(ctx context.Context, userID string, limit, offset int) ([]*AuditLog, error)
+type AuditRepository interface {
+	Create(ctx context.Context, log *domain.AuditLog) error
+	FindByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.AuditLog, error)
 }
 
-type repository struct {
+type auditRepo struct {
 	db *pgxpool.Pool
 }
 
-func NewRepository(db *pgxpool.Pool) Repository {
-	return &repository{db: db}
+func NewAuditRepository(db *pgxpool.Pool) AuditRepository {
+	return &auditRepo{db: db}
 }
 
-func (r *repository) Create(ctx context.Context, log *AuditLog) error {
+func (r *auditRepo) Create(ctx context.Context, log *domain.AuditLog) error {
 	metaJSON, err := json.Marshal(log.Metadata)
 	if err != nil {
 		metaJSON = []byte("{}")
@@ -39,7 +40,7 @@ func (r *repository) Create(ctx context.Context, log *AuditLog) error {
 	).Scan(&log.ID, &log.CreatedAt)
 }
 
-func (r *repository) FindByUserID(ctx context.Context, userID string, limit, offset int) ([]*AuditLog, error) {
+func (r *auditRepo) FindByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.AuditLog, error) {
 	if limit <= 0 {
 		limit = 20
 	}
@@ -60,9 +61,9 @@ func (r *repository) FindByUserID(ctx context.Context, userID string, limit, off
 	}
 	defer rows.Close()
 
-	var logs []*AuditLog
+	var logs []*domain.AuditLog
 	for rows.Next() {
-		var log AuditLog
+		var log domain.AuditLog
 		var metaBytes []byte
 
 		if err := rows.Scan(
@@ -84,3 +85,4 @@ func (r *repository) FindByUserID(ctx context.Context, userID string, limit, off
 	}
 	return logs, nil
 }
+

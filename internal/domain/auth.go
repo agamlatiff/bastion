@@ -1,4 +1,4 @@
-package auth
+package domain
 
 import "time"
 
@@ -62,3 +62,4 @@ func (u *User) ToUserResponse() *UserResponse {
 		UpdatedAt:  u.UpdatedAt,
 	}
 }
+

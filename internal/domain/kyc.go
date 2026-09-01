@@ -1,4 +1,4 @@
-package kyc
+package domain
 
 import "time"
 
@@ -67,3 +67,4 @@ func (k *KYCVerification) ToKYCResponse() *KYCResponse {
 		VerifiedAt:      k.VerifiedAt,
 	}
 }
+

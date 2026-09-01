@@ -1,26 +1,28 @@
-package auth
+package handler
 
 import (
 	"net/http"
 
-	"github.com/agamlatiff/bastion/internal/audit"
+	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/repository"
+	"github.com/agamlatiff/bastion/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
-type Handler struct {
-	authService Service
-	auditRepo   audit.Repository
+type AuthHandler struct {
+	authService service.AuthService
+	auditRepo   repository.AuditRepository
 }
 
-func NewHandler(authService Service, auditRepo audit.Repository) *Handler {
-	return &Handler{
+func NewAuthHandler(authService service.AuthService, auditRepo repository.AuditRepository) *AuthHandler {
+	return &AuthHandler{
 		authService: authService,
 		auditRepo:   auditRepo,
 	}
 }
 
-func (h *Handler) Register(c *gin.Context) {
-	var req RegisterRequest
+func (h *AuthHandler) Register(c *gin.Context) {
+	var req domain.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
@@ -38,7 +40,7 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &audit.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
 		UserID:    &response.User.ID,
 		Action:    "USER_REGISTERED",
 		IPAddress: c.ClientIP(),
@@ -56,8 +58,8 @@ func (h *Handler) Register(c *gin.Context) {
 	})
 }
 
-func (h *Handler) Login(c *gin.Context) {
-	var req LoginRequest
+func (h *AuthHandler) Login(c *gin.Context) {
+	var req domain.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
@@ -75,7 +77,7 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &audit.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
 		UserID:    &response.User.ID,
 		Action:    "USER_LOGIN",
 		IPAddress: c.ClientIP(),
@@ -92,7 +94,7 @@ func (h *Handler) Login(c *gin.Context) {
 	})
 }
 
-func (h *Handler) GetProfile(c *gin.Context) {
+func (h *AuthHandler) GetProfile(c *gin.Context) {
 	user, exists := c.Get("currentUser")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -102,7 +104,7 @@ func (h *Handler) GetProfile(c *gin.Context) {
 		return
 	}
 
-	currentUser, ok := user.(*User)
+	currentUser, ok := user.(*domain.User)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"status": "error",
@@ -117,7 +119,7 @@ func (h *Handler) GetProfile(c *gin.Context) {
 	})
 }
 
-func (h *Handler) Logout(c *gin.Context) {
+func (h *AuthHandler) Logout(c *gin.Context) {
 	tokenStr, exists := c.Get("token")
 	if !exists {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -129,7 +131,7 @@ func (h *Handler) Logout(c *gin.Context) {
 
 	user, _ := c.Get("currentUser")
 	var userID *string
-	if u, ok := user.(*User); ok {
+	if u, ok := user.(*domain.User); ok {
 		userID = &u.ID
 	}
 
@@ -142,7 +144,7 @@ func (h *Handler) Logout(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &audit.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
 		UserID:    userID,
 		Action:    "USER_LOGOUT",
 		IPAddress: c.ClientIP(),
@@ -155,7 +157,7 @@ func (h *Handler) Logout(c *gin.Context) {
 	})
 }
 
-func (h *Handler) GetAuditLogs(c *gin.Context) {
+func (h *AuthHandler) GetAuditLogs(c *gin.Context) {
 	user, exists := c.Get("currentUser")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -165,7 +167,7 @@ func (h *Handler) GetAuditLogs(c *gin.Context) {
 		return
 	}
 
-	currentUser := user.(*User)
+	currentUser := user.(*domain.User)
 	logs, err := h.auditRepo.FindByUserID(c.Request.Context(), currentUser.ID, 20, 0)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

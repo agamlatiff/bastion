@@ -1,4 +1,4 @@
-package audit
+package domain
 
 import "time"
 
@@ -11,3 +11,4 @@ type AuditLog struct {
 	Metadata  map[string]any `json:"metadata"`
 	CreatedAt time.Time      `json:"created_at"`
 }
+

@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/agamlatiff/bastion/internal/auth"
+	"github.com/agamlatiff/bastion/internal/domain"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,7 +18,7 @@ func RequireRole(allowedRoles ...string) gin.HandlerFunc {
 			return
 		}
 
-		currentUser, ok := userVal.(*auth.User)
+		currentUser, ok := userVal.(*domain.User)
 		if !ok || currentUser == nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"status": "error",

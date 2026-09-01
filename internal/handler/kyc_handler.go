@@ -1,26 +1,27 @@
-package kyc
+package handler
 
 import (
 	"net/http"
 
-	"github.com/agamlatiff/bastion/internal/audit"
-	"github.com/agamlatiff/bastion/internal/auth"
+	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/repository"
+	"github.com/agamlatiff/bastion/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
-type Handler struct {
-	kycService Service
-	auditRepo  audit.Repository
+type KYCHandler struct {
+	kycService service.KYCService
+	auditRepo  repository.AuditRepository
 }
 
-func NewHandler(kycService Service, auditRepo audit.Repository) *Handler {
-	return &Handler{
+func NewKYCHandler(kycService service.KYCService, auditRepo repository.AuditRepository) *KYCHandler {
+	return &KYCHandler{
 		kycService: kycService,
 		auditRepo:  auditRepo,
 	}
 }
 
-func (h *Handler) SubmitKYC(c *gin.Context) {
+func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 	user, exists := c.Get("currentUser")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -30,9 +31,9 @@ func (h *Handler) SubmitKYC(c *gin.Context) {
 		return
 	}
 
-	currentUser := user.(*auth.User)
+	currentUser := user.(*domain.User)
 
-	var req SubmitKYCRequest
+	var req domain.SubmitKYCRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
@@ -50,7 +51,7 @@ func (h *Handler) SubmitKYC(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &audit.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
 		UserID:    &currentUser.ID,
 		Action:    "KYC_SUBMISSION",
 		IPAddress: c.ClientIP(),
@@ -67,7 +68,7 @@ func (h *Handler) SubmitKYC(c *gin.Context) {
 	})
 }
 
-func (h *Handler) GetKYCStatus(c *gin.Context) {
+func (h *KYCHandler) GetKYCStatus(c *gin.Context) {
 	user, exists := c.Get("currentUser")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -77,7 +78,7 @@ func (h *Handler) GetKYCStatus(c *gin.Context) {
 		return
 	}
 
-	currentUser := user.(*auth.User)
+	currentUser := user.(*domain.User)
 
 	kyc, err := h.kycService.GetKYCStatus(c.Request.Context(), currentUser.ID)
 	if err != nil {
@@ -88,7 +89,7 @@ func (h *Handler) GetKYCStatus(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &audit.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
 		UserID:    &currentUser.ID,
 		Action:    "KYC_DATA_ACCESS",
 		IPAddress: c.ClientIP(),
@@ -104,7 +105,7 @@ func (h *Handler) GetKYCStatus(c *gin.Context) {
 	})
 }
 
-func (h *Handler) ReviewKYC(c *gin.Context) {
+func (h *KYCHandler) ReviewKYC(c *gin.Context) {
 	user, exists := c.Get("currentUser")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -114,9 +115,9 @@ func (h *Handler) ReviewKYC(c *gin.Context) {
 		return
 	}
 
-	currentUser := user.(*auth.User)
+	currentUser := user.(*domain.User)
 
-	var req ReviewKYCRequest
+	var req domain.ReviewKYCRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
@@ -134,7 +135,7 @@ func (h *Handler) ReviewKYC(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &audit.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
 		UserID:    &currentUser.ID,
 		Action:    "KYC_REVIEW",
 		IPAddress: c.ClientIP(),

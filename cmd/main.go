@@ -9,12 +9,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/agamlatiff/bastion/internal/audit"
-	"github.com/agamlatiff/bastion/internal/auth"
-	"github.com/agamlatiff/bastion/internal/kyc"
+	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/handler"
 	"github.com/agamlatiff/bastion/internal/platform/config"
 	"github.com/agamlatiff/bastion/internal/platform/middleware"
-	"github.com/agamlatiff/bastion/internal/wallet"
+	"github.com/agamlatiff/bastion/internal/repository"
+	"github.com/agamlatiff/bastion/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -42,25 +42,28 @@ func main() {
 	})
 	defer rdb.Close()
 
-	// Dependency Injection (Wiring modular packages)
+	// Dependency Injection (Wiring layered packages)
 
-	// Audit Module
-	auditRepo := audit.NewRepository(dbPool)
+	// Audit Module (Repository only)
+	auditRepo := repository.NewAuditRepository(dbPool)
 
 	// Auth Module
-	userRepo := auth.NewRepository(dbPool)
-	authService := auth.NewService(userRepo, rdb, cfg.JWTSecret, cfg.JWTExpiryHours)
-	authHandler := auth.NewHandler(authService, auditRepo)
+	userRepo := repository.NewUserRepository(dbPool)
+	authService := service.NewAuthService(userRepo, rdb, cfg.JWTSecret, cfg.JWTExpiryHours)
+	authHandler := handler.NewAuthHandler(authService, auditRepo)
 
 	// Wallet Module
-	walletRepo := wallet.NewRepository(dbPool)
-	walletService := wallet.NewService(walletRepo, userRepo, rdb)
-	walletHandler := wallet.NewHandler(walletService, auditRepo)
+	transactor := repository.NewTransactor(dbPool)
+	walletRepo := repository.NewWalletRepository()
+	txRepo := repository.NewTransactionRepository()
+	ledgerRepo := repository.NewLedgerRepository()
+	walletService := service.NewWalletService(transactor, walletRepo, txRepo, ledgerRepo, userRepo, rdb)
+	walletHandler := handler.NewWalletHandler(walletService, auditRepo)
 
 	// KYC Module
-	kycRepo := kyc.NewRepository(dbPool)
-	kycService := kyc.NewService(kycRepo)
-	kycHandler := kyc.NewHandler(kycService, auditRepo)
+	kycRepo := repository.NewKYCRepository(dbPool)
+	kycService := service.NewKYCService(kycRepo)
+	kycHandler := handler.NewKYCHandler(kycService, auditRepo)
 
 	// Initialize Gin router engine
 	r := gin.New()
@@ -80,7 +83,7 @@ func main() {
 	{
 		publicRoutes.GET("/healthz", func(c *gin.Context) {
 			c.JSON(200, gin.H{
-				"status": "ok",
+				"status":  "ok",
 				"message": "Healthcheck",
 			})
 		})
@@ -120,15 +123,15 @@ func main() {
 	{
 		kycRoutes.POST("", kycHandler.SubmitKYC)
 		kycRoutes.GET("/status", kycHandler.GetKYCStatus)
-		kycRoutes.POST("/review", middleware.RequireRole(auth.RoleAdmin, auth.RoleKYCReviewer), kycHandler.ReviewKYC)
+		kycRoutes.POST("/review", middleware.RequireRole(domain.RoleAdmin, domain.RoleKYCReviewer), kycHandler.ReviewKYC)
 	}
 
 	srv := &http.Server{
-		Addr: ":" + cfg.AppPort,
+		Addr:    ":" + cfg.AppPort,
 		Handler: r,
 	}
 
-	go func ()  {
+	go func() {
 		log.Printf("Bastion API is running on port %s", cfg.AppPort)
 
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

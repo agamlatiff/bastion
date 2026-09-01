@@ -1,30 +1,32 @@
-package auth
+package service
 
 import (
 	"context"
 	"errors"
 	"time"
 
+	"github.com/agamlatiff/bastion/internal/domain"
 	"github.com/agamlatiff/bastion/internal/platform/security"
+	"github.com/agamlatiff/bastion/internal/repository"
 	"github.com/redis/go-redis/v9"
 )
 
-type Service interface {
-	Register(ctx context.Context, req *RegisterRequest) (*AuthResponse, error)
-	Login(ctx context.Context, req *LoginRequest) (*AuthResponse, error)
-	ValidateToken(ctx context.Context, tokenStr string) (*User, error)
+type AuthService interface {
+	Register(ctx context.Context, req *domain.RegisterRequest) (*domain.AuthResponse, error)
+	Login(ctx context.Context, req *domain.LoginRequest) (*domain.AuthResponse, error)
+	ValidateToken(ctx context.Context, tokenStr string) (*domain.User, error)
 	Logout(ctx context.Context, tokenStr string) error
 }
 
-type service struct {
-	userRepo       Repository
+type authService struct {
+	userRepo       repository.UserRepository
 	rdb            *redis.Client
 	jwtSecret      string
 	jwtExpiryHours int
 }
 
-func NewService(userRepo Repository, rdb *redis.Client, jwtSecret string, jwtExpiryHours int) Service {
-	return &service{
+func NewAuthService(userRepo repository.UserRepository, rdb *redis.Client, jwtSecret string, jwtExpiryHours int) AuthService {
+	return &authService{
 		userRepo:       userRepo,
 		rdb:            rdb,
 		jwtSecret:      jwtSecret,
@@ -32,7 +34,7 @@ func NewService(userRepo Repository, rdb *redis.Client, jwtSecret string, jwtExp
 	}
 }
 
-func (s *service) Register(ctx context.Context, req *RegisterRequest) (*AuthResponse, error) {
+func (s *authService) Register(ctx context.Context, req *domain.RegisterRequest) (*domain.AuthResponse, error) {
 	if err := security.ValidatePassword(req.Password); err != nil {
 		return nil, err
 	}
@@ -47,11 +49,11 @@ func (s *service) Register(ctx context.Context, req *RegisterRequest) (*AuthResp
 		return nil, err
 	}
 
-	newUser := &User{
+	newUser := &domain.User{
 		Email:        req.Email,
 		PasswordHash: string(hashedPassword),
 		FullName:     req.FullName,
-		Role:         RoleUser,
+		Role:         domain.RoleUser,
 		Tier:         "tier_1",
 	}
 
@@ -68,13 +70,13 @@ func (s *service) Register(ctx context.Context, req *RegisterRequest) (*AuthResp
 		return nil, err
 	}
 
-	return &AuthResponse{
+	return &domain.AuthResponse{
 		Token: tokenStr,
 		User:  newUser.ToUserResponse(),
 	}, nil
 }
 
-func (s *service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, error) {
+func (s *authService) Login(ctx context.Context, req *domain.LoginRequest) (*domain.AuthResponse, error) {
 	user, err := s.userRepo.FindByEmail(ctx, req.Email)
 	if err != nil {
 		return nil, errors.New("invalid email or password")
@@ -89,13 +91,13 @@ func (s *service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, 
 		return nil, err
 	}
 
-	return &AuthResponse{
+	return &domain.AuthResponse{
 		Token: tokenStr,
 		User:  user.ToUserResponse(),
 	}, nil
 }
 
-func (s *service) ValidateToken(ctx context.Context, tokenStr string) (*User, error) {
+func (s *authService) ValidateToken(ctx context.Context, tokenStr string) (*domain.User, error) {
 	claims, err := security.ParseAndValidateToken(tokenStr, s.jwtSecret)
 	if err != nil {
 		return nil, err
@@ -109,7 +111,7 @@ func (s *service) ValidateToken(ctx context.Context, tokenStr string) (*User, er
 	return s.userRepo.FindByID(ctx, claims.UserID)
 }
 
-func (s *service) Logout(ctx context.Context, tokenStr string) error {
+func (s *authService) Logout(ctx context.Context, tokenStr string) error {
 	claims, err := security.ParseAndValidateToken(tokenStr, s.jwtSecret)
 	if err != nil {
 		return err

@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/agamlatiff/bastion/internal/auth"
+	"github.com/agamlatiff/bastion/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware(authService auth.Service) gin.HandlerFunc {
+func AuthMiddleware(authService service.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
