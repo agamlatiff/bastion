@@ -13,12 +13,14 @@ import (
 type AuthHandler struct {
 	authService service.AuthService
 	auditRepo   repository.AuditRepository
+	db          repository.DBTX
 }
 
-func NewAuthHandler(authService service.AuthService, auditRepo repository.AuditRepository) *AuthHandler {
+func NewAuthHandler(authService service.AuthService, auditRepo repository.AuditRepository, db repository.DBTX) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 		auditRepo:   auditRepo,
+		db:          db,
 	}
 }
 
@@ -41,7 +43,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
 		UserID:    &response.User.ID,
 		Action:    "USER_REGISTERED",
 		IPAddress: c.ClientIP(),
@@ -78,7 +80,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
 		UserID:    &response.User.ID,
 		Action:    "USER_LOGIN",
 		IPAddress: c.ClientIP(),
@@ -145,7 +147,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
 		UserID:    userID,
 		Action:    "USER_LOGOUT",
 		IPAddress: c.ClientIP(),
@@ -169,7 +171,7 @@ func (h *AuthHandler) GetAuditLogs(c *gin.Context) {
 	}
 
 	currentUser := user.(*domain.User)
-	logs, err := h.auditRepo.FindByUserID(c.Request.Context(), currentUser.ID, 20, 0)
+	logs, err := h.auditRepo.FindByUserID(c.Request.Context(), h.db, currentUser.ID, 20, 0)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status": "error",

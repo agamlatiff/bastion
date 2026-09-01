@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/jackc/pgx/v5"
 )
 
 // WalletRepository defines the persistence interface for managing Wallet entities in the `wallets` table.
@@ -48,6 +50,9 @@ func (r *walletRepo) FindByUserID(ctx context.Context, db DBTX, userID string) (
 		&wallet.UpdatedAt,
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrWalletNotFound
+		}
 		return nil, err
 	}
 	return wallet, nil
@@ -71,6 +76,9 @@ func (r *walletRepo) FindByID(ctx context.Context, db DBTX, walletID string) (*d
 		&wallet.UpdatedAt,
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrWalletNotFound
+		}
 		return nil, err
 	}
 	return wallet, nil
@@ -84,20 +92,38 @@ func (r *walletRepo) GetBalanceForUpdate(ctx context.Context, db DBTX, walletID 
 
 	query := `SELECT balance, max_balance_limit FROM wallets WHERE id = $1 FOR UPDATE`
 	err := db.QueryRow(ctx, query, walletID).Scan(&currentBalance, &maxLimit)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, 0, domain.ErrWalletNotFound
+		}
+		return 0, 0, err
+	}
 
-	return currentBalance, maxLimit, err
+	return currentBalance, maxLimit, nil
 }
 
 // UpdateBalance sets a new balance amount for the given wallet ID.
 func (r *walletRepo) UpdateBalance(ctx context.Context, db DBTX, walletID string, newBalance int64) error {
 	query := `UPDATE wallets SET balance = $1, updated_at = NOW() WHERE id = $2`
-	_, err := db.Exec(ctx, query, newBalance, walletID)
-	return err
+	res, err := db.Exec(ctx, query, newBalance, walletID)
+	if err != nil {
+		return err
+	}
+	if res.RowsAffected() == 0 {
+		return domain.ErrWalletNotFound
+	}
+	return nil
 }
 
 // UpdateMaxLimit updates the maximum balance limit allowed for a user's wallet (e.g. upgraded to 10M on KYC).
 func (r *walletRepo) UpdateMaxLimit(ctx context.Context, db DBTX, userID string, maxLimit int64) error {
 	query := `UPDATE wallets SET max_balance_limit = $1, updated_at = NOW() WHERE user_id = $2`
-	_, err := db.Exec(ctx, query, maxLimit, userID)
-	return err
+	res, err := db.Exec(ctx, query, maxLimit, userID)
+	if err != nil {
+		return err
+	}
+	if res.RowsAffected() == 0 {
+		return domain.ErrWalletNotFound
+	}
+	return nil
 }

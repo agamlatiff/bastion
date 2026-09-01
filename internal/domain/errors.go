@@ -3,16 +3,21 @@ package domain
 import "errors"
 
 var (
+	// --- Common Generic Errors ---
+	ErrNotFound             = errors.New("resource not found")
+
 	// --- Auth & User Errors ---
 	ErrUserNotFound         = errors.New("user not found")
 	ErrEmailAlreadyExists   = errors.New("email already registered")
 	ErrInvalidCredentials   = errors.New("invalid email or password")
 
 	// --- KYC Errors ---
+	ErrKYCNotFound          = errors.New("kyc application not found")
 	ErrKYCRequired          = errors.New("sender must be KYC verified to perform transfer")
 	ErrKYCAlreadyPending    = errors.New("kyc application already pending")
 
 	// --- Wallet & Balance Errors ---
+	ErrWalletNotFound       = errors.New("wallet not found")
 	ErrInsufficientBalance  = errors.New("insufficient balance")
 	ErrExceedsMaxLimit      = errors.New("balance exceeds maximum wallet limit")
 	ErrInvalidAmount        = errors.New("amount must be greater than zero")

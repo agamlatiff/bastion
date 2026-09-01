@@ -49,9 +49,12 @@ func (s *kycService) SubmitKYC(ctx context.Context, user *domain.User, req *dto.
 
 	// Step 3: Check for existing pending or approved KYC submissions to avoid duplicate reviews
 	existingKYC, err := s.kycRepo.FindByUserID(ctx, s.transactor.DB(), user.ID)
-	if err == nil && existingKYC != nil {
+	if err != nil && !errors.Is(err, domain.ErrKYCNotFound) {
+		return nil, err
+	}
+	if existingKYC != nil {
 		if existingKYC.Status == domain.KYCStatusPending {
-			return nil, errors.New("you already have a pending KYC application under review")
+			return nil, domain.ErrKYCAlreadyPending
 		}
 		if existingKYC.Status == domain.KYCStatusApproved {
 			return nil, errors.New("your KYC is already approved")

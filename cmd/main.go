@@ -42,14 +42,14 @@ func main() {
 	})
 	defer rdb.Close()
 
-	// Repositories (PostgreSQL & Redis abstractions)
+	// Repositories (Stateless PostgreSQL & Redis abstractions)
 	transactor := repository.NewTransactor(dbPool)
 	userRepo := repository.NewUserRepository()
 	walletRepo := repository.NewWalletRepository()
 	txRepo := repository.NewTransactionRepository()
 	ledgerRepo := repository.NewLedgerRepository()
 	kycRepo := repository.NewKYCRepository()
-	auditRepo := repository.NewAuditRepository(dbPool)
+	auditRepo := repository.NewAuditRepository()
 	blacklistRepo := repository.NewTokenBlacklistRepository(rdb)
 	locker := repository.NewRedisLocker(rdb)
 
@@ -59,9 +59,9 @@ func main() {
 	kycService := service.NewKYCService(transactor, kycRepo, userRepo, walletRepo)
 
 	// Handlers (HTTP Presentation layer)
-	authHandler := handler.NewAuthHandler(authService, auditRepo)
-	walletHandler := handler.NewWalletHandler(walletService, auditRepo)
-	kycHandler := handler.NewKYCHandler(kycService, auditRepo)
+	authHandler := handler.NewAuthHandler(authService, auditRepo, transactor.DB())
+	walletHandler := handler.NewWalletHandler(walletService, auditRepo, transactor.DB())
+	kycHandler := handler.NewKYCHandler(kycService, auditRepo, transactor.DB())
 
 	// Initialize Gin router engine
 	r := gin.New()

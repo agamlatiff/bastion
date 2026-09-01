@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -48,7 +47,7 @@ func (m *mockUserRepo) FindByEmail(ctx context.Context, db repository.DBTX, emai
 	if u, ok := m.users[email]; ok {
 		return u, nil
 	}
-	return nil, errors.New("not found")
+	return nil, domain.ErrUserNotFound
 }
 
 func (m *mockUserRepo) FindByID(ctx context.Context, db repository.DBTX, id string) (*domain.User, error) {
@@ -57,7 +56,7 @@ func (m *mockUserRepo) FindByID(ctx context.Context, db repository.DBTX, id stri
 			return u, nil
 		}
 	}
-	return nil, errors.New("not found")
+	return nil, domain.ErrUserNotFound
 }
 
 func (m *mockUserRepo) UpdateTierAndVerification(ctx context.Context, db repository.DBTX, userID string, tier string, isVerified bool) error {
@@ -68,7 +67,7 @@ func (m *mockUserRepo) UpdateTierAndVerification(ctx context.Context, db reposit
 			return nil
 		}
 	}
-	return errors.New("not found")
+	return domain.ErrUserNotFound
 }
 
 type mockWalletRepo struct {
@@ -90,7 +89,7 @@ func (m *mockWalletRepo) FindByUserID(ctx context.Context, db repository.DBTX, u
 	if w, ok := m.wallets[userID]; ok {
 		return w, nil
 	}
-	return nil, errors.New("wallet not found")
+	return nil, domain.ErrWalletNotFound
 }
 
 func (m *mockWalletRepo) FindByID(ctx context.Context, db repository.DBTX, walletID string) (*domain.Wallet, error) {
@@ -99,7 +98,7 @@ func (m *mockWalletRepo) FindByID(ctx context.Context, db repository.DBTX, walle
 			return w, nil
 		}
 	}
-	return nil, errors.New("wallet not found")
+	return nil, domain.ErrWalletNotFound
 }
 
 func (m *mockWalletRepo) GetBalanceForUpdate(ctx context.Context, db repository.DBTX, walletID string) (int64, int64, error) {
@@ -108,7 +107,7 @@ func (m *mockWalletRepo) GetBalanceForUpdate(ctx context.Context, db repository.
 			return w.Balance, w.MaxBalanceLimit, nil
 		}
 	}
-	return 0, 0, errors.New("wallet not found")
+	return 0, 0, domain.ErrWalletNotFound
 }
 
 func (m *mockWalletRepo) UpdateBalance(ctx context.Context, db repository.DBTX, walletID string, newBalance int64) error {
@@ -118,7 +117,7 @@ func (m *mockWalletRepo) UpdateBalance(ctx context.Context, db repository.DBTX, 
 			return nil
 		}
 	}
-	return errors.New("wallet not found")
+	return domain.ErrWalletNotFound
 }
 
 func (m *mockWalletRepo) UpdateMaxLimit(ctx context.Context, db repository.DBTX, userID string, maxLimit int64) error {
@@ -126,7 +125,7 @@ func (m *mockWalletRepo) UpdateMaxLimit(ctx context.Context, db repository.DBTX,
 		w.MaxBalanceLimit = maxLimit
 		return nil
 	}
-	return errors.New("wallet not found")
+	return domain.ErrWalletNotFound
 }
 
 func TestAuthService_Register(t *testing.T) {

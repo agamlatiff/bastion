@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/jackc/pgx/v5"
 )
 
 // TransactionRepository defines the persistence interface for the `transactions` table.
@@ -41,6 +43,9 @@ func (r *transactionRepo) CheckIdempotency(ctx context.Context, db DBTX, idempot
 		&existingTx.CreatedAt,
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
 		return nil, err
 	}
 	return &existingTx, nil

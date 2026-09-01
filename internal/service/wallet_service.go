@@ -75,7 +75,7 @@ func (s *walletService) TopUp(ctx context.Context, userID string, req *dto.TopUp
 		return nil, err
 	}
 	if !locked {
-		return nil, errors.New("concurrent request detected for the same idempotency key")
+		return nil, domain.ErrConcurrentRequest
 	}
 	defer s.locker.ReleaseLock(ctx, fullIdmKey)
 
@@ -154,7 +154,10 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 	// Step 2: Validate sender exists and is KYC verified (Tier 2 requirement)
 	senderUser, err := s.userRepo.FindByID(ctx, s.transactor.DB(), senderUserID)
 	if err != nil {
-		return nil, errors.New("sender user not found")
+		if errors.Is(err, domain.ErrUserNotFound) {
+			return nil, domain.ErrUserNotFound
+		}
+		return nil, err
 	}
 	if !senderUser.IsVerified {
 		return nil, domain.ErrKYCRequired
@@ -169,7 +172,10 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 	// Step 4: Validate receiver exists and is not the sender themselves
 	receiverUser, err := s.userRepo.FindByEmail(ctx, s.transactor.DB(), req.ReceiverEmail)
 	if err != nil {
-		return nil, errors.New("receiver user not found")
+		if errors.Is(err, domain.ErrUserNotFound) {
+			return nil, errors.New("receiver user not found")
+		}
+		return nil, err
 	}
 	if receiverUser.ID == senderUserID {
 		return nil, domain.ErrSelfTransfer
@@ -178,7 +184,10 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 	// Step 5: Fetch receiver's wallet
 	receiverWallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.DB(), receiverUser.ID)
 	if err != nil {
-		return nil, errors.New("receiver wallet not found")
+		if errors.Is(err, domain.ErrWalletNotFound) {
+			return nil, errors.New("receiver wallet not found")
+		}
+		return nil, err
 	}
 
 	// Step 6: Acquire distributed lock to prevent race conditions on idempotency key
@@ -188,7 +197,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 		return nil, err
 	}
 	if !locked {
-		return nil, errors.New("concurrent request detected for the same idempotency key")
+		return nil, domain.ErrConcurrentRequest
 	}
 	defer s.locker.ReleaseLock(ctx, fullIdmKey)
 

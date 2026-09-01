@@ -13,12 +13,14 @@ import (
 type KYCHandler struct {
 	kycService service.KYCService
 	auditRepo  repository.AuditRepository
+	db         repository.DBTX
 }
 
-func NewKYCHandler(kycService service.KYCService, auditRepo repository.AuditRepository) *KYCHandler {
+func NewKYCHandler(kycService service.KYCService, auditRepo repository.AuditRepository, db repository.DBTX) *KYCHandler {
 	return &KYCHandler{
 		kycService: kycService,
 		auditRepo:  auditRepo,
+		db:         db,
 	}
 }
 
@@ -52,7 +54,7 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
 		UserID:    &currentUser.ID,
 		Action:    "KYC_SUBMISSION",
 		IPAddress: c.ClientIP(),
@@ -90,7 +92,7 @@ func (h *KYCHandler) GetKYCStatus(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
 		UserID:    &currentUser.ID,
 		Action:    "KYC_DATA_ACCESS",
 		IPAddress: c.ClientIP(),
@@ -136,7 +138,7 @@ func (h *KYCHandler) ReviewKYC(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
 		UserID:    &currentUser.ID,
 		Action:    "KYC_REVIEW",
 		IPAddress: c.ClientIP(),

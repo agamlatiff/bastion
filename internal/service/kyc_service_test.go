@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -34,13 +33,13 @@ func (m *mockKYCRepo) FindByUserID(ctx context.Context, db repository.DBTX, user
 			return k, nil
 		}
 	}
-	return nil, nil
+	return nil, domain.ErrKYCNotFound
 }
 
 func (m *mockKYCRepo) FindByID(ctx context.Context, db repository.DBTX, id string) (*domain.KYCVerification, error) {
 	verification, exists := m.kycMap[id]
 	if !exists {
-		return nil, nil
+		return nil, domain.ErrKYCNotFound
 	}
 	return verification, nil
 }
@@ -53,7 +52,7 @@ func (m *mockKYCRepo) UpdateStatus(ctx context.Context, db repository.DBTX, kycI
 		verification.VerifiedAt = &now
 		return nil
 	}
-	return errors.New("kyc not found")
+	return domain.ErrKYCNotFound
 }
 
 func TestKYCService_SubmitKYC(t *testing.T) {

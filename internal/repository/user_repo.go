@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/jackc/pgx/v5"
 )
 
 // UserRepository defines the persistence interface for managing User entities in the `users` table.
@@ -59,6 +61,9 @@ func (r *userRepo) FindByEmail(ctx context.Context, db DBTX, email string) (*dom
 		&user.UpdatedAt,
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrUserNotFound
+		}
 		return nil, err
 	}
 	return user, nil
@@ -84,6 +89,9 @@ func (r *userRepo) FindByID(ctx context.Context, db DBTX, id string) (*domain.Us
 		&user.UpdatedAt,
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrUserNotFound
+		}
 		return nil, err
 	}
 	return user, nil

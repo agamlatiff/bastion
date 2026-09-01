@@ -52,9 +52,12 @@ func (s *authService) Register(ctx context.Context, req *dto.RegisterRequest) (*
 	}
 
 	// Step 2: Check if email is already registered in the system
-	existingUser, _ := s.userRepo.FindByEmail(ctx, s.transactor.DB(), req.Email)
+	existingUser, err := s.userRepo.FindByEmail(ctx, s.transactor.DB(), req.Email)
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return nil, err
+	}
 	if existingUser != nil {
-		return nil, errors.New("email already registered")
+		return nil, domain.ErrEmailAlreadyExists
 	}
 
 	// Step 3: Hash plain password using Bcrypt
@@ -101,12 +104,15 @@ func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Au
 	// Step 1: Retrieve user by email from repository
 	user, err := s.userRepo.FindByEmail(ctx, s.transactor.DB(), req.Email)
 	if err != nil {
-		return nil, errors.New("invalid email or password")
+		if errors.Is(err, domain.ErrUserNotFound) {
+			return nil, domain.ErrInvalidCredentials
+		}
+		return nil, err
 	}
 
 	// Step 2: Compare input password against stored Bcrypt hash
 	if err := security.ComparePassword(user.PasswordHash, req.Password); err != nil {
-		return nil, errors.New("invalid email or password")
+		return nil, domain.ErrInvalidCredentials
 	}
 
 	// Step 3: Generate signed JWT access token
@@ -130,7 +136,10 @@ func (s *authService) ValidateToken(ctx context.Context, tokenStr string) (*doma
 	}
 
 	// Step 2: Check token blacklist repository to ensure the token hasn't been logged out
-	isRevoked, _ := s.blacklistRepo.IsRevoked(ctx, claims.ID)
+	isRevoked, err := s.blacklistRepo.IsRevoked(ctx, claims.ID)
+	if err != nil {
+		return nil, err
+	}
 	if isRevoked {
 		return nil, errors.New("token has been logged out")
 	}

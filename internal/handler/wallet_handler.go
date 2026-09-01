@@ -15,12 +15,14 @@ import (
 type WalletHandler struct {
 	walletService service.WalletService
 	auditRepo     repository.AuditRepository
+	db            repository.DBTX
 }
 
-func NewWalletHandler(walletService service.WalletService, auditRepo repository.AuditRepository) *WalletHandler {
+func NewWalletHandler(walletService service.WalletService, auditRepo repository.AuditRepository, db repository.DBTX) *WalletHandler {
 	return &WalletHandler{
 		walletService: walletService,
 		auditRepo:     auditRepo,
+		db:            db,
 	}
 }
 
@@ -68,7 +70,7 @@ func handleError(c *gin.Context, err error) {
 		statusCode = http.StatusForbidden // 403
 		errorCode = "KYC_REQUIRED"
 		message = err.Error()
-	case errors.Is(err, domain.ErrInvalidReceiver) || err.Error() == "receiver wallet not found":
+	case errors.Is(err, domain.ErrInvalidReceiver) || errors.Is(err, domain.ErrWalletNotFound) || err.Error() == "receiver wallet not found":
 		statusCode = http.StatusNotFound // 404
 		errorCode = "INVALID_RECEIVER"
 		message = "receiver wallet not found"
@@ -133,7 +135,7 @@ func (h *WalletHandler) TopUp(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
 		UserID:    &currentUser.ID,
 		Action:    "WALLET_TOPUP",
 		IPAddress: c.ClientIP(),
@@ -173,7 +175,7 @@ func (h *WalletHandler) Transfer(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditRepo.Create(c.Request.Context(), &domain.AuditLog{
+	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
 		UserID:    &currentUser.ID,
 		Action:    "WALLET_TRANSFER",
 		IPAddress: c.ClientIP(),

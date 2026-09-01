@@ -61,7 +61,7 @@ func (r *kycRepo) FindByUserID(ctx context.Context, db DBTX, userID string) (*do
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errors.New("kyc application not found")
+			return nil, domain.ErrKYCNotFound
 		}
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (r *kycRepo) FindByID(ctx context.Context, db DBTX, id string) (*domain.KYC
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errors.New("kyc application not found")
+			return nil, domain.ErrKYCNotFound
 		}
 		return nil, err
 	}
@@ -104,8 +104,14 @@ func (r *kycRepo) UpdateStatus(ctx context.Context, db DBTX, kycID string, statu
 			SET status = 'approved', verified_at = NOW(), rejection_reason = NULL
 			WHERE id = $1
 		`
-		_, err := db.Exec(ctx, query, kycID)
-		return err
+		res, err := db.Exec(ctx, query, kycID)
+		if err != nil {
+			return err
+		}
+		if res.RowsAffected() == 0 {
+			return domain.ErrKYCNotFound
+		}
+		return nil
 	}
 
 	query := `
@@ -113,6 +119,12 @@ func (r *kycRepo) UpdateStatus(ctx context.Context, db DBTX, kycID string, statu
 		SET status = 'rejected', rejection_reason = $2, verified_at = NOW()
 		WHERE id = $1
 	`
-	_, err := db.Exec(ctx, query, kycID, rejectionReason)
-	return err
+	res, err := db.Exec(ctx, query, kycID, rejectionReason)
+	if err != nil {
+		return err
+	}
+	if res.RowsAffected() == 0 {
+		return domain.ErrKYCNotFound
+	}
+	return nil
 }
