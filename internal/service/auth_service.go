@@ -11,11 +11,18 @@ import (
 	"github.com/agamlatiff/bastion/internal/repository"
 )
 
+// Token lifetime constants
+const (
+	AccessTokenDuration  = 15 * time.Minute      // Short-lived access token
+	RefreshTokenDuration = 7 * 24 * time.Hour    // Long-lived refresh token (7 days)
+)
+
 type AuthService interface {
 	Register(ctx context.Context, req *dto.RegisterRequest) (*dto.AuthResponse, error)
 	Login(ctx context.Context, req *dto.LoginRequest) (*dto.AuthResponse, error)
 	ValidateToken(ctx context.Context, tokenStr string) (*domain.User, error)
 	Logout(ctx context.Context, tokenStr string) error
+	RefreshToken(ctx context.Context, refreshTokenStr string) (*dto.AuthResponse, error)
 	SetPIN(ctx context.Context, userID string, pin string) error
 	ChangePIN(ctx context.Context, userID string, oldPIN, newPIN string) error
 }
@@ -25,6 +32,7 @@ type authService struct {
 	userRepo       repository.UserRepository
 	walletRepo     repository.WalletRepository
 	blacklistRepo  repository.TokenBlacklistRepository
+	refreshRepo    repository.RefreshTokenRepository
 	jwtSecret      string
 	jwtExpiryHours int
 }
@@ -34,6 +42,7 @@ func NewAuthService(
 	userRepo repository.UserRepository,
 	walletRepo repository.WalletRepository,
 	blacklistRepo repository.TokenBlacklistRepository,
+	refreshRepo repository.RefreshTokenRepository,
 	jwtSecret string,
 	jwtExpiryHours int,
 ) AuthService {
@@ -42,6 +51,7 @@ func NewAuthService(
 		userRepo:       userRepo,
 		walletRepo:     walletRepo,
 		blacklistRepo:  blacklistRepo,
+		refreshRepo:    refreshRepo,
 		jwtSecret:      jwtSecret,
 		jwtExpiryHours: jwtExpiryHours,
 	}
@@ -89,16 +99,29 @@ func (s *authService) Register(ctx context.Context, req *dto.RegisterRequest) (*
 		return nil, err
 	}
 
-	// Step 6: Generate signed JWT access token for immediate authentication
-	tokenStr, _, err := security.GenerateToken(newUser.ID, newUser.Email, newUser.Tier, s.jwtSecret, s.jwtExpiryHours)
+	// Step 6: Generate signed Token Pair (Short-lived Access Token + Long-lived Refresh Token)
+	accessToken, refreshToken, _, refreshClaims, err := security.GenerateTokenPair(
+		newUser.ID,
+		newUser.Email,
+		newUser.Tier,
+		s.jwtSecret,
+		AccessTokenDuration,
+		RefreshTokenDuration,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	// Step 7: Return sanitized authentication response (never exposing password hash)
+	// Step 7: Store active refresh token ID in Redis repository
+	if err := s.refreshRepo.Store(ctx, newUser.ID, refreshClaims.ID, RefreshTokenDuration); err != nil {
+		return nil, err
+	}
+
+	// Step 8: Return authentication response with token pair
 	return &dto.AuthResponse{
-		Token: tokenStr,
-		User:  dto.ToUserResponse(newUser),
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User:         dto.ToUserResponse(newUser),
 	}, nil
 }
 
@@ -117,16 +140,29 @@ func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Au
 		return nil, domain.ErrInvalidCredentials
 	}
 
-	// Step 3: Generate signed JWT access token
-	tokenStr, _, err := security.GenerateToken(user.ID, user.Email, user.Tier, s.jwtSecret, s.jwtExpiryHours)
+	// Step 3: Generate signed Token Pair
+	accessToken, refreshToken, _, refreshClaims, err := security.GenerateTokenPair(
+		user.ID,
+		user.Email,
+		user.Tier,
+		s.jwtSecret,
+		AccessTokenDuration,
+		RefreshTokenDuration,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	// Step 4: Return authentication response with sanitized user data
+	// Step 4: Store active refresh token ID in Redis repository
+	if err := s.refreshRepo.Store(ctx, user.ID, refreshClaims.ID, RefreshTokenDuration); err != nil {
+		return nil, err
+	}
+
+	// Step 5: Return authentication response with token pair
 	return &dto.AuthResponse{
-		Token: tokenStr,
-		User:  dto.ToUserResponse(user),
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User:         dto.ToUserResponse(user),
 	}, nil
 }
 
@@ -163,8 +199,69 @@ func (s *authService) Logout(ctx context.Context, tokenStr string) error {
 		return nil
 	}
 
-	// Step 3: Revoke token in blacklist repository
+	// Step 3: Revoke all active refresh tokens for the user in Redis
+	_ = s.refreshRepo.RevokeAllForUser(ctx, claims.UserID)
+
+	// Step 4: Revoke access token in blacklist repository
 	return s.blacklistRepo.Revoke(ctx, claims.ID, remainingDuration)
+}
+
+func (s *authService) RefreshToken(ctx context.Context, refreshTokenStr string) (*dto.AuthResponse, error) {
+	// Step 1: Parse and validate refresh token signature & expiration
+	claims, err := security.ParseAndValidateRefreshToken(refreshTokenStr, s.jwtSecret)
+	if err != nil {
+		return nil, domain.ErrInvalidRefreshToken
+	}
+
+	// Step 2: Check if this specific refresh token is still active in Redis
+	isActive, err := s.refreshRepo.IsActive(ctx, claims.UserID, claims.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 3: TOKEN REUSE DETECTION (Breach Prevention)
+	// If the refresh token is valid Cryptographically but NOT in Redis, it was already used/stolen!
+	if !isActive {
+		// Revoke all remaining sessions for this user immediately
+		_ = s.refreshRepo.RevokeAllForUser(ctx, claims.UserID)
+		return nil, domain.ErrTokenReuseDetected
+	}
+
+	// Step 4: Fetch user data to ensure user is still active
+	user, err := s.userRepo.FindByID(ctx, s.transactor.DB(), claims.UserID)
+	if err != nil {
+		return nil, domain.ErrUserNotFound
+	}
+
+	// Step 5: Invalidate/Revoke the used refresh token from Redis (One-Time-Use)
+	if err := s.refreshRepo.Revoke(ctx, claims.UserID, claims.ID); err != nil {
+		return nil, err
+	}
+
+	// Step 6: Generate a brand new Token Pair (Token Rotation)
+	accessToken, refreshToken, _, newRefreshClaims, err := security.GenerateTokenPair(
+		user.ID,
+		user.Email,
+		user.Tier,
+		s.jwtSecret,
+		AccessTokenDuration,
+		RefreshTokenDuration,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 7: Store the new rotated refresh token in Redis
+	if err := s.refreshRepo.Store(ctx, user.ID, newRefreshClaims.ID, RefreshTokenDuration); err != nil {
+		return nil, err
+	}
+
+	// Step 8: Return rotated token pair
+	return &dto.AuthResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User:         dto.ToUserResponse(user),
+	}, nil
 }
 
 func (s *authService) SetPIN(ctx context.Context, userID, pin string) error {

@@ -51,10 +51,11 @@ func main() {
 	kycRepo := repository.NewKYCRepository()
 	auditRepo := repository.NewAuditRepository()
 	blacklistRepo := repository.NewTokenBlacklistRepository(rdb)
+	refreshRepo := repository.NewRefreshTokenRepository(rdb)
 	locker := repository.NewRedisLocker(rdb)
 
 	// Services (100% pure business logic, zero DB/Redis driver coupling)
-	authService := service.NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, cfg.JWTSecret, cfg.JWTExpiryHours)
+	authService := service.NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, cfg.JWTSecret, cfg.JWTExpiryHours)
 	walletService := service.NewWalletService(transactor, walletRepo, txRepo, ledgerRepo, userRepo, locker)
 	kycService := service.NewKYCService(transactor, kycRepo, userRepo, walletRepo)
 
@@ -94,6 +95,7 @@ func main() {
 	{
 		authPublicRoutes.POST("/register", middleware.RateLimitMiddleware(rdb, "register", 3, 1*time.Minute), authHandler.Register)
 		authPublicRoutes.POST("/login", middleware.RateLimitMiddleware(rdb, "login", 5, 1*time.Minute), authHandler.Login)
+		authPublicRoutes.POST("/refresh", middleware.RateLimitMiddleware(rdb, "refresh", 10, 1*time.Minute), authHandler.RefreshToken)
 	}
 
 	// Protected Auth Routes

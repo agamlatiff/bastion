@@ -11,6 +11,8 @@ var (
 	ErrEmailAlreadyExists   = errors.New("email already registered")
 	ErrInvalidCredentials   = errors.New("invalid email or password")
 	ErrTokenRevoked         = errors.New("token has been logged out")
+	ErrInvalidRefreshToken  = errors.New("invalid or expired refresh token")
+	ErrTokenReuseDetected   = errors.New("token reuse detected: all sessions revoked for security")
 
 	// --- PIN Errors ---
 	ErrPINNotSet            = errors.New("transaction pin has not been set, please set up your pin first")

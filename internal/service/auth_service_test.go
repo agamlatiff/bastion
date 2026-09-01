@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -32,6 +33,37 @@ func (m *mockTokenBlacklistRepo) Revoke(ctx context.Context, jti string, ttl tim
 
 func (m *mockTokenBlacklistRepo) IsRevoked(ctx context.Context, jti string) (bool, error) {
 	return m.revokedTokens[jti], nil
+}
+
+type mockRefreshTokenRepo struct {
+	tokens map[string]bool
+}
+
+func newMockRefreshTokenRepo() *mockRefreshTokenRepo {
+	return &mockRefreshTokenRepo{tokens: make(map[string]bool)}
+}
+
+func (m *mockRefreshTokenRepo) Store(ctx context.Context, userID, tokenID string, ttl time.Duration) error {
+	m.tokens[userID+":"+tokenID] = true
+	return nil
+}
+
+func (m *mockRefreshTokenRepo) IsActive(ctx context.Context, userID, tokenID string) (bool, error) {
+	return m.tokens[userID+":"+tokenID], nil
+}
+
+func (m *mockRefreshTokenRepo) Revoke(ctx context.Context, userID, tokenID string) error {
+	delete(m.tokens, userID+":"+tokenID)
+	return nil
+}
+
+func (m *mockRefreshTokenRepo) RevokeAllForUser(ctx context.Context, userID string) error {
+	for k := range m.tokens {
+		if len(k) > len(userID) && k[:len(userID)] == userID {
+			delete(m.tokens, k)
+		}
+	}
+	return nil
 }
 
 type mockUserRepo struct {
@@ -142,6 +174,7 @@ func TestAuthService_Register(t *testing.T) {
 	usersMap := make(map[string]*domain.User)
 	walletsMap := make(map[string]*domain.Wallet)
 	revokedMap := make(map[string]bool)
+	refreshRepo := newMockRefreshTokenRepo()
 	hashedPw, _ := security.HashPassword("KatakunciKuat123!")
 
 	existingUser := &domain.User{
@@ -156,7 +189,7 @@ func TestAuthService_Register(t *testing.T) {
 	blacklistRepo := &mockTokenBlacklistRepo{revokedTokens: revokedMap}
 	transactor := &mockTransactor{}
 
-	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, "secret", 24)
+	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, "secret", 24)
 
 	t.Run("Success", func(t *testing.T) {
 		req := &dto.RegisterRequest{Email: "new@bastion.com", Password: "StrongPassword1!", FullName: "New User"}
@@ -166,8 +199,12 @@ func TestAuthService_Register(t *testing.T) {
 			t.Errorf("expected success, got error: %v", err)
 		}
 
-		if res.Token == "" {
-			t.Errorf("expected token, got empty string")
+		if res.AccessToken == "" {
+			t.Errorf("expected access token, got empty string")
+		}
+
+		if res.RefreshToken == "" {
+			t.Errorf("expected refresh token, got empty string")
 		}
 
 		if res.User.Email != "new@bastion.com" {
@@ -194,6 +231,62 @@ func TestAuthService_Register(t *testing.T) {
 	})
 }
 
+func TestAuthService_RefreshToken(t *testing.T) {
+	usersMap := make(map[string]*domain.User)
+	refreshRepo := newMockRefreshTokenRepo()
+	hashedPw, _ := security.HashPassword("KatakunciKuat123!")
+
+	user := &domain.User{
+		ID:           "usr_refresh_1",
+		Email:        "refresh@bastion.com",
+		PasswordHash: string(hashedPw),
+		Tier:         domain.Tier1,
+	}
+	usersMap[user.Email] = user
+	usersMap[user.ID] = user
+
+	userRepo := &mockUserRepo{users: usersMap}
+	walletRepo := &mockWalletRepo{wallets: make(map[string]*domain.Wallet)}
+	blacklistRepo := &mockTokenBlacklistRepo{revokedTokens: make(map[string]bool)}
+	transactor := &mockTransactor{}
+
+	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, "my_jwt_secret_key_123", 24)
+
+	// Login to get valid token pair
+	loginRes, err := svc.Login(context.Background(), &dto.LoginRequest{Email: "refresh@bastion.com", Password: "KatakunciKuat123!"})
+	if err != nil {
+		t.Fatalf("expected login success, got error: %v", err)
+	}
+
+	t.Run("Successful Refresh & Rotation", func(t *testing.T) {
+		refreshedRes, err := svc.RefreshToken(context.Background(), loginRes.RefreshToken)
+		if err != nil {
+			t.Fatalf("expected refresh success, got error: %v", err)
+		}
+
+		if refreshedRes.AccessToken == "" || refreshedRes.RefreshToken == "" {
+			t.Errorf("expected new access and refresh tokens")
+		}
+
+		if refreshedRes.RefreshToken == loginRes.RefreshToken {
+			t.Errorf("expected refresh token to be rotated, but got the same token")
+		}
+
+		// Verify old refresh token is now invalidated (Reuse detection)
+		_, reuseErr := svc.RefreshToken(context.Background(), loginRes.RefreshToken)
+		if !errors.Is(reuseErr, domain.ErrTokenReuseDetected) {
+			t.Errorf("expected ErrTokenReuseDetected on old token, got %v", reuseErr)
+		}
+	})
+
+	t.Run("Invalid Refresh Token String", func(t *testing.T) {
+		_, err := svc.RefreshToken(context.Background(), "invalid.token.string")
+		if !errors.Is(err, domain.ErrInvalidRefreshToken) {
+			t.Errorf("expected ErrInvalidRefreshToken, got %v", err)
+		}
+	})
+}
+
 func TestAuthService_PIN(t *testing.T) {
 	usersMap := make(map[string]*domain.User)
 	user := &domain.User{
@@ -201,13 +294,15 @@ func TestAuthService_PIN(t *testing.T) {
 		Email: "pinuser@bastion.com",
 	}
 	usersMap[user.Email] = user
+	usersMap[user.ID] = user
 
 	userRepo := &mockUserRepo{users: usersMap}
 	walletRepo := &mockWalletRepo{wallets: make(map[string]*domain.Wallet)}
 	blacklistRepo := &mockTokenBlacklistRepo{revokedTokens: make(map[string]bool)}
+	refreshRepo := newMockRefreshTokenRepo()
 	transactor := &mockTransactor{}
 
-	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, "secret", 24)
+	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, "secret", 24)
 
 	t.Run("SetPIN Success", func(t *testing.T) {
 		err := svc.SetPIN(context.Background(), "usr_pin_1", "123456")

@@ -30,10 +30,16 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-// AuthResponse represents the JSON response returned after successful login or registration.
+// RefreshTokenRequest defines the incoming payload to refresh expired access tokens.
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+// AuthResponse represents the JSON response returned after successful login, registration, or token refresh.
 type AuthResponse struct {
-	Token string        `json:"token"`
-	User  *UserResponse `json:"user"`
+	AccessToken  string        `json:"access_token"`
+	RefreshToken string        `json:"refresh_token,omitempty"`
+	User         *UserResponse `json:"user,omitempty"`
 }
 
 // UserResponse represents the safe public user profile excluding sensitive fields.
