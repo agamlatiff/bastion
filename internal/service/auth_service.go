@@ -9,7 +9,6 @@ import (
 	"github.com/agamlatiff/bastion/internal/dto"
 	"github.com/agamlatiff/bastion/internal/platform/security"
 	"github.com/agamlatiff/bastion/internal/repository"
-	"github.com/redis/go-redis/v9"
 )
 
 type AuthService interface {
@@ -23,7 +22,7 @@ type authService struct {
 	transactor     repository.Transactor
 	userRepo       repository.UserRepository
 	walletRepo     repository.WalletRepository
-	rdb            *redis.Client
+	blacklistRepo  repository.TokenBlacklistRepository
 	jwtSecret      string
 	jwtExpiryHours int
 }
@@ -32,7 +31,7 @@ func NewAuthService(
 	transactor repository.Transactor,
 	userRepo repository.UserRepository,
 	walletRepo repository.WalletRepository,
-	rdb *redis.Client,
+	blacklistRepo repository.TokenBlacklistRepository,
 	jwtSecret string,
 	jwtExpiryHours int,
 ) AuthService {
@@ -40,7 +39,7 @@ func NewAuthService(
 		transactor:     transactor,
 		userRepo:       userRepo,
 		walletRepo:     walletRepo,
-		rdb:            rdb,
+		blacklistRepo:  blacklistRepo,
 		jwtSecret:      jwtSecret,
 		jwtExpiryHours: jwtExpiryHours,
 	}
@@ -130,9 +129,9 @@ func (s *authService) ValidateToken(ctx context.Context, tokenStr string) (*doma
 		return nil, err
 	}
 
-	// Step 2: Check Redis token blacklist to ensure the token hasn't been logged out
-	blacklisted, _ := s.rdb.Get(ctx, "blacklist:jti:"+claims.ID).Result()
-	if blacklisted != "" {
+	// Step 2: Check token blacklist repository to ensure the token hasn't been logged out
+	isRevoked, _ := s.blacklistRepo.IsRevoked(ctx, claims.ID)
+	if isRevoked {
 		return nil, errors.New("token has been logged out")
 	}
 
@@ -153,6 +152,6 @@ func (s *authService) Logout(ctx context.Context, tokenStr string) error {
 		return nil
 	}
 
-	// Step 3: Store JTI in Redis blacklist with TTL equal to remaining lifetime
-	return s.rdb.Set(ctx, "blacklist:jti:"+claims.ID, "revoked", remainingDuration).Err()
+	// Step 3: Revoke token in blacklist repository
+	return s.blacklistRepo.Revoke(ctx, claims.ID, remainingDuration)
 }

@@ -42,7 +42,7 @@ func main() {
 	})
 	defer rdb.Close()
 
-	// Dependency Injection (Wiring layered packages)
+	// Repositories (PostgreSQL & Redis abstractions)
 	transactor := repository.NewTransactor(dbPool)
 	userRepo := repository.NewUserRepository()
 	walletRepo := repository.NewWalletRepository()
@@ -50,13 +50,15 @@ func main() {
 	ledgerRepo := repository.NewLedgerRepository()
 	kycRepo := repository.NewKYCRepository()
 	auditRepo := repository.NewAuditRepository(dbPool)
+	blacklistRepo := repository.NewTokenBlacklistRepository(rdb)
+	locker := repository.NewRedisLocker(rdb)
 
-	// Services
-	authService := service.NewAuthService(transactor, userRepo, walletRepo, rdb, cfg.JWTSecret, cfg.JWTExpiryHours)
-	walletService := service.NewWalletService(transactor, walletRepo, txRepo, ledgerRepo, userRepo, rdb)
+	// Services (100% pure business logic, zero DB/Redis driver coupling)
+	authService := service.NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, cfg.JWTSecret, cfg.JWTExpiryHours)
+	walletService := service.NewWalletService(transactor, walletRepo, txRepo, ledgerRepo, userRepo, locker)
 	kycService := service.NewKYCService(transactor, kycRepo, userRepo, walletRepo)
 
-	// Handlers
+	// Handlers (HTTP Presentation layer)
 	authHandler := handler.NewAuthHandler(authService, auditRepo)
 	walletHandler := handler.NewWalletHandler(walletService, auditRepo)
 	kycHandler := handler.NewKYCHandler(kycService, auditRepo)

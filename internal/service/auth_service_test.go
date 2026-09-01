@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/agamlatiff/bastion/internal/domain"
 	"github.com/agamlatiff/bastion/internal/dto"
 	"github.com/agamlatiff/bastion/internal/platform/security"
 	"github.com/agamlatiff/bastion/internal/repository"
-	"github.com/redis/go-redis/v9"
 )
 
 type mockTransactor struct{}
@@ -20,6 +20,19 @@ func (m *mockTransactor) WithTx(ctx context.Context, fn func(tx repository.DBTX)
 
 func (m *mockTransactor) DB() repository.DBTX {
 	return nil
+}
+
+type mockTokenBlacklistRepo struct {
+	revokedTokens map[string]bool
+}
+
+func (m *mockTokenBlacklistRepo) Revoke(ctx context.Context, jti string, ttl time.Duration) error {
+	m.revokedTokens[jti] = true
+	return nil
+}
+
+func (m *mockTokenBlacklistRepo) IsRevoked(ctx context.Context, jti string) (bool, error) {
+	return m.revokedTokens[jti], nil
 }
 
 type mockUserRepo struct {
@@ -117,9 +130,9 @@ func (m *mockWalletRepo) UpdateMaxLimit(ctx context.Context, db repository.DBTX,
 }
 
 func TestAuthService_Register(t *testing.T) {
-	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	usersMap := make(map[string]*domain.User)
 	walletsMap := make(map[string]*domain.Wallet)
+	revokedMap := make(map[string]bool)
 	hashedPw, _ := security.HashPassword("KatakunciKuat123!")
 
 	existingUser := &domain.User{
@@ -131,9 +144,10 @@ func TestAuthService_Register(t *testing.T) {
 	usersMap[existingUser.Email] = existingUser
 	userRepo := &mockUserRepo{users: usersMap}
 	walletRepo := &mockWalletRepo{wallets: walletsMap}
+	blacklistRepo := &mockTokenBlacklistRepo{revokedTokens: revokedMap}
 	transactor := &mockTransactor{}
 
-	svc := NewAuthService(transactor, userRepo, walletRepo, rdb, "secret", 24)
+	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, "secret", 24)
 
 	t.Run("Success", func(t *testing.T) {
 		req := &dto.RegisterRequest{Email: "new@bastion.com", Password: "StrongPassword1!", FullName: "New User"}

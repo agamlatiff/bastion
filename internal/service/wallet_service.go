@@ -9,7 +9,6 @@ import (
 	"github.com/agamlatiff/bastion/internal/domain"
 	"github.com/agamlatiff/bastion/internal/dto"
 	"github.com/agamlatiff/bastion/internal/repository"
-	"github.com/redis/go-redis/v9"
 )
 
 type WalletService interface {
@@ -25,7 +24,7 @@ type walletService struct {
 	txRepo     repository.TransactionRepository
 	ledgerRepo repository.LedgerRepository
 	userRepo   repository.UserRepository
-	rdb        *redis.Client
+	locker     repository.Locker
 }
 
 func NewWalletService(
@@ -34,7 +33,7 @@ func NewWalletService(
 	txRepo repository.TransactionRepository,
 	ledgerRepo repository.LedgerRepository,
 	userRepo repository.UserRepository,
-	rdb *redis.Client,
+	locker repository.Locker,
 ) WalletService {
 	return &walletService{
 		transactor: transactor,
@@ -42,7 +41,7 @@ func NewWalletService(
 		txRepo:     txRepo,
 		ledgerRepo: ledgerRepo,
 		userRepo:   userRepo,
-		rdb:        rdb,
+		locker:     locker,
 	}
 }
 
@@ -69,16 +68,16 @@ func (s *walletService) TopUp(ctx context.Context, userID string, req *dto.TopUp
 		return nil, err
 	}
 
-	// Step 3: Acquire distributed lock in Redis to prevent concurrent duplicate top-up requests
+	// Step 3: Acquire distributed lock to prevent concurrent duplicate top-up requests
 	fullIdmKey := fmt.Sprintf("idempotency:%s:topup:%s", userID, req.IdempotencyKey)
-	locked, err := s.rdb.SetNX(ctx, fullIdmKey, "locked", 5*time.Second).Result()
+	locked, err := s.locker.AcquireLock(ctx, fullIdmKey, 5*time.Second)
 	if err != nil {
 		return nil, err
 	}
 	if !locked {
 		return nil, errors.New("concurrent request detected for the same idempotency key")
 	}
-	defer s.rdb.Del(ctx, fullIdmKey)
+	defer s.locker.ReleaseLock(ctx, fullIdmKey)
 
 	// Step 4: Set default description fallback
 	desc := req.Description
@@ -182,16 +181,16 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 		return nil, errors.New("receiver wallet not found")
 	}
 
-	// Step 6: Acquire distributed Redis lock to prevent race conditions on idempotency key
+	// Step 6: Acquire distributed lock to prevent race conditions on idempotency key
 	fullIdmKey := fmt.Sprintf("idempotency:%s:transfer:%s", senderUserID, req.IdempotencyKey)
-	locked, err := s.rdb.SetNX(ctx, fullIdmKey, "locked", 5*time.Second).Result()
+	locked, err := s.locker.AcquireLock(ctx, fullIdmKey, 5*time.Second)
 	if err != nil {
 		return nil, err
 	}
 	if !locked {
 		return nil, errors.New("concurrent request detected for the same idempotency key")
 	}
-	defer s.rdb.Del(ctx, fullIdmKey)
+	defer s.locker.ReleaseLock(ctx, fullIdmKey)
 
 	// Step 7: Execute atomic transfer in a database transaction with deadlock prevention
 	var result *domain.Transaction
