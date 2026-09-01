@@ -52,13 +52,7 @@ func (s *walletService) GetBalance(ctx context.Context, userID string) (*dto.Wal
 		return nil, err
 	}
 
-	return &dto.WalletBalanceResponse{
-		WalletID:        wallet.ID,
-		UserID:          wallet.UserID,
-		Balance:         wallet.Balance,
-		Currency:        wallet.Currency,
-		MaxBalanceLimit: wallet.MaxBalanceLimit,
-	}, nil
+	return dto.ToWalletBalanceResponse(wallet), nil
 }
 
 func (s *walletService) TopUp(ctx context.Context, userID string, req *dto.TopUpRequest) (*domain.Transaction, error) {

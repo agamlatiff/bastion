@@ -12,6 +12,16 @@ type SubmitKYCRequest struct {
 	SelfieImageURL string `json:"selfie_image_url" binding:"required"`
 }
 
+func (r *SubmitKYCRequest) ToKYCVerification(userID string) *domain.KYCVerification {
+	return &domain.KYCVerification{
+		UserID:         userID,
+		IDCardNumber:   r.IDCardNumber,
+		IDCardImageURL: r.IDCardImageURL,
+		SelfieImageURL: r.SelfieImageURL,
+		Status:         domain.KYCStatusPending,
+	}
+}
+
 type ReviewKYCRequest struct {
 	KYCID           string `json:"kyc_id" binding:"required"`
 	Status          string `json:"status" binding:"required,oneof=approved rejected"`

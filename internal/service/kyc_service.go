@@ -42,13 +42,7 @@ func (s *kycService) SubmitKYC(ctx context.Context, user *domain.User, req *dto.
 		}
 	}
 
-	kyc := &domain.KYCVerification{
-		UserID:         user.ID,
-		IDCardNumber:   req.IDCardNumber,
-		IDCardImageURL: req.IDCardImageURL,
-		SelfieImageURL: req.SelfieImageURL,
-		Status:         domain.KYCStatusPending,
-	}
+	kyc := req.ToKYCVerification(user.ID)
 
 	if err := s.kycRepo.Create(ctx, kyc); err != nil {
 		return nil, err

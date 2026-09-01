@@ -50,13 +50,7 @@ func (s *authService) Register(ctx context.Context, req *dto.RegisterRequest) (*
 		return nil, err
 	}
 
-	newUser := &domain.User{
-		Email:        req.Email,
-		PasswordHash: string(hashedPassword),
-		FullName:     req.FullName,
-		Role:         domain.RoleUser,
-		Tier:         "tier_1",
-	}
+	newUser := req.ToUser(string(hashedPassword))
 
 	if err := s.userRepo.Create(ctx, newUser); err != nil {
 		return nil, err

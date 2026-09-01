@@ -12,6 +12,16 @@ type RegisterRequest struct {
 	FullName string `json:"full_name" binding:"required,min=4"`
 }
 
+func (r *RegisterRequest) ToUser(hashedPassword string) *domain.User {
+	return &domain.User{
+		Email:        r.Email,
+		PasswordHash: hashedPassword,
+		FullName:     r.FullName,
+		Role:         domain.RoleUser,
+		Tier:         "tier_1",
+	}
+}
+
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`

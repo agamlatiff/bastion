@@ -1,5 +1,7 @@
 package dto
 
+import "github.com/agamlatiff/bastion/internal/domain"
+
 type TransferRequest struct {
 	ReceiverEmail  string `json:"receiver_email" binding:"required,email"`
 	Amount         int64  `json:"amount" binding:"required,gt=0"`
@@ -24,4 +26,17 @@ type WalletBalanceResponse struct {
 	Balance         int64  `json:"balance"`
 	Currency        string `json:"currency"`
 	MaxBalanceLimit int64  `json:"max_balance_limit"`
+}
+
+func ToWalletBalanceResponse(w *domain.Wallet) *WalletBalanceResponse {
+	if w == nil {
+		return nil
+	}
+	return &WalletBalanceResponse{
+		WalletID:        w.ID,
+		UserID:          w.UserID,
+		Balance:         w.Balance,
+		Currency:        w.Currency,
+		MaxBalanceLimit: w.MaxBalanceLimit,
+	}
 }
