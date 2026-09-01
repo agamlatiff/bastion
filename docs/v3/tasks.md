@@ -14,20 +14,20 @@ V3 focuses on migrating Bastion from a purely synchronous financial core to a re
 Transform transactions from simple synchronous operations into **stateful business processes**.
 
 ### Tasks
-* [ ] Review transaction implementation V2
-* [ ] Define transaction lifecycle
-* [ ] Define transaction states
-* [ ] Define valid state transitions
-* [ ] Define invalid transitions
-* [ ] Implement transition rules
-* [ ] Add transaction status history
-* [ ] Add transition reason
-* [ ] Update transaction domain model
-* [ ] Update database schema
-* [ ] Update API response
-* [ ] Add state transition tests
-* [ ] Add invalid transition tests
-* [ ] Add concurrent transition tests
+* [x] Review transaction implementation V2
+* [x] Define transaction lifecycle
+* [x] Define transaction states
+* [x] Define valid state transitions
+* [x] Define invalid transitions
+* [x] Implement transition rules
+* [x] Add transaction status history
+* [x] Add transition reason
+* [x] Update transaction domain model
+* [x] Update database schema
+* [x] Update API response
+* [x] Add state transition tests
+* [x] Add invalid transition tests
+* [x] Add concurrent transition tests
 
 ### Learning Track
 **LEARN:** State machine, Domain invariants, State transition, Business lifecycle, Finite-state machines, Transaction vs HTTP request lifecycle.

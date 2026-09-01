@@ -27,10 +27,14 @@ test:
 DB_URL="postgres://bastion:bastion_secret@localhost:5433/bastion_db?sslmode=disable"
 
 migrate-up:
-	@echo "Running database migrations UP..."
-	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path infra/postgres/migrations -database $(DB_URL) up
+	@echo "Running database migrations via Docker..."
+	@for file in infra/postgres/migrations/*.sql; do \
+		echo "Applying $$file..."; \
+		docker exec -i bastion_postgres psql -U bastion -d bastion_db < "$$file"; \
+	done
 
 migrate-down:
-	@echo "Running database migrations DOWN..."
-	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path infra/postgres/migrations -database $(DB_URL) down
+	@echo "Warning: Down migrations are not supported with raw SQL files."
+	@echo "To reset the database, run: docker compose down -v && docker compose up -d"
+
 

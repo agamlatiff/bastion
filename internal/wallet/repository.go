@@ -11,6 +11,7 @@ type Repository interface {
 	ExecuteTopUp(ctx context.Context, walletID string, amount int64, idmKey string, desc string) (*Transaction, error)
 	ExecuteTransfer(ctx context.Context, senderWalletID string, receiverWalletID string, amount int64, idmKey string, desc string) (*Transaction, error)
 	GetTransaction(ctx context.Context, walletID string, limit int, offset int) ([]*Transaction, error)
+	UpdateTransactionState(ctx context.Context, transaction *Transaction, newState TransactionState, reason string) error
 }
 
 type repository struct {
@@ -106,10 +107,11 @@ func (r *repository) ExecuteTopUp(ctx context.Context, walletID string, amount i
 	var transaction Transaction
 	createTxQuery := `
 		INSERT INTO transactions (idempotency_key, receiver_wallet_id, amount, fee_amount, type, status, description)
-		VALUES ($1, $2, $3, 0, 'TOPUP', 'SUCCESS', $4)
+		VALUES ($1, $2, $3, 0, 'TOPUP', $5, $4)
 		RETURNING id, idempotency_key, sender_wallet_id, receiver_wallet_id, amount, fee_amount, type, status, description, created_at
 	`
-	err = tx.QueryRow(ctx, createTxQuery, idmKey, walletID, amount, desc).Scan(
+    // Notice we added StateCompleted at the very end of the arguments here!
+	err = tx.QueryRow(ctx, createTxQuery, idmKey, walletID, amount, desc, StateCompleted).Scan(
 		&transaction.ID,
 		&transaction.IdempotencyKey,
 		&transaction.SenderWalletID,
@@ -121,6 +123,7 @@ func (r *repository) ExecuteTopUp(ctx context.Context, walletID string, amount i
 		&transaction.Description,
 		&transaction.CreatedAt,
 	)
+
 	if err != nil {
 		return nil, err
 	}
@@ -220,10 +223,10 @@ func (r *repository) ExecuteTransfer(ctx context.Context, senderWalletID string,
 	var transaction Transaction
 	createTxQuery := `
 		INSERT INTO transactions (idempotency_key, sender_wallet_id, receiver_wallet_id, amount, fee_amount, type, status, description)
-		VALUES ($1, $2, $3, $4, 0, 'TRANSFER', 'SUCCESS', $5)
+		VALUES ($1, $2, $3, $4, 0, 'TRANSFER', $6, $5)
 		RETURNING id, idempotency_key, sender_wallet_id, receiver_wallet_id, amount, fee_amount, type, status, description, created_at
 	`
-	err = tx.QueryRow(ctx, createTxQuery, idmKey, senderWalletID, receiverWalletID, amount, desc).Scan(
+	err = tx.QueryRow(ctx, createTxQuery, idmKey, senderWalletID, receiverWalletID, amount, desc, StateCompleted).Scan(
 		&transaction.ID,
 		&transaction.IdempotencyKey,
 		&transaction.SenderWalletID,
@@ -304,4 +307,37 @@ func (r *repository) GetTransaction(ctx context.Context, walletID string, limit 
 	}
 
 	return transactions, nil
+}
+
+func (r *repository) UpdateTransactionState(ctx context.Context, transaction *Transaction, newState TransactionState, reason string) error {
+	// 1. Ask the Domain Model if this transition is legal!
+	history, err := transaction.TransitionTo(newState, reason)
+	if err != nil {
+		return err // e.g., ErrInvalidStateTransition
+	}
+
+	// 2. Start an ACID Database Transaction
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// 3. Update the main transactions table
+	updateTxQuery := `UPDATE transactions SET status = $1 WHERE id = $2`
+	if _, err := tx.Exec(ctx, updateTxQuery, transaction.Status, transaction.ID); err != nil {
+		return err
+	}
+
+	// 4. Record the history footprint
+	insertHistoryQuery := `
+		INSERT INTO transaction_histories (transaction_id, state_from, state_to, reason)
+		VALUES ($1, $2, $3, $4)
+	`
+	if _, err := tx.Exec(ctx, insertHistoryQuery, history.TransactionID, history.StateFrom, history.StateTo, history.Reason); err != nil {
+		return err
+	}
+
+	// 5. Commit both changes safely
+	return tx.Commit(ctx)
 }
