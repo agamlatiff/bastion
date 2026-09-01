@@ -47,24 +47,29 @@ func NewWalletService(
 }
 
 func (s *walletService) GetBalance(ctx context.Context, userID string) (*dto.WalletBalanceResponse, error) {
-	wallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.(repository.DBTX), userID)
+	// Step 1: Query wallet record for user
+	wallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.DB(), userID)
 	if err != nil {
 		return nil, err
 	}
 
+	// Step 2: Return formatted wallet balance response DTO
 	return dto.ToWalletBalanceResponse(wallet), nil
 }
 
 func (s *walletService) TopUp(ctx context.Context, userID string, req *dto.TopUpRequest) (*domain.Transaction, error) {
+	// Step 1: Validate top up amount is strictly positive
 	if req.Amount <= 0 {
 		return nil, domain.ErrInvalidAmount
 	}
 
-	wallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.(repository.DBTX), userID)
+	// Step 2: Fetch user's wallet
+	wallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.DB(), userID)
 	if err != nil {
 		return nil, err
 	}
 
+	// Step 3: Acquire distributed lock in Redis to prevent concurrent duplicate top-up requests
 	fullIdmKey := fmt.Sprintf("idempotency:%s:topup:%s", userID, req.IdempotencyKey)
 	locked, err := s.rdb.SetNX(ctx, fullIdmKey, "locked", 5*time.Second).Result()
 	if err != nil {
@@ -75,33 +80,40 @@ func (s *walletService) TopUp(ctx context.Context, userID string, req *dto.TopUp
 	}
 	defer s.rdb.Del(ctx, fullIdmKey)
 
+	// Step 4: Set default description fallback
 	desc := req.Description
 	if desc == "" {
 		desc = "Top Up Balance"
 	}
 
+	// Step 5: Execute atomic database transaction (Lock row -> Validate limit -> Update balance -> Insert Tx -> Insert Ledger)
 	var result *domain.Transaction
 	err = s.transactor.WithTx(ctx, func(db repository.DBTX) error {
+		// 5a. Idempotency Check: Return existing transaction if already processed
 		existing, idmErr := s.txRepo.CheckIdempotency(ctx, db, fullIdmKey)
 		if idmErr == nil {
 			result = existing
 			return nil
 		}
 
+		// 5b. Lock the wallet row with `SELECT ... FOR UPDATE`
 		currentBalance, maxLimit, lockErr := s.walletRepo.GetBalanceForUpdate(ctx, db, wallet.ID)
 		if lockErr != nil {
 			return lockErr
 		}
 
+		// 5c. Validate new balance does not exceed the wallet limit
 		newBalance := currentBalance + req.Amount
 		if newBalance > maxLimit {
 			return domain.ErrExceedsMaxLimit
 		}
 
+		// 5d. Update wallet balance
 		if updateErr := s.walletRepo.UpdateBalance(ctx, db, wallet.ID, newBalance); updateErr != nil {
 			return updateErr
 		}
 
+		// 5e. Insert transaction record
 		tx := &domain.Transaction{
 			IdempotencyKey:   fullIdmKey,
 			ReceiverWalletID: &wallet.ID,
@@ -115,6 +127,7 @@ func (s *walletService) TopUp(ctx context.Context, userID string, req *dto.TopUp
 			return insertErr
 		}
 
+		// 5f. Insert double-entry CREDIT ledger entry
 		entry := &domain.LedgerEntry{
 			TransactionID: tx.ID,
 			WalletID:      wallet.ID,
@@ -134,38 +147,42 @@ func (s *walletService) TopUp(ctx context.Context, userID string, req *dto.TopUp
 }
 
 func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *dto.TransferRequest) (*domain.Transaction, error) {
+	// Step 1: Validate transfer amount is strictly positive
 	if req.Amount <= 0 {
 		return nil, domain.ErrInvalidAmount
 	}
 
-	senderUser, err := s.userRepo.FindByID(ctx, senderUserID)
+	// Step 2: Validate sender exists and is KYC verified (Tier 2 requirement)
+	senderUser, err := s.userRepo.FindByID(ctx, s.transactor.DB(), senderUserID)
 	if err != nil {
 		return nil, errors.New("sender user not found")
 	}
-
 	if !senderUser.IsVerified {
 		return nil, domain.ErrKYCRequired
 	}
 
-	senderWallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.(repository.DBTX), senderUserID)
+	// Step 3: Fetch sender's wallet
+	senderWallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.DB(), senderUserID)
 	if err != nil {
 		return nil, err
 	}
 
-	receiverUser, err := s.userRepo.FindByEmail(ctx, req.ReceiverEmail)
+	// Step 4: Validate receiver exists and is not the sender themselves
+	receiverUser, err := s.userRepo.FindByEmail(ctx, s.transactor.DB(), req.ReceiverEmail)
 	if err != nil {
 		return nil, errors.New("receiver user not found")
 	}
-
 	if receiverUser.ID == senderUserID {
 		return nil, domain.ErrSelfTransfer
 	}
 
-	receiverWallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.(repository.DBTX), receiverUser.ID)
+	// Step 5: Fetch receiver's wallet
+	receiverWallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.DB(), receiverUser.ID)
 	if err != nil {
 		return nil, errors.New("receiver wallet not found")
 	}
 
+	// Step 6: Acquire distributed Redis lock to prevent race conditions on idempotency key
 	fullIdmKey := fmt.Sprintf("idempotency:%s:transfer:%s", senderUserID, req.IdempotencyKey)
 	locked, err := s.rdb.SetNX(ctx, fullIdmKey, "locked", 5*time.Second).Result()
 	if err != nil {
@@ -176,19 +193,23 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 	}
 	defer s.rdb.Del(ctx, fullIdmKey)
 
+	// Step 7: Execute atomic transfer in a database transaction with deadlock prevention
 	var result *domain.Transaction
 	err = s.transactor.WithTx(ctx, func(db repository.DBTX) error {
+		// 7a. Check if this transfer was already processed
 		existing, idmErr := s.txRepo.CheckIdempotency(ctx, db, fullIdmKey)
 		if idmErr == nil {
 			result = existing
 			return nil
 		}
 
+		// 7b. Deadlock Prevention: Order wallet locks lexicographically by UUID
 		firstID, secondID := senderWallet.ID, receiverWallet.ID
 		if senderWallet.ID > receiverWallet.ID {
 			firstID, secondID = receiverWallet.ID, senderWallet.ID
 		}
 
+		// 7c. Lock both wallet rows with `SELECT ... FOR UPDATE`
 		b1, _, lockErr := s.walletRepo.GetBalanceForUpdate(ctx, db, firstID)
 		if lockErr != nil {
 			return lockErr
@@ -198,6 +219,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 			return lockErr
 		}
 
+		// 7d. Assign locked balance variables back to sender and receiver
 		var senderBalance, receiverBalance, receiverLimit int64
 		if senderWallet.ID == firstID {
 			senderBalance, receiverBalance, receiverLimit = b1, b2, l2
@@ -205,15 +227,19 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 			senderBalance, receiverBalance, receiverLimit = b2, b1, l2
 		}
 
+		// 7e. Check sender's sufficient balance
 		if senderBalance < req.Amount {
 			return domain.ErrInsufficientBalance
 		}
+
+		// 7f. Calculate new balances and check receiver's wallet limit
 		newSenderBalance := senderBalance - req.Amount
 		newReceiverBalance := receiverBalance + req.Amount
 		if newReceiverBalance > receiverLimit {
 			return domain.ErrExceedsMaxLimit
 		}
 
+		// 7g. Update balances for both sender and receiver wallets
 		if err := s.walletRepo.UpdateBalance(ctx, db, senderWallet.ID, newSenderBalance); err != nil {
 			return err
 		}
@@ -221,6 +247,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 			return err
 		}
 
+		// 7h. Record the transaction in `transactions` table
 		tx := &domain.Transaction{
 			IdempotencyKey:   fullIdmKey,
 			SenderWalletID:   &senderWallet.ID,
@@ -235,6 +262,7 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 			return err
 		}
 
+		// 7i. Insert double-entry ledger records (DEBIT on sender, CREDIT on receiver)
 		if err := s.ledgerRepo.Insert(ctx, db, &domain.LedgerEntry{
 			TransactionID: tx.ID,
 			WalletID:      senderWallet.ID,
@@ -262,10 +290,12 @@ func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *
 }
 
 func (s *walletService) GetTransaction(ctx context.Context, userID string, limit int, offset int) ([]*domain.Transaction, error) {
-	wallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.(repository.DBTX), userID)
+	// Step 1: Find user's wallet ID
+	wallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.DB(), userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.txRepo.GetTransactionsByWalletID(ctx, s.transactor.(repository.DBTX), wallet.ID, limit, offset)
+	// Step 2: Fetch paginated transaction history from repository
+	return s.txRepo.GetTransactionsByWalletID(ctx, s.transactor.DB(), wallet.ID, limit, offset)
 }

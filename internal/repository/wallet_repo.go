@@ -7,16 +7,24 @@ import (
 )
 
 type WalletRepository interface {
+	Create(ctx context.Context, db DBTX, userID string) error
 	FindByUserID(ctx context.Context, db DBTX, userID string) (*domain.Wallet, error)
 	FindByID(ctx context.Context, db DBTX, walletID string) (*domain.Wallet, error)
 	GetBalanceForUpdate(ctx context.Context, db DBTX, walletID string) (balance int64, maxLimit int64, err error)
 	UpdateBalance(ctx context.Context, db DBTX, walletID string, newBalance int64) error
+	UpdateMaxLimit(ctx context.Context, db DBTX, userID string, maxLimit int64) error
 }
 
 type walletRepo struct{}
 
 func NewWalletRepository() WalletRepository {
 	return &walletRepo{}
+}
+
+func (r *walletRepo) Create(ctx context.Context, db DBTX, userID string) error {
+	query := `INSERT INTO wallets (user_id) VALUES ($1)`
+	_, err := db.Exec(ctx, query, userID)
+	return err
 }
 
 func (r *walletRepo) FindByUserID(ctx context.Context, db DBTX, userID string) (*domain.Wallet, error) {
@@ -68,5 +76,11 @@ func (r *walletRepo) GetBalanceForUpdate(ctx context.Context, db DBTX, walletID 
 func (r *walletRepo) UpdateBalance(ctx context.Context, db DBTX, walletID string, newBalance int64) error {
 	query := `UPDATE wallets SET balance = $1, updated_at = NOW() WHERE id = $2`
 	_, err := db.Exec(ctx, query, newBalance, walletID)
+	return err
+}
+
+func (r *walletRepo) UpdateMaxLimit(ctx context.Context, db DBTX, userID string, maxLimit int64) error {
+	query := `UPDATE wallets SET max_balance_limit = $1, updated_at = NOW() WHERE user_id = $2`
+	_, err := db.Exec(ctx, query, maxLimit, userID)
 	return err
 }

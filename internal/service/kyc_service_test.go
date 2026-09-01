@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/agamlatiff/bastion/internal/domain"
 	"github.com/agamlatiff/bastion/internal/dto"
+	"github.com/agamlatiff/bastion/internal/repository"
 )
 
 type mockKYCRepo struct {
@@ -19,14 +21,14 @@ func newMockKYCRepo() *mockKYCRepo {
 	}
 }
 
-func (m *mockKYCRepo) Create(ctx context.Context, verification *domain.KYCVerification) error {
+func (m *mockKYCRepo) Create(ctx context.Context, db repository.DBTX, verification *domain.KYCVerification) error {
 	verification.ID = "kyc_123"
 	verification.SubmittedAt = time.Now()
 	m.kycMap[verification.ID] = verification
 	return nil
 }
 
-func (m *mockKYCRepo) FindByUserID(ctx context.Context, userID string) (*domain.KYCVerification, error) {
+func (m *mockKYCRepo) FindByUserID(ctx context.Context, db repository.DBTX, userID string) (*domain.KYCVerification, error) {
 	for _, k := range m.kycMap {
 		if k.UserID == userID {
 			return k, nil
@@ -35,7 +37,7 @@ func (m *mockKYCRepo) FindByUserID(ctx context.Context, userID string) (*domain.
 	return nil, nil
 }
 
-func (m *mockKYCRepo) FindByID(ctx context.Context, id string) (*domain.KYCVerification, error) {
+func (m *mockKYCRepo) FindByID(ctx context.Context, db repository.DBTX, id string) (*domain.KYCVerification, error) {
 	verification, exists := m.kycMap[id]
 	if !exists {
 		return nil, nil
@@ -43,28 +45,24 @@ func (m *mockKYCRepo) FindByID(ctx context.Context, id string) (*domain.KYCVerif
 	return verification, nil
 }
 
-func (m *mockKYCRepo) ApproveKYC(ctx context.Context, kycID, userID string) error {
+func (m *mockKYCRepo) UpdateStatus(ctx context.Context, db repository.DBTX, kycID, status string, rejectionReason *string) error {
 	if verification, exists := m.kycMap[kycID]; exists {
-		verification.Status = domain.KYCStatusApproved
+		verification.Status = status
+		verification.RejectionReason = rejectionReason
 		now := time.Now()
 		verification.VerifiedAt = &now
+		return nil
 	}
-	return nil
-}
-
-func (m *mockKYCRepo) RejectKYC(ctx context.Context, kycID, reason string) error {
-	if verification, exists := m.kycMap[kycID]; exists {
-		verification.Status = domain.KYCStatusRejected
-		verification.RejectionReason = &reason
-		now := time.Now()
-		verification.VerifiedAt = &now
-	}
-	return nil
+	return errors.New("kyc not found")
 }
 
 func TestKYCService_SubmitKYC(t *testing.T) {
-	repo := newMockKYCRepo()
-	svc := NewKYCService(repo)
+	kycRepo := newMockKYCRepo()
+	userRepo := &mockUserRepo{users: make(map[string]*domain.User)}
+	walletRepo := &mockWalletRepo{wallets: make(map[string]*domain.Wallet)}
+	transactor := &mockTransactor{}
+
+	svc := NewKYCService(transactor, kycRepo, userRepo, walletRepo)
 
 	user := &domain.User{
 		ID:         "usr_123",

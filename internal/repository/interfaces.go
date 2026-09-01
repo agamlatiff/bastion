@@ -15,4 +15,5 @@ type DBTX interface {
 
 type Transactor interface {
 	WithTx(ctx context.Context, fn func(tx DBTX) error) error
+	DB() DBTX
 }

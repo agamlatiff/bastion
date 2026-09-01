@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -28,3 +29,6 @@ func (t *pgxTransactor) WithTx(ctx context.Context, fn func(tx DBTX) error) erro
 	return tx.Commit(ctx)
 }
 
+func (t *pgxTransactor) DB() DBTX {
+	return t.db
+}

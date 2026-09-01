@@ -43,26 +43,22 @@ func main() {
 	defer rdb.Close()
 
 	// Dependency Injection (Wiring layered packages)
-
-	// Audit Module (Repository only)
-	auditRepo := repository.NewAuditRepository(dbPool)
-
-	// Auth Module
-	userRepo := repository.NewUserRepository(dbPool)
-	authService := service.NewAuthService(userRepo, rdb, cfg.JWTSecret, cfg.JWTExpiryHours)
-	authHandler := handler.NewAuthHandler(authService, auditRepo)
-
-	// Wallet Module
 	transactor := repository.NewTransactor(dbPool)
+	userRepo := repository.NewUserRepository()
 	walletRepo := repository.NewWalletRepository()
 	txRepo := repository.NewTransactionRepository()
 	ledgerRepo := repository.NewLedgerRepository()
-	walletService := service.NewWalletService(transactor, walletRepo, txRepo, ledgerRepo, userRepo, rdb)
-	walletHandler := handler.NewWalletHandler(walletService, auditRepo)
+	kycRepo := repository.NewKYCRepository()
+	auditRepo := repository.NewAuditRepository(dbPool)
 
-	// KYC Module
-	kycRepo := repository.NewKYCRepository(dbPool)
-	kycService := service.NewKYCService(kycRepo)
+	// Services
+	authService := service.NewAuthService(transactor, userRepo, walletRepo, rdb, cfg.JWTSecret, cfg.JWTExpiryHours)
+	walletService := service.NewWalletService(transactor, walletRepo, txRepo, ledgerRepo, userRepo, rdb)
+	kycService := service.NewKYCService(transactor, kycRepo, userRepo, walletRepo)
+
+	// Handlers
+	authHandler := handler.NewAuthHandler(authService, auditRepo)
+	walletHandler := handler.NewWalletHandler(walletService, auditRepo)
 	kycHandler := handler.NewKYCHandler(kycService, auditRepo)
 
 	// Initialize Gin router engine

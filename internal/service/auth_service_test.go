@@ -8,25 +8,37 @@ import (
 	"github.com/agamlatiff/bastion/internal/domain"
 	"github.com/agamlatiff/bastion/internal/dto"
 	"github.com/agamlatiff/bastion/internal/platform/security"
+	"github.com/agamlatiff/bastion/internal/repository"
 	"github.com/redis/go-redis/v9"
 )
+
+type mockTransactor struct{}
+
+func (m *mockTransactor) WithTx(ctx context.Context, fn func(tx repository.DBTX) error) error {
+	return fn(nil)
+}
+
+func (m *mockTransactor) DB() repository.DBTX {
+	return nil
+}
 
 type mockUserRepo struct {
 	users map[string]*domain.User
 }
 
-func (m *mockUserRepo) Create(ctx context.Context, user *domain.User) error {
+func (m *mockUserRepo) Create(ctx context.Context, db repository.DBTX, user *domain.User) error {
 	m.users[user.Email] = user
 	return nil
 }
-func (m *mockUserRepo) CreateWallet(ctx context.Context, userID string) error { return nil }
-func (m *mockUserRepo) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+
+func (m *mockUserRepo) FindByEmail(ctx context.Context, db repository.DBTX, email string) (*domain.User, error) {
 	if u, ok := m.users[email]; ok {
 		return u, nil
 	}
 	return nil, errors.New("not found")
 }
-func (m *mockUserRepo) FindByID(ctx context.Context, id string) (*domain.User, error) {
+
+func (m *mockUserRepo) FindByID(ctx context.Context, db repository.DBTX, id string) (*domain.User, error) {
 	for _, u := range m.users {
 		if u.ID == id {
 			return u, nil
@@ -35,9 +47,79 @@ func (m *mockUserRepo) FindByID(ctx context.Context, id string) (*domain.User, e
 	return nil, errors.New("not found")
 }
 
+func (m *mockUserRepo) UpdateTierAndVerification(ctx context.Context, db repository.DBTX, userID string, tier string, isVerified bool) error {
+	for _, u := range m.users {
+		if u.ID == userID {
+			u.Tier = tier
+			u.IsVerified = isVerified
+			return nil
+		}
+	}
+	return errors.New("not found")
+}
+
+type mockWalletRepo struct {
+	wallets map[string]*domain.Wallet
+}
+
+func (m *mockWalletRepo) Create(ctx context.Context, db repository.DBTX, userID string) error {
+	m.wallets[userID] = &domain.Wallet{
+		ID:              "wal_" + userID,
+		UserID:          userID,
+		Balance:         0,
+		Currency:        "IDR",
+		MaxBalanceLimit: 2000000,
+	}
+	return nil
+}
+
+func (m *mockWalletRepo) FindByUserID(ctx context.Context, db repository.DBTX, userID string) (*domain.Wallet, error) {
+	if w, ok := m.wallets[userID]; ok {
+		return w, nil
+	}
+	return nil, errors.New("wallet not found")
+}
+
+func (m *mockWalletRepo) FindByID(ctx context.Context, db repository.DBTX, walletID string) (*domain.Wallet, error) {
+	for _, w := range m.wallets {
+		if w.ID == walletID {
+			return w, nil
+		}
+	}
+	return nil, errors.New("wallet not found")
+}
+
+func (m *mockWalletRepo) GetBalanceForUpdate(ctx context.Context, db repository.DBTX, walletID string) (int64, int64, error) {
+	for _, w := range m.wallets {
+		if w.ID == walletID {
+			return w.Balance, w.MaxBalanceLimit, nil
+		}
+	}
+	return 0, 0, errors.New("wallet not found")
+}
+
+func (m *mockWalletRepo) UpdateBalance(ctx context.Context, db repository.DBTX, walletID string, newBalance int64) error {
+	for _, w := range m.wallets {
+		if w.ID == walletID {
+			w.Balance = newBalance
+			return nil
+		}
+	}
+	return errors.New("wallet not found")
+}
+
+func (m *mockWalletRepo) UpdateMaxLimit(ctx context.Context, db repository.DBTX, userID string, maxLimit int64) error {
+	if w, ok := m.wallets[userID]; ok {
+		w.MaxBalanceLimit = maxLimit
+		return nil
+	}
+	return errors.New("wallet not found")
+}
+
 func TestAuthService_Register(t *testing.T) {
 	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	usersMap := make(map[string]*domain.User)
+	walletsMap := make(map[string]*domain.Wallet)
 	hashedPw, _ := security.HashPassword("KatakunciKuat123!")
 
 	existingUser := &domain.User{
@@ -47,8 +129,11 @@ func TestAuthService_Register(t *testing.T) {
 	}
 
 	usersMap[existingUser.Email] = existingUser
-	repo := &mockUserRepo{users: usersMap}
-	svc := NewAuthService(repo, rdb, "secret", 24)
+	userRepo := &mockUserRepo{users: usersMap}
+	walletRepo := &mockWalletRepo{wallets: walletsMap}
+	transactor := &mockTransactor{}
+
+	svc := NewAuthService(transactor, userRepo, walletRepo, rdb, "secret", 24)
 
 	t.Run("Success", func(t *testing.T) {
 		req := &dto.RegisterRequest{Email: "new@bastion.com", Password: "StrongPassword1!", FullName: "New User"}
