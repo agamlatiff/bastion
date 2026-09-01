@@ -69,7 +69,7 @@ func main() {
 	// Middleware
 	r.Use(middleware.RequestIDMiddleware())
 	r.Use(middleware.SecurityHeaderMiddleware())
-	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.CORSMiddleware(cfg.AllowedOrigins))
 	r.Use(middleware.TimeoutMiddleware(10 * time.Second))
 	r.Use(middleware.MaxBodySizeMiddleware(1 * 1024 * 1024))
 

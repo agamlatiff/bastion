@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -21,6 +22,7 @@ type Config struct {
 	RedisPort      string
 	JWTSecret      string
 	JWTExpiryHours int
+	AllowedOrigins []string
 }
 
 func LoadConfig() (*Config, error) {
@@ -46,9 +48,18 @@ func LoadConfig() (*Config, error) {
 	}
 
 	expiryHours, err := strconv.Atoi(getEnv("JWT_EXPIRY_HOURS", "24"))
-
 	if err != nil {
 		expiryHours = 24
+	}
+
+	// Parse comma-separated whitelist origins
+	rawOrigins := getEnv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173")
+	var allowedOrigins []string
+	for _, origin := range strings.Split(rawOrigins, ",") {
+		trimmed := strings.TrimSpace(origin)
+		if trimmed != "" {
+			allowedOrigins = append(allowedOrigins, trimmed)
+		}
 	}
 
 	cfg := &Config{
@@ -62,6 +73,7 @@ func LoadConfig() (*Config, error) {
 		RedisPort:      getEnv("REDIS_PORT", "6379"),
 		JWTSecret:      jwtSecret,
 		JWTExpiryHours: expiryHours,
+		AllowedOrigins: allowedOrigins,
 	}
 
 	return cfg, nil
@@ -69,11 +81,9 @@ func LoadConfig() (*Config, error) {
 
 func getEnv(key, defaultValue string) string {
 	value, exists := os.LookupEnv(key)
-
 	if !exists || value == "" {
 		return defaultValue
 	}
-
 	return value
 }
 
