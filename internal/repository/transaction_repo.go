@@ -1,10 +1,12 @@
 package repository
 
 import (
-	"github.com/agamlatiff/bastion/internal/domain"
 	"context"
+
+	"github.com/agamlatiff/bastion/internal/domain"
 )
 
+// TransactionRepository defines the persistence interface for the `transactions` table.
 type TransactionRepository interface {
 	CheckIdempotency(ctx context.Context, db DBTX, idempotencyKey string) (*domain.Transaction, error)
 	Insert(ctx context.Context, db DBTX, transaction *domain.Transaction) error
@@ -13,10 +15,12 @@ type TransactionRepository interface {
 
 type transactionRepo struct{}
 
+// NewTransactionRepository creates a new stateless TransactionRepository instance.
 func NewTransactionRepository() TransactionRepository {
 	return &transactionRepo{}
 }
 
+// CheckIdempotency checks if a transaction with the given idempotency key was already recorded.
 func (r *transactionRepo) CheckIdempotency(ctx context.Context, db DBTX, idempotencyKey string) (*domain.Transaction, error) {
 	var existingTx domain.Transaction
 	query := `
@@ -42,29 +46,34 @@ func (r *transactionRepo) CheckIdempotency(ctx context.Context, db DBTX, idempot
 	return &existingTx, nil
 }
 
+// Insert saves a new transaction record and populates its generated ID and timestamp.
 func (r *transactionRepo) Insert(ctx context.Context, db DBTX, tx *domain.Transaction) error {
 	query := `
 		INSERT INTO transactions (idempotency_key, sender_wallet_id, receiver_wallet_id, amount, fee_amount, type, status, description)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id, created_at
 	`
-	err := db.QueryRow(ctx, query, 
-		tx.IdempotencyKey, 
-		tx.SenderWalletID, 
-		tx.ReceiverWalletID, 
-		tx.Amount, 
-		tx.FeeAmount, 
-		tx.Type, 
-		tx.Status, 
+	return db.QueryRow(
+		ctx, query,
+		tx.IdempotencyKey,
+		tx.SenderWalletID,
+		tx.ReceiverWalletID,
+		tx.Amount,
+		tx.FeeAmount,
+		tx.Type,
+		tx.Status,
 		tx.Description,
 	).Scan(&tx.ID, &tx.CreatedAt)
-	
-	return err
 }
 
+// GetTransactionsByWalletID retrieves paginated transactions involving the specified wallet ID (as sender or receiver).
 func (r *transactionRepo) GetTransactionsByWalletID(ctx context.Context, db DBTX, walletID string, limit int, offset int) ([]*domain.Transaction, error) {
-	if limit <= 0 { limit = 20 }
-	if limit > 100 { limit = 100 }
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
 
 	query := `
 		SELECT id, idempotency_key, sender_wallet_id, receiver_wallet_id, amount, fee_amount, type, status, description, created_at
@@ -101,4 +110,3 @@ func (r *transactionRepo) GetTransactionsByWalletID(ctx context.Context, db DBTX
 
 	return transactions, nil
 }
-

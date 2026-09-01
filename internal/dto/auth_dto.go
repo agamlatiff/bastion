@@ -6,12 +6,14 @@ import (
 	"github.com/agamlatiff/bastion/internal/domain"
 )
 
+// RegisterRequest defines the incoming payload for new user registration.
 type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8"`
 	FullName string `json:"full_name" binding:"required,min=4"`
 }
 
+// ToUser converts RegisterRequest into a User domain entity with hashed password.
 func (r *RegisterRequest) ToUser(hashedPassword string) *domain.User {
 	return &domain.User{
 		Email:        r.Email,
@@ -22,16 +24,19 @@ func (r *RegisterRequest) ToUser(hashedPassword string) *domain.User {
 	}
 }
 
+// LoginRequest defines the incoming payload for user authentication.
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 }
 
+// AuthResponse represents the JSON response returned after successful login or registration.
 type AuthResponse struct {
-	Token string        `json:"token"`
-	User  *UserResponse `json:"user"`
+	Token string        `json:"token"` // Signed JWT bearer token
+	User  *UserResponse `json:"user"`  // Sanitized user profile
 }
 
+// UserResponse represents the safe public user profile excluding sensitive fields.
 type UserResponse struct {
 	ID         string    `json:"id"`
 	Email      string    `json:"email"`
@@ -43,6 +48,7 @@ type UserResponse struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
+// ToUserResponse safely transforms a User domain entity into a UserResponse DTO, stripping sensitive data.
 func ToUserResponse(u *domain.User) *UserResponse {
 	if u == nil {
 		return nil

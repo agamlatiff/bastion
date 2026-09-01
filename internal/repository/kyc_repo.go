@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+// KYCRepository defines the persistence interface for managing `kyc_verifications` records.
 type KYCRepository interface {
 	Create(ctx context.Context, db DBTX, kyc *domain.KYCVerification) error
 	FindByUserID(ctx context.Context, db DBTX, userID string) (*domain.KYCVerification, error)
@@ -17,10 +18,12 @@ type KYCRepository interface {
 
 type kycRepo struct{}
 
+// NewKYCRepository creates a new stateless KYCRepository instance.
 func NewKYCRepository() KYCRepository {
 	return &kycRepo{}
 }
 
+// Create inserts a new KYC application record into `kyc_verifications`.
 func (r *kycRepo) Create(ctx context.Context, db DBTX, kyc *domain.KYCVerification) error {
 	query := `
 		INSERT INTO kyc_verifications (user_id, id_card_number, id_card_image_url, selfie_image_url, status)
@@ -37,6 +40,7 @@ func (r *kycRepo) Create(ctx context.Context, db DBTX, kyc *domain.KYCVerificati
 	).Scan(&kyc.ID, &kyc.Status, &kyc.SubmittedAt)
 }
 
+// FindByUserID retrieves the KYC verification submission belonging to a specific user ID.
 func (r *kycRepo) FindByUserID(ctx context.Context, db DBTX, userID string) (*domain.KYCVerification, error) {
 	query := `
 		SELECT id, user_id, id_card_number, id_card_image_url, selfie_image_url, status, rejection_reason, submitted_at, verified_at
@@ -64,6 +68,7 @@ func (r *kycRepo) FindByUserID(ctx context.Context, db DBTX, userID string) (*do
 	return &kyc, nil
 }
 
+// FindByID retrieves a single KYC application record by its primary key UUID string.
 func (r *kycRepo) FindByID(ctx context.Context, db DBTX, id string) (*domain.KYCVerification, error) {
 	query := `
 		SELECT id, user_id, id_card_number, id_card_image_url, selfie_image_url, status, rejection_reason, submitted_at, verified_at
@@ -91,10 +96,10 @@ func (r *kycRepo) FindByID(ctx context.Context, db DBTX, id string) (*domain.KYC
 	return &kyc, nil
 }
 
+// UpdateStatus sets the KYC status (e.g. "approved" or "rejected") and records verification timestamp or rejection reason.
 func (r *kycRepo) UpdateStatus(ctx context.Context, db DBTX, kycID string, status string, rejectionReason *string) error {
-	var query string
 	if status == domain.KYCStatusApproved {
-		query = `
+		query := `
 			UPDATE kyc_verifications
 			SET status = 'approved', verified_at = NOW(), rejection_reason = NULL
 			WHERE id = $1
@@ -103,7 +108,7 @@ func (r *kycRepo) UpdateStatus(ctx context.Context, db DBTX, kycID string, statu
 		return err
 	}
 
-	query = `
+	query := `
 		UPDATE kyc_verifications
 		SET status = 'rejected', rejection_reason = $2, verified_at = NOW()
 		WHERE id = $1

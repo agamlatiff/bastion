@@ -1,13 +1,14 @@
 package repository
 
 import (
-	"github.com/agamlatiff/bastion/internal/domain"
 	"context"
 	"encoding/json"
 
+	"github.com/agamlatiff/bastion/internal/domain"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// AuditRepository defines the persistence interface for writing and reading immutable `audit_logs`.
 type AuditRepository interface {
 	Create(ctx context.Context, log *domain.AuditLog) error
 	FindByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.AuditLog, error)
@@ -17,10 +18,12 @@ type auditRepo struct {
 	db *pgxpool.Pool
 }
 
+// NewAuditRepository creates a new AuditRepository instance with PostgreSQL connection pool.
 func NewAuditRepository(db *pgxpool.Pool) AuditRepository {
 	return &auditRepo{db: db}
 }
 
+// Create inserts a new security audit log entry into the `audit_logs` table.
 func (r *auditRepo) Create(ctx context.Context, log *domain.AuditLog) error {
 	metaJSON, err := json.Marshal(log.Metadata)
 	if err != nil {
@@ -31,7 +34,8 @@ func (r *auditRepo) Create(ctx context.Context, log *domain.AuditLog) error {
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, created_at
 	`
-	return r.db.QueryRow(ctx, query,
+	return r.db.QueryRow(
+		ctx, query,
 		log.UserID,
 		log.Action,
 		log.IPAddress,
@@ -40,6 +44,7 @@ func (r *auditRepo) Create(ctx context.Context, log *domain.AuditLog) error {
 	).Scan(&log.ID, &log.CreatedAt)
 }
 
+// FindByUserID retrieves paginated audit logs for a specific user ordered by newest first.
 func (r *auditRepo) FindByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.AuditLog, error) {
 	if limit <= 0 {
 		limit = 20
@@ -85,4 +90,3 @@ func (r *auditRepo) FindByUserID(ctx context.Context, userID string, limit, offs
 	}
 	return logs, nil
 }
-
