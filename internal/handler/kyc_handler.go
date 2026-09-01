@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/dto"
 	"github.com/agamlatiff/bastion/internal/repository"
 	"github.com/agamlatiff/bastion/internal/service"
 	"github.com/gin-gonic/gin"
@@ -33,7 +34,7 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 
 	currentUser := user.(*domain.User)
 
-	var req domain.SubmitKYCRequest
+	var req dto.SubmitKYCRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
@@ -64,7 +65,7 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "KYC application submitted successfully",
-		"data":    kyc.ToKYCResponse(),
+		"data":    dto.ToKYCResponse(kyc),
 	})
 }
 
@@ -101,7 +102,7 @@ func (h *KYCHandler) GetKYCStatus(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
-		"data":   kyc.ToKYCResponse(),
+		"data":   dto.ToKYCResponse(kyc),
 	})
 }
 
@@ -117,7 +118,7 @@ func (h *KYCHandler) ReviewKYC(c *gin.Context) {
 
 	currentUser := user.(*domain.User)
 
-	var req domain.ReviewKYCRequest
+	var req dto.ReviewKYCRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
@@ -151,6 +152,6 @@ func (h *KYCHandler) ReviewKYC(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "KYC review processed successfully",
-		"data":    kycData.ToKYCResponse(),
+		"data":    dto.ToKYCResponse(kycData),
 	})
 }

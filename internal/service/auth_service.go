@@ -6,14 +6,15 @@ import (
 	"time"
 
 	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/dto"
 	"github.com/agamlatiff/bastion/internal/platform/security"
 	"github.com/agamlatiff/bastion/internal/repository"
 	"github.com/redis/go-redis/v9"
 )
 
 type AuthService interface {
-	Register(ctx context.Context, req *domain.RegisterRequest) (*domain.AuthResponse, error)
-	Login(ctx context.Context, req *domain.LoginRequest) (*domain.AuthResponse, error)
+	Register(ctx context.Context, req *dto.RegisterRequest) (*dto.AuthResponse, error)
+	Login(ctx context.Context, req *dto.LoginRequest) (*dto.AuthResponse, error)
 	ValidateToken(ctx context.Context, tokenStr string) (*domain.User, error)
 	Logout(ctx context.Context, tokenStr string) error
 }
@@ -34,7 +35,7 @@ func NewAuthService(userRepo repository.UserRepository, rdb *redis.Client, jwtSe
 	}
 }
 
-func (s *authService) Register(ctx context.Context, req *domain.RegisterRequest) (*domain.AuthResponse, error) {
+func (s *authService) Register(ctx context.Context, req *dto.RegisterRequest) (*dto.AuthResponse, error) {
 	if err := security.ValidatePassword(req.Password); err != nil {
 		return nil, err
 	}
@@ -70,13 +71,13 @@ func (s *authService) Register(ctx context.Context, req *domain.RegisterRequest)
 		return nil, err
 	}
 
-	return &domain.AuthResponse{
+	return &dto.AuthResponse{
 		Token: tokenStr,
-		User:  newUser.ToUserResponse(),
+		User:  dto.ToUserResponse(newUser),
 	}, nil
 }
 
-func (s *authService) Login(ctx context.Context, req *domain.LoginRequest) (*domain.AuthResponse, error) {
+func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.AuthResponse, error) {
 	user, err := s.userRepo.FindByEmail(ctx, req.Email)
 	if err != nil {
 		return nil, errors.New("invalid email or password")
@@ -91,9 +92,9 @@ func (s *authService) Login(ctx context.Context, req *domain.LoginRequest) (*dom
 		return nil, err
 	}
 
-	return &domain.AuthResponse{
+	return &dto.AuthResponse{
 		Token: tokenStr,
-		User:  user.ToUserResponse(),
+		User:  dto.ToUserResponse(user),
 	}, nil
 }
 

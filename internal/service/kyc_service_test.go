@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/dto"
 )
 
 type mockKYCRepo struct {
@@ -72,7 +73,7 @@ func TestKYCService_SubmitKYC(t *testing.T) {
 	}
 
 	t.Run("Success", func(t *testing.T) {
-		req := &domain.SubmitKYCRequest{
+		req := &dto.SubmitKYCRequest{
 			IDCardNumber:   "3171012345678901",
 			IDCardImageURL: "https://bucket.com/id.jpg",
 			SelfieImageURL: "https://bucket.com/selfie.jpg",
@@ -89,7 +90,7 @@ func TestKYCService_SubmitKYC(t *testing.T) {
 	})
 
 	t.Run("Invalid NIK Length", func(t *testing.T) {
-		req := &domain.SubmitKYCRequest{
+		req := &dto.SubmitKYCRequest{
 			IDCardNumber:   "123",
 			IDCardImageURL: "https://bucket.com/id.jpg",
 			SelfieImageURL: "https://bucket.com/selfie.jpg",

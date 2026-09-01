@@ -5,13 +5,14 @@ import (
 	"errors"
 
 	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/dto"
 	"github.com/agamlatiff/bastion/internal/repository"
 )
 
 type KYCService interface {
-	SubmitKYC(ctx context.Context, user *domain.User, req *domain.SubmitKYCRequest) (*domain.KYCVerification, error)
+	SubmitKYC(ctx context.Context, user *domain.User, req *dto.SubmitKYCRequest) (*domain.KYCVerification, error)
 	GetKYCStatus(ctx context.Context, userID string) (*domain.KYCVerification, error)
-	ReviewKYC(ctx context.Context, kycID string, req *domain.ReviewKYCRequest) (*domain.KYCVerification, error)
+	ReviewKYC(ctx context.Context, kycID string, req *dto.ReviewKYCRequest) (*domain.KYCVerification, error)
 }
 
 type kycService struct {
@@ -22,7 +23,7 @@ func NewKYCService(kycRepo repository.KYCRepository) KYCService {
 	return &kycService{kycRepo: kycRepo}
 }
 
-func (s *kycService) SubmitKYC(ctx context.Context, user *domain.User, req *domain.SubmitKYCRequest) (*domain.KYCVerification, error) {
+func (s *kycService) SubmitKYC(ctx context.Context, user *domain.User, req *dto.SubmitKYCRequest) (*domain.KYCVerification, error) {
 	if user.Tier == "tier_2" || user.IsVerified {
 		return nil, errors.New("user is already verified as tier 2")
 	}
@@ -60,7 +61,7 @@ func (s *kycService) GetKYCStatus(ctx context.Context, userID string) (*domain.K
 	return s.kycRepo.FindByUserID(ctx, userID)
 }
 
-func (s *kycService) ReviewKYC(ctx context.Context, kycID string, req *domain.ReviewKYCRequest) (*domain.KYCVerification, error) {
+func (s *kycService) ReviewKYC(ctx context.Context, kycID string, req *dto.ReviewKYCRequest) (*domain.KYCVerification, error) {
 	existingKYC, err := s.kycRepo.FindByID(ctx, kycID)
 	if err != nil {
 		return nil, err

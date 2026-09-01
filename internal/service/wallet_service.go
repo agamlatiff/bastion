@@ -7,14 +7,15 @@ import (
 	"time"
 
 	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/dto"
 	"github.com/agamlatiff/bastion/internal/repository"
 	"github.com/redis/go-redis/v9"
 )
 
 type WalletService interface {
-	GetBalance(ctx context.Context, userID string) (*domain.WalletBalanceResponse, error)
-	TopUp(ctx context.Context, userID string, req *domain.TopUpRequest) (*domain.Transaction, error)
-	Transfer(ctx context.Context, senderUserID string, req *domain.TransferRequest) (*domain.Transaction, error)
+	GetBalance(ctx context.Context, userID string) (*dto.WalletBalanceResponse, error)
+	TopUp(ctx context.Context, userID string, req *dto.TopUpRequest) (*domain.Transaction, error)
+	Transfer(ctx context.Context, senderUserID string, req *dto.TransferRequest) (*domain.Transaction, error)
 	GetTransaction(ctx context.Context, userID string, limit int, offset int) ([]*domain.Transaction, error)
 }
 
@@ -45,13 +46,13 @@ func NewWalletService(
 	}
 }
 
-func (s *walletService) GetBalance(ctx context.Context, userID string) (*domain.WalletBalanceResponse, error) {
+func (s *walletService) GetBalance(ctx context.Context, userID string) (*dto.WalletBalanceResponse, error) {
 	wallet, err := s.walletRepo.FindByUserID(ctx, s.transactor.(repository.DBTX), userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &domain.WalletBalanceResponse{
+	return &dto.WalletBalanceResponse{
 		WalletID:        wallet.ID,
 		UserID:          wallet.UserID,
 		Balance:         wallet.Balance,
@@ -60,7 +61,7 @@ func (s *walletService) GetBalance(ctx context.Context, userID string) (*domain.
 	}, nil
 }
 
-func (s *walletService) TopUp(ctx context.Context, userID string, req *domain.TopUpRequest) (*domain.Transaction, error) {
+func (s *walletService) TopUp(ctx context.Context, userID string, req *dto.TopUpRequest) (*domain.Transaction, error) {
 	if req.Amount <= 0 {
 		return nil, domain.ErrInvalidAmount
 	}
@@ -138,7 +139,7 @@ func (s *walletService) TopUp(ctx context.Context, userID string, req *domain.To
 	return result, err
 }
 
-func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *domain.TransferRequest) (*domain.Transaction, error) {
+func (s *walletService) Transfer(ctx context.Context, senderUserID string, req *dto.TransferRequest) (*domain.Transaction, error) {
 	if req.Amount <= 0 {
 		return nil, domain.ErrInvalidAmount
 	}

@@ -1,26 +1,29 @@
-package domain
+package dto_test
 
 import (
 	"testing"
+
+	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/dto"
 )
 
 func TestMaskIDCardNumber(t *testing.T) {
 	rawNIK := "3171012345678901"
 	expectedMasked := "3171********8901"
 
-	masked := MaskIDCardNumber(rawNIK)
+	masked := dto.MaskIDCardNumber(rawNIK)
 	if masked != expectedMasked {
 		t.Errorf("Expected masked NIK %s, got %s", expectedMasked, masked)
 	}
 
-	verification := &KYCVerification{
+	verification := &domain.KYCVerification{
 		ID:           "kyc_123",
 		UserID:       "usr_123",
 		IDCardNumber: rawNIK,
-		Status:       KYCStatusPending,
+		Status:       domain.KYCStatusPending,
 	}
 
-	resp := verification.ToKYCResponse()
+	resp := dto.ToKYCResponse(verification)
 	if resp.IDCardNumber != expectedMasked {
 		t.Errorf("ToKYCResponse did not mask IDCardNumber: got %s", resp.IDCardNumber)
 	}

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/dto"
 	"github.com/agamlatiff/bastion/internal/repository"
 	"github.com/agamlatiff/bastion/internal/service"
 	"github.com/gin-gonic/gin"
@@ -120,7 +121,7 @@ func (h *WalletHandler) TopUp(c *gin.Context) {
 
 	currentUser := user.(*domain.User)
 
-	var req domain.TopUpRequest
+	var req dto.TopUpRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "error": err.Error()})
 		return
@@ -160,7 +161,7 @@ func (h *WalletHandler) Transfer(c *gin.Context) {
 
 	currentUser := user.(*domain.User)
 
-	var req domain.TransferRequest
+	var req dto.TransferRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "error": err.Error()})
 		return
@@ -201,7 +202,7 @@ func (h *WalletHandler) GetTransaction(c *gin.Context) {
 
 	currentUser := user.(*domain.User)
 
-	var req domain.GetTransactionRequest
+	var req dto.GetTransactionRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		handleError(c, err)
 		return

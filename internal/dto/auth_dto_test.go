@@ -1,26 +1,29 @@
-package domain
+package dto_test
 
 import (
 	"encoding/json"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/dto"
 )
 
 func TestUserResponse_NeverLeaksPasswordHash(t *testing.T) {
-	user := &User{
+	user := &domain.User{
 		ID:           "usr_12345",
 		Email:        "user@example.com",
 		PasswordHash: "superSecretBcryptPasswordHash",
 		FullName:     "John Doe",
-		Role:         RoleUser,
+		Role:         domain.RoleUser,
 		Tier:         "tier_1",
 		IsVerified:   false,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
 
-	userResponse := user.ToUserResponse()
+	userResponse := dto.ToUserResponse(user)
 
 	jsonBytes, err := json.Marshal(userResponse)
 	if err != nil {

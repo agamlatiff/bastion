@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/dto"
 	"github.com/agamlatiff/bastion/internal/repository"
 	"github.com/agamlatiff/bastion/internal/service"
 	"github.com/gin-gonic/gin"
@@ -22,7 +23,7 @@ func NewAuthHandler(authService service.AuthService, auditRepo repository.AuditR
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {
-	var req domain.RegisterRequest
+	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
@@ -59,7 +60,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
-	var req domain.LoginRequest
+	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "error",
@@ -115,7 +116,7 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
-		"data":   currentUser.ToUserResponse(),
+		"data":   dto.ToUserResponse(currentUser),
 	})
 }
 

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/agamlatiff/bastion/internal/domain"
+	"github.com/agamlatiff/bastion/internal/dto"
 	"github.com/agamlatiff/bastion/internal/platform/security"
 	"github.com/redis/go-redis/v9"
 )
@@ -50,7 +51,7 @@ func TestAuthService_Register(t *testing.T) {
 	svc := NewAuthService(repo, rdb, "secret", 24)
 
 	t.Run("Success", func(t *testing.T) {
-		req := &domain.RegisterRequest{Email: "new@bastion.com", Password: "StrongPassword1!", FullName: "New User"}
+		req := &dto.RegisterRequest{Email: "new@bastion.com", Password: "StrongPassword1!", FullName: "New User"}
 		res, err := svc.Register(context.Background(), req)
 
 		if err != nil {
@@ -67,7 +68,7 @@ func TestAuthService_Register(t *testing.T) {
 	})
 
 	t.Run("Duplicate Email Error", func(t *testing.T) {
-		req := &domain.RegisterRequest{Email: "existing@bastion.com", Password: "StrongPassword1!", FullName: "Duplicate User"}
+		req := &dto.RegisterRequest{Email: "existing@bastion.com", Password: "StrongPassword1!", FullName: "Duplicate User"}
 		_, err := svc.Register(context.Background(), req)
 
 		if err == nil {
@@ -76,7 +77,7 @@ func TestAuthService_Register(t *testing.T) {
 	})
 
 	t.Run("Weak Password Error", func(t *testing.T) {
-		req := &domain.RegisterRequest{Email: "weak@bastion.com", Password: "123", FullName: "Weak User"}
+		req := &dto.RegisterRequest{Email: "weak@bastion.com", Password: "123", FullName: "Weak User"}
 		_, err := svc.Register(context.Background(), req)
 
 		if err == nil {

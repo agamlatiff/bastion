@@ -1,24 +1,10 @@
-package domain
+package dto
 
-import "time"
+import (
+	"time"
 
-const (
-	RoleUser        = "USER"
-	RoleAdmin       = "ADMIN"
-	RoleKYCReviewer = "KYC_REVIEWER"
+	"github.com/agamlatiff/bastion/internal/domain"
 )
-
-type User struct {
-	ID           string    `json:"id"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"`
-	FullName     string    `json:"full_name"`
-	Role         string    `json:"role"`
-	Tier         string    `json:"tier"`
-	IsVerified   bool      `json:"is_verified"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
-}
 
 type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`
@@ -47,7 +33,7 @@ type UserResponse struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
-func (u *User) ToUserResponse() *UserResponse {
+func ToUserResponse(u *domain.User) *UserResponse {
 	if u == nil {
 		return nil
 	}
@@ -62,4 +48,3 @@ func (u *User) ToUserResponse() *UserResponse {
 		UpdatedAt:  u.UpdatedAt,
 	}
 }
-
