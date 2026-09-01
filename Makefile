@@ -34,3 +34,5 @@ migrate-down:
 	@echo "Running database migrations DOWN..."
 	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path infra/postgres/migrations -database $(DB_URL) down
 
+table-postgresql:
+	docker exec -it bastion_postgres psql -U bastion -d bastion_db
