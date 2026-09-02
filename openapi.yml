@@ -91,20 +91,33 @@ paths:
                   example: "password123"
       responses:
         "200":
-          description: Login successful
+          description: Login successful (or 2FA challenge if enabled)
           content:
             application/json:
-              example:
-                status: "success"
-                message: "login successful"
-                data:
-                  token: "eyJhbGciOiJIUzI1NiIs..."
-                  user:
-                    id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
-                    email: "agam@test.com"
-                    full_name: "Agam Latiff"
-                    tier: "tier_1"
-                    is_verified: false
+              examples:
+                login_success:
+                  summary: Normal login — returns token pair
+                  value:
+                    status: "success"
+                    message: "Login successfully"
+                    data:
+                      access_token: "eyJhbGciOiJIUzI1NiIs..."
+                      refresh_token: "eyJhbGciOiJIUzI1NiIs..."
+                      user:
+                        id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                        email: "agam@test.com"
+                        full_name: "Agam Latiff"
+                        tier: "tier_1"
+                        is_two_factor_enabled: false
+                        created_at: "2026-08-17T10:00:00Z"
+                two_factor_required:
+                  summary: 2FA challenge — client must verify TOTP code
+                  value:
+                    status: "success"
+                    message: "Two-factor authentication required"
+                    data:
+                      two_factor_required: true
+                      temp_token: "eyJhbGciOiJIUzI1NiIs..."
         "401":
           description: Invalid credentials
           content:
@@ -164,6 +177,282 @@ paths:
               example:
                 status: "error"
                 error: "unauthorized"
+
+  /api/v1/auth/refresh:
+    post:
+      summary: Refresh Access Token (Rotate refresh token)
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIs..."
+      responses:
+        "200":
+          description: New token pair issued (old refresh token invalidated)
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "Token refreshed successfully"
+                data:
+                  access_token: "eyJhbGciOiJIUzI1NiIs..."
+                  refresh_token: "eyJhbGciOiJIUzI1NiIs..."
+        "401":
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "invalid or expired refresh token"
+
+  /api/v1/auth/pin:
+    post:
+      summary: Set Transaction PIN (first time setup)
+      tags:
+        - Auth
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - pin
+              properties:
+                pin:
+                  type: string
+                  pattern: "^[0-9]{6}$"
+                  example: "123456"
+      responses:
+        "200":
+          description: PIN set successfully
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "Transaction PIN has been successfully set"
+        "400":
+          description: PIN already set or invalid format
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "pin already set"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "unauthorized"
+    put:
+      summary: Change Transaction PIN
+      tags:
+        - Auth
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - old_pin
+                - new_pin
+              properties:
+                old_pin:
+                  type: string
+                  example: "123456"
+                new_pin:
+                  type: string
+                  example: "654321"
+      responses:
+        "200":
+          description: PIN changed successfully
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "Transaction PIN has been successfully changed"
+        "400":
+          description: Invalid old PIN or invalid format
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "invalid pin"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "unauthorized"
+
+  /api/v1/auth/2fa/setup:
+    post:
+      summary: Setup 2FA — Generate secret & QR code URI
+      description: Returns a Base32 secret and an otpauth:// URI to be scanned by Google Authenticator or Authy. Call /enable after scanning to activate.
+      tags:
+        - Auth (2FA)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 2FA secret and QR URI generated
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "Scan this QR code in Google Authenticator or enter the secret manually"
+                data:
+                  secret: "JBSWY3DPEHPK3PXP"
+                  otp_auth_url: "otpauth://totp/Bastion:agam@test.com?secret=JBSWY3DPEHPK3PXP&issuer=Bastion"
+        "400":
+          description: 2FA already enabled
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "two-factor authentication is already enabled"
+        "401":
+          description: Unauthorized
+
+  /api/v1/auth/2fa/enable:
+    post:
+      summary: Enable 2FA — Confirm with TOTP code from authenticator app
+      tags:
+        - Auth (2FA)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  pattern: "^[0-9]{6}$"
+                  example: "123456"
+      responses:
+        "200":
+          description: 2FA activated successfully
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "Two-factor authentication has been successfully activated"
+        "400":
+          description: Invalid TOTP code or 2FA not set up yet
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "invalid two-factor authentication code"
+        "401":
+          description: Unauthorized
+
+  /api/v1/auth/2fa/disable:
+    post:
+      summary: Disable 2FA — Confirm with TOTP code
+      tags:
+        - Auth (2FA)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  example: "123456"
+      responses:
+        "200":
+          description: 2FA deactivated successfully
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "Two-factor authentication has been deactivated"
+        "400":
+          description: Invalid code or 2FA not enabled
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "two-factor authentication is not enabled"
+        "401":
+          description: Unauthorized
+
+  /api/v1/auth/2fa/verify:
+    post:
+      summary: Verify 2FA Login — Submit TOTP code after login challenge
+      description: After receiving two_factor_required=true from /login, submit the temp_token and TOTP code here to receive a full token pair.
+      tags:
+        - Auth (2FA)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - temp_token
+                - code
+              properties:
+                temp_token:
+                  type: string
+                  description: Short-lived 5-minute token received from /login
+                  example: "eyJhbGciOiJIUzI1NiIs..."
+                code:
+                  type: string
+                  pattern: "^[0-9]{6}$"
+                  example: "123456"
+      responses:
+        "200":
+          description: 2FA verified — full token pair issued
+          content:
+            application/json:
+              example:
+                status: "success"
+                message: "2FA Login successful"
+                data:
+                  access_token: "eyJhbGciOiJIUzI1NiIs..."
+                  refresh_token: "eyJhbGciOiJIUzI1NiIs..."
+                  user:
+                    id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                    email: "agam@test.com"
+                    full_name: "Agam Latiff"
+                    tier: "tier_1"
+                    is_two_factor_enabled: true
+        "401":
+          description: Invalid or expired temp_token, or wrong TOTP code
+          content:
+            application/json:
+              example:
+                status: "error"
+                error: "invalid two-factor authentication code"
 
   # ==========================================
   # 💳 2. WALLET ENDPOINTS
@@ -352,26 +641,75 @@ paths:
                   description: "Lunch money"
                   created_at: "2026-08-17T10:00:00Z"
         "400":
-          description: Validation error, self-transfer, insufficient balance, or tier restriction
+          description: Invalid request body or PIN not set
           content:
             application/json:
               example:
                 status: "error"
-                error: "sender must be tier 2 to make transfers"
+                error: "pin not set"
         "401":
-          description: Unauthorized
+          description: Unauthorized or wrong transaction PIN
+          content:
+            application/json:
+              examples:
+                unauthorized:
+                  value:
+                    status: "error"
+                    error: "unauthorized"
+                invalid_pin:
+                  value:
+                    status: "error"
+                    error: "invalid pin"
+        "403":
+          description: KYC Tier 2 required to make transfers
           content:
             application/json:
               example:
                 status: "error"
-                error: "unauthorized"
+                error: "kyc verification required to perform this action"
         "404":
-          description: Receiver email not found
+          description: Receiver user or wallet not found
           content:
             application/json:
-              example:
-                status: "error"
-                error: "receiver email not found"
+              examples:
+                receiver_not_found:
+                  value:
+                    status: "error"
+                    error: "receiver user not found"
+                wallet_not_found:
+                  value:
+                    status: "error"
+                    error: "receiver wallet not found"
+        "409":
+          description: Self-transfer or concurrent request conflict
+          content:
+            application/json:
+              examples:
+                self_transfer:
+                  value:
+                    status: "error"
+                    error: "cannot transfer to yourself"
+                concurrent:
+                  value:
+                    status: "error"
+                    error: "a transfer is already in progress"
+        "422":
+          description: Insufficient balance or exceeds tier/daily limit
+          content:
+            application/json:
+              examples:
+                insufficient_balance:
+                  value:
+                    status: "error"
+                    error: "insufficient balance"
+                exceeds_limit:
+                  value:
+                    status: "error"
+                    error: "transfer amount exceeds maximum wallet balance limit"
+                daily_limit:
+                  value:
+                    status: "error"
+                    error: "daily transfer limit exceeded"
 
   # ==========================================
   # 🪪 3. KYC ENDPOINTS
