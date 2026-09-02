@@ -25,6 +25,7 @@ type Config struct {
 	JWTExpiryHours    int
 	AllowedOrigins    []string
 	DataEncryptionKey []byte
+	TrustedProxies    []string
 }
 
 func LoadConfig() (*Config, error) {
@@ -70,6 +71,16 @@ func LoadConfig() (*Config, error) {
 		}
 	}
 
+	// Parse comma-separated trusted proxies
+	rawProxies := getEnv("TRUSTED_PROXIES", "127.0.0.1,::1")
+	var trustedProxies []string
+	for _, proxy := range strings.Split(rawProxies, ",") {
+		trimmed := strings.TrimSpace(proxy)
+		if trimmed != "" {
+			trustedProxies = append(trustedProxies, trimmed)
+		}
+	}
+
 	cfg := &Config{
 		AppPort:           getEnv("APP_PORT", "8080"),
 		DBHost:            getEnv("DB_HOST", "localhost"),
@@ -83,6 +94,7 @@ func LoadConfig() (*Config, error) {
 		JWTExpiryHours:    expiryHours,
 		AllowedOrigins:    allowedOrigins,
 		DataEncryptionKey: encryptionKey,
+		TrustedProxies:    trustedProxies,
 	}
 
 	return cfg, nil

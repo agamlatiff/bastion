@@ -28,17 +28,33 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	// Connect to PostgreSQL database pool
+	// High-Throughput PostgreSQL Pool Configuration
 	ctx := context.Background()
-	dbPool, err := pgxpool.New(ctx, cfg.DatabaseURL())
+	poolConfig, err := pgxpool.ParseConfig(cfg.DatabaseURL())
+	if err != nil {
+		log.Fatalf("Failed to parse PostgreSQL database URL config: %v", err)
+	}
+	poolConfig.MaxConns = 50
+	poolConfig.MinConns = 10
+	poolConfig.MaxConnLifetime = 1 * time.Hour
+	poolConfig.MaxConnIdleTime = 30 * time.Minute
+	poolConfig.HealthCheckPeriod = 1 * time.Minute
+
+	dbPool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		log.Fatalf("Failed to connect to PostgreSQL: %v", err)
 	}
 	defer dbPool.Close()
 
-	// Connect to Redis Client
+	// High-Throughput Redis Client Configuration
 	rdb := redis.NewClient(&redis.Options{
-		Addr: cfg.RedisAddr(),
+		Addr:         cfg.RedisAddr(),
+		PoolSize:     50,
+		MinIdleConns: 10,
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		PoolTimeout:  4 * time.Second,
 	})
 	defer rdb.Close()
 
@@ -66,6 +82,9 @@ func main() {
 
 	// Initialize Gin router engine
 	r := gin.New()
+
+	// Configure Trusted Proxies to prevent IP spoofing
+	_ = r.SetTrustedProxies(cfg.TrustedProxies)
 
 	// Middleware
 	r.Use(middleware.RequestIDMiddleware())

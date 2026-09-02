@@ -60,7 +60,7 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 		IPAddress: c.ClientIP(),
 		UserAgent: c.Request.UserAgent(),
 		Metadata: map[string]any{
-			"id_card_number": req.IDCardNumber,
+			"id_card_number": dto.MaskIDCardNumber(req.IDCardNumber),
 		},
 	})
 
