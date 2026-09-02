@@ -57,7 +57,7 @@ func main() {
 	// Services (100% pure business logic, zero DB/Redis driver coupling)
 	authService := service.NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, cfg.JWTSecret, cfg.JWTExpiryHours)
 	walletService := service.NewWalletService(transactor, walletRepo, txRepo, ledgerRepo, userRepo, locker)
-	kycService := service.NewKYCService(transactor, kycRepo, userRepo, walletRepo)
+	kycService := service.NewKYCService(transactor, kycRepo, userRepo, walletRepo, cfg.DataEncryptionKey)
 
 	// Handlers (HTTP Presentation layer)
 	authHandler := handler.NewAuthHandler(authService, auditRepo, transactor.DB())

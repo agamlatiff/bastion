@@ -8,21 +8,23 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/agamlatiff/bastion/internal/platform/security"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	AppPort        string
-	DBHost         string
-	DBPort         string
-	DBUser         string
-	DBPassword     string
-	DBName         string
-	RedisHost      string
-	RedisPort      string
-	JWTSecret      string
-	JWTExpiryHours int
-	AllowedOrigins []string
+	AppPort           string
+	DBHost            string
+	DBPort            string
+	DBUser            string
+	DBPassword        string
+	DBName            string
+	RedisHost         string
+	RedisPort         string
+	JWTSecret         string
+	JWTExpiryHours    int
+	AllowedOrigins    []string
+	DataEncryptionKey []byte
 }
 
 func LoadConfig() (*Config, error) {
@@ -47,6 +49,12 @@ func LoadConfig() (*Config, error) {
 		return nil, errors.New("FATAL: DB_PASSWORD is required in production environment")
 	}
 
+	rawEncryptionKey := getEnv("DATA_ENCRYPTION_KEY", "01234567890123456789012345678901") // 32-byte default for development
+	encryptionKey, err := security.ParseEncryptionKey(rawEncryptionKey)
+	if err != nil {
+		return nil, fmt.Errorf("FATAL: invalid DATA_ENCRYPTION_KEY: %w", err)
+	}
+
 	expiryHours, err := strconv.Atoi(getEnv("JWT_EXPIRY_HOURS", "24"))
 	if err != nil {
 		expiryHours = 24
@@ -63,17 +71,18 @@ func LoadConfig() (*Config, error) {
 	}
 
 	cfg := &Config{
-		AppPort:        getEnv("APP_PORT", "8080"),
-		DBHost:         getEnv("DB_HOST", "localhost"),
-		DBPort:         getEnv("DB_PORT", "5433"),
-		DBUser:         getEnv("DB_USER", "bastion"),
-		DBPassword:     getEnv("DB_PASSWORD", "bastion_secret"),
-		DBName:         getEnv("DB_NAME", "bastion_db"),
-		RedisHost:      getEnv("REDIS_HOST", "localhost"),
-		RedisPort:      getEnv("REDIS_PORT", "6379"),
-		JWTSecret:      jwtSecret,
-		JWTExpiryHours: expiryHours,
-		AllowedOrigins: allowedOrigins,
+		AppPort:           getEnv("APP_PORT", "8080"),
+		DBHost:            getEnv("DB_HOST", "localhost"),
+		DBPort:            getEnv("DB_PORT", "5433"),
+		DBUser:            getEnv("DB_USER", "bastion"),
+		DBPassword:        getEnv("DB_PASSWORD", "bastion_secret"),
+		DBName:            getEnv("DB_NAME", "bastion_db"),
+		RedisHost:         getEnv("REDIS_HOST", "localhost"),
+		RedisPort:         getEnv("REDIS_PORT", "6379"),
+		JWTSecret:         jwtSecret,
+		JWTExpiryHours:    expiryHours,
+		AllowedOrigins:    allowedOrigins,
+		DataEncryptionKey: encryptionKey,
 	}
 
 	return cfg, nil

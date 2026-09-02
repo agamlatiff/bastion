@@ -6,6 +6,7 @@ import (
 
 	"github.com/agamlatiff/bastion/internal/domain"
 	"github.com/agamlatiff/bastion/internal/dto"
+	"github.com/agamlatiff/bastion/internal/platform/security"
 	"github.com/agamlatiff/bastion/internal/repository"
 )
 
@@ -16,10 +17,11 @@ type KYCService interface {
 }
 
 type kycService struct {
-	transactor repository.Transactor
-	kycRepo    repository.KYCRepository
-	userRepo   repository.UserRepository
-	walletRepo repository.WalletRepository
+	transactor    repository.Transactor
+	kycRepo       repository.KYCRepository
+	userRepo      repository.UserRepository
+	walletRepo    repository.WalletRepository
+	encryptionKey []byte
 }
 
 func NewKYCService(
@@ -27,12 +29,14 @@ func NewKYCService(
 	kycRepo repository.KYCRepository,
 	userRepo repository.UserRepository,
 	walletRepo repository.WalletRepository,
+	encryptionKey []byte,
 ) KYCService {
 	return &kycService{
-		transactor: transactor,
-		kycRepo:    kycRepo,
-		userRepo:   userRepo,
-		walletRepo: walletRepo,
+		transactor:    transactor,
+		kycRepo:       kycRepo,
+		userRepo:      userRepo,
+		walletRepo:    walletRepo,
+		encryptionKey: encryptionKey,
 	}
 }
 
@@ -61,20 +65,39 @@ func (s *kycService) SubmitKYC(ctx context.Context, user *domain.User, req *dto.
 		}
 	}
 
-	// Step 4: Map request DTO to KYCVerification domain entity
-	kyc := req.ToKYCVerification(user.ID)
+	// Step 4: Encrypt sensitive PII (NIK / ID Card Number) at rest using AES-256-GCM
+	encryptedNIK, err := security.Encrypt(req.IDCardNumber, s.encryptionKey)
+	if err != nil {
+		return nil, err
+	}
 
-	// Step 5: Save new KYC application into `kyc_verifications` table
+	// Step 5: Map request DTO to KYCVerification domain entity with encrypted NIK
+	kyc := req.ToKYCVerification(user.ID)
+	kyc.IDCardNumber = encryptedNIK
+
+	// Step 6: Save new KYC application into `kyc_verifications` table
 	if err := s.kycRepo.Create(ctx, s.transactor.DB(), kyc); err != nil {
 		return nil, err
 	}
 
+	// Restore plaintext for in-memory response return
+	kyc.IDCardNumber = req.IDCardNumber
 	return kyc, nil
 }
 
 func (s *kycService) GetKYCStatus(ctx context.Context, userID string) (*domain.KYCVerification, error) {
 	// Step 1: Retrieve latest KYC verification record for the given user ID
-	return s.kycRepo.FindByUserID(ctx, s.transactor.DB(), userID)
+	kyc, err := s.kycRepo.FindByUserID(ctx, s.transactor.DB(), userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 2: Decrypt NIK if stored in encrypted format
+	if decrypted, err := security.Decrypt(kyc.IDCardNumber, s.encryptionKey); err == nil {
+		kyc.IDCardNumber = decrypted
+	}
+
+	return kyc, nil
 }
 
 func (s *kycService) ReviewKYC(ctx context.Context, kycID string, req *dto.ReviewKYCRequest) (*domain.KYCVerification, error) {
@@ -128,6 +151,15 @@ func (s *kycService) ReviewKYC(ctx context.Context, kycID string, req *dto.Revie
 		return nil, domain.ErrInvalidKYCStatus
 	}
 
-	// Step 4: Return updated KYC verification record
-	return s.kycRepo.FindByID(ctx, s.transactor.DB(), kycID)
+	// Step 4: Return updated KYC verification record with decrypted NIK
+	updatedKYC, err := s.kycRepo.FindByID(ctx, s.transactor.DB(), kycID)
+	if err != nil {
+		return nil, err
+	}
+
+	if decrypted, err := security.Decrypt(updatedKYC.IDCardNumber, s.encryptionKey); err == nil {
+		updatedKYC.IDCardNumber = decrypted
+	}
+
+	return updatedKYC, nil
 }
