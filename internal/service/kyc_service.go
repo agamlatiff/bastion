@@ -65,17 +65,30 @@ func (s *kycService) SubmitKYC(ctx context.Context, user *domain.User, req *dto.
 		}
 	}
 
-	// Step 4: Encrypt sensitive PII (NIK / ID Card Number) at rest using AES-256-GCM
+	// Step 4: Compute HMAC-SHA256 blind index hash for duplicate NIK detection across accounts
+	nikHash := security.HashBlindIndex(req.IDCardNumber, s.encryptionKey)
+
+	// Step 5: Prevent duplicate NIK usage across multiple user accounts
+	duplicateKYC, err := s.kycRepo.FindByIDCardHash(ctx, s.transactor.DB(), nikHash)
+	if err != nil && !errors.Is(err, domain.ErrKYCNotFound) {
+		return nil, err
+	}
+	if duplicateKYC != nil && duplicateKYC.UserID != user.ID {
+		return nil, domain.ErrDuplicateNIK
+	}
+
+	// Step 6: Encrypt sensitive PII (NIK / ID Card Number) at rest using AES-256-GCM
 	encryptedNIK, err := security.Encrypt(req.IDCardNumber, s.encryptionKey)
 	if err != nil {
 		return nil, err
 	}
 
-	// Step 5: Map request DTO to KYCVerification domain entity with encrypted NIK
+	// Step 7: Map request DTO to KYCVerification domain entity with encrypted NIK & blind index hash
 	kyc := req.ToKYCVerification(user.ID)
 	kyc.IDCardNumber = encryptedNIK
+	kyc.IDCardHash = nikHash
 
-	// Step 6: Save new KYC application into `kyc_verifications` table
+	// Step 8: Save new KYC application into `kyc_verifications` table
 	if err := s.kycRepo.Create(ctx, s.transactor.DB(), kyc); err != nil {
 		return nil, err
 	}

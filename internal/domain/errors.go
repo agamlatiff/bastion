@@ -30,6 +30,7 @@ var (
 	ErrInvalidKYCStatus     = errors.New("invalid status: must be either 'approved' or 'rejected'")
 	ErrInvalidNIKLength     = errors.New("id card number (NIK) must be exactly 16 digits")
 	ErrAlreadyVerified      = errors.New("user is already verified as tier 2")
+	ErrDuplicateNIK         = errors.New("id card number (NIK) is already registered by another account")
 
 	// --- Wallet & Balance Errors ---
 	ErrWalletNotFound       = errors.New("wallet not found")

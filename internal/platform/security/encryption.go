@@ -3,7 +3,9 @@ package security
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
@@ -96,4 +98,11 @@ func Decrypt(ciphertextBase64 string, key []byte) (string, error) {
 	}
 
 	return string(plaintext), nil
+}
+
+// HashBlindIndex computes a deterministic HMAC-SHA256 blind index hash for exact-match searching and uniqueness checks.
+func HashBlindIndex(plaintext string, key []byte) string {
+	mac := hmac.New(sha256.New, key)
+	mac.Write([]byte(plaintext))
+	return hex.EncodeToString(mac.Sum(nil))
 }

@@ -13,6 +13,7 @@ type KYCRepository interface {
 	Create(ctx context.Context, db DBTX, kyc *domain.KYCVerification) error
 	FindByUserID(ctx context.Context, db DBTX, userID string) (*domain.KYCVerification, error)
 	FindByID(ctx context.Context, db DBTX, id string) (*domain.KYCVerification, error)
+	FindByIDCardHash(ctx context.Context, db DBTX, hash string) (*domain.KYCVerification, error)
 	UpdateStatus(ctx context.Context, db DBTX, kycID string, status string, rejectionReason *string) error
 }
 
@@ -26,14 +27,15 @@ func NewKYCRepository() KYCRepository {
 // Create inserts a new KYC application record into `kyc_verifications`.
 func (r *kycRepo) Create(ctx context.Context, db DBTX, kyc *domain.KYCVerification) error {
 	query := `
-		INSERT INTO kyc_verifications (user_id, id_card_number, id_card_image_url, selfie_image_url, status)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO kyc_verifications (user_id, id_card_number, id_card_hash, id_card_image_url, selfie_image_url, status)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id, status, submitted_at
 	`
 	return db.QueryRow(
 		ctx, query,
 		kyc.UserID,
 		kyc.IDCardNumber,
+		kyc.IDCardHash,
 		kyc.IDCardImageURL,
 		kyc.SelfieImageURL,
 		kyc.Status,
@@ -43,7 +45,7 @@ func (r *kycRepo) Create(ctx context.Context, db DBTX, kyc *domain.KYCVerificati
 // FindByUserID retrieves the KYC verification submission belonging to a specific user ID.
 func (r *kycRepo) FindByUserID(ctx context.Context, db DBTX, userID string) (*domain.KYCVerification, error) {
 	query := `
-		SELECT id, user_id, id_card_number, id_card_image_url, selfie_image_url, status, rejection_reason, submitted_at, verified_at
+		SELECT id, user_id, id_card_number, id_card_hash, id_card_image_url, selfie_image_url, status, rejection_reason, submitted_at, verified_at
 		FROM kyc_verifications
 		WHERE user_id = $1
 	`
@@ -52,6 +54,7 @@ func (r *kycRepo) FindByUserID(ctx context.Context, db DBTX, userID string) (*do
 		&kyc.ID,
 		&kyc.UserID,
 		&kyc.IDCardNumber,
+		&kyc.IDCardHash,
 		&kyc.IDCardImageURL,
 		&kyc.SelfieImageURL,
 		&kyc.Status,
@@ -71,7 +74,7 @@ func (r *kycRepo) FindByUserID(ctx context.Context, db DBTX, userID string) (*do
 // FindByID retrieves a single KYC application record by its primary key UUID string.
 func (r *kycRepo) FindByID(ctx context.Context, db DBTX, id string) (*domain.KYCVerification, error) {
 	query := `
-		SELECT id, user_id, id_card_number, id_card_image_url, selfie_image_url, status, rejection_reason, submitted_at, verified_at
+		SELECT id, user_id, id_card_number, id_card_hash, id_card_image_url, selfie_image_url, status, rejection_reason, submitted_at, verified_at
 		FROM kyc_verifications
 		WHERE id = $1
 	`
@@ -80,6 +83,36 @@ func (r *kycRepo) FindByID(ctx context.Context, db DBTX, id string) (*domain.KYC
 		&kyc.ID,
 		&kyc.UserID,
 		&kyc.IDCardNumber,
+		&kyc.IDCardHash,
+		&kyc.IDCardImageURL,
+		&kyc.SelfieImageURL,
+		&kyc.Status,
+		&kyc.RejectionReason,
+		&kyc.SubmittedAt,
+		&kyc.VerifiedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrKYCNotFound
+		}
+		return nil, err
+	}
+	return &kyc, nil
+}
+
+// FindByIDCardHash searches a KYC verification record by its deterministic HMAC blind index hash.
+func (r *kycRepo) FindByIDCardHash(ctx context.Context, db DBTX, hash string) (*domain.KYCVerification, error) {
+	query := `
+		SELECT id, user_id, id_card_number, id_card_hash, id_card_image_url, selfie_image_url, status, rejection_reason, submitted_at, verified_at
+		FROM kyc_verifications
+		WHERE id_card_hash = $1
+	`
+	var kyc domain.KYCVerification
+	err := db.QueryRow(ctx, query, hash).Scan(
+		&kyc.ID,
+		&kyc.UserID,
+		&kyc.IDCardNumber,
+		&kyc.IDCardHash,
 		&kyc.IDCardImageURL,
 		&kyc.SelfieImageURL,
 		&kyc.Status,

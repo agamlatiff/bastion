@@ -21,7 +21,7 @@ func newMockKYCRepo() *mockKYCRepo {
 }
 
 func (m *mockKYCRepo) Create(ctx context.Context, db repository.DBTX, verification *domain.KYCVerification) error {
-	verification.ID = "kyc_123"
+	verification.ID = "kyc_" + verification.UserID
 	verification.SubmittedAt = time.Now()
 	// Store a copy in the map to simulate DB persistence
 	stored := *verification
@@ -46,6 +46,16 @@ func (m *mockKYCRepo) FindByID(ctx context.Context, db repository.DBTX, id strin
 	}
 	res := *verification
 	return &res, nil
+}
+
+func (m *mockKYCRepo) FindByIDCardHash(ctx context.Context, db repository.DBTX, hash string) (*domain.KYCVerification, error) {
+	for _, k := range m.kycMap {
+		if k.IDCardHash == hash {
+			res := *k
+			return &res, nil
+		}
+	}
+	return nil, domain.ErrKYCNotFound
 }
 
 func (m *mockKYCRepo) UpdateStatus(ctx context.Context, db repository.DBTX, kycID, status string, rejectionReason *string) error {
@@ -84,7 +94,7 @@ func TestKYCService_SubmitAndReviewKYC(t *testing.T) {
 	}
 	walletRepo.wallets[user.ID] = wallet
 
-	t.Run("Submit KYC Success with Field-Level Encryption", func(t *testing.T) {
+	t.Run("Submit KYC Success with Field-Level Encryption and Blind Indexing", func(t *testing.T) {
 		req := &dto.SubmitKYCRequest{
 			IDCardNumber:   "3171012345678901",
 			IDCardImageURL: "https://bucket.com/id.jpg",
@@ -101,9 +111,34 @@ func TestKYCService_SubmitAndReviewKYC(t *testing.T) {
 		}
 
 		// Verify that raw plaintext NIK was NOT stored directly in database repository
-		storedRecord := kycRepo.kycMap["kyc_123"]
+		storedRecord := kycRepo.kycMap["kyc_usr_123"]
 		if storedRecord.IDCardNumber == "3171012345678901" {
 			t.Errorf("expected IDCardNumber in database to be encrypted ciphertext, but found plaintext")
+		}
+
+		// Verify IDCardHash was populated with 64-char HMAC hash
+		if len(storedRecord.IDCardHash) != 64 {
+			t.Errorf("expected 64-char blind index hash, got length %d", len(storedRecord.IDCardHash))
+		}
+	})
+
+	t.Run("Duplicate NIK Rejected Across Different Accounts", func(t *testing.T) {
+		otherUser := &domain.User{
+			ID:         "usr_fraudster",
+			Tier:       domain.Tier1,
+			IsVerified: false,
+		}
+		userRepo.users[otherUser.ID] = otherUser
+
+		req := &dto.SubmitKYCRequest{
+			IDCardNumber:   "3171012345678901", // Same NIK as usr_123
+			IDCardImageURL: "https://bucket.com/fraud.jpg",
+			SelfieImageURL: "https://bucket.com/fraud.jpg",
+		}
+
+		_, err := svc.SubmitKYC(context.Background(), otherUser, req)
+		if err != domain.ErrDuplicateNIK {
+			t.Errorf("expected ErrDuplicateNIK, got %v", err)
 		}
 	})
 
@@ -119,7 +154,7 @@ func TestKYCService_SubmitAndReviewKYC(t *testing.T) {
 	})
 
 	t.Run("ReviewKYC Approval Decrypts NIK and Upgrades Tier", func(t *testing.T) {
-		reviewed, err := svc.ReviewKYC(context.Background(), "kyc_123", &dto.ReviewKYCRequest{
+		reviewed, err := svc.ReviewKYC(context.Background(), "kyc_usr_123", &dto.ReviewKYCRequest{
 			Status: domain.KYCStatusApproved,
 		})
 		if err != nil {
