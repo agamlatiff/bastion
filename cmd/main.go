@@ -71,7 +71,7 @@ func main() {
 	locker := repository.NewRedisLocker(rdb)
 
 	// Services (100% pure business logic, zero DB/Redis driver coupling)
-	authService := service.NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, cfg.JWTSecret, cfg.JWTExpiryHours)
+	authService := service.NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, cfg.JWTSecret, cfg.JWTExpiryHours, cfg.DataEncryptionKey)
 	walletService := service.NewWalletService(transactor, walletRepo, txRepo, ledgerRepo, userRepo, locker)
 	kycService := service.NewKYCService(transactor, kycRepo, userRepo, walletRepo, cfg.DataEncryptionKey)
 
@@ -115,6 +115,7 @@ func main() {
 		authPublicRoutes.POST("/register", middleware.RateLimitMiddleware(rdb, "register", 3, 1*time.Minute), authHandler.Register)
 		authPublicRoutes.POST("/login", middleware.RateLimitMiddleware(rdb, "login", 5, 1*time.Minute), authHandler.Login)
 		authPublicRoutes.POST("/refresh", middleware.RateLimitMiddleware(rdb, "refresh", 10, 1*time.Minute), authHandler.RefreshToken)
+		authPublicRoutes.POST("/2fa/verify", middleware.RateLimitMiddleware(rdb, "2fa_verify", 5, 1*time.Minute), authHandler.Verify2FALogin)
 	}
 
 	// Protected Auth Routes
@@ -126,6 +127,9 @@ func main() {
 		protectedRoutes.GET("/audit-logs", authHandler.GetAuditLogs)
 		protectedRoutes.POST("/pin", authHandler.SetPIN)
 		protectedRoutes.PUT("/pin", authHandler.ChangePIN)
+		protectedRoutes.POST("/2fa/setup", authHandler.Setup2FA)
+		protectedRoutes.POST("/2fa/enable", authHandler.Enable2FA)
+		protectedRoutes.POST("/2fa/disable", authHandler.Disable2FA)
 	}
 
 	// Protected Wallet Routes

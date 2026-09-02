@@ -25,6 +25,10 @@ type AuthService interface {
 	RefreshToken(ctx context.Context, refreshTokenStr string) (*dto.AuthResponse, error)
 	SetPIN(ctx context.Context, userID string, pin string) error
 	ChangePIN(ctx context.Context, userID string, oldPIN, newPIN string) error
+	Setup2FA(ctx context.Context, userID string) (*dto.TwoFactorSetupResponse, error)
+	Enable2FA(ctx context.Context, userID, code string) error
+	Disable2FA(ctx context.Context, userID, code string) error
+	Verify2FALogin(ctx context.Context, req *dto.Verify2FALoginRequest) (*dto.AuthResponse, error)
 }
 
 type authService struct {
@@ -35,6 +39,7 @@ type authService struct {
 	refreshRepo    repository.RefreshTokenRepository
 	jwtSecret      string
 	jwtExpiryHours int
+	encryptionKey  []byte
 }
 
 func NewAuthService(
@@ -45,6 +50,7 @@ func NewAuthService(
 	refreshRepo repository.RefreshTokenRepository,
 	jwtSecret string,
 	jwtExpiryHours int,
+	encryptionKey []byte,
 ) AuthService {
 	return &authService{
 		transactor:     transactor,
@@ -54,6 +60,7 @@ func NewAuthService(
 		refreshRepo:    refreshRepo,
 		jwtSecret:      jwtSecret,
 		jwtExpiryHours: jwtExpiryHours,
+		encryptionKey:  encryptionKey,
 	}
 }
 
@@ -140,7 +147,19 @@ func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Au
 		return nil, domain.ErrInvalidCredentials
 	}
 
-	// Step 3: Generate signed Token Pair
+	// Step 3: Two-Factor Authentication Check
+	if user.IsTwoFactorEnabled {
+		tempToken, err := security.Generate2FATempToken(user.ID, user.Email, s.jwtSecret)
+		if err != nil {
+			return nil, err
+		}
+		return &dto.AuthResponse{
+			TwoFactorRequired: true,
+			TempToken:         tempToken,
+		}, nil
+	}
+
+	// Step 4: Generate signed Token Pair
 	accessToken, refreshToken, _, refreshClaims, err := security.GenerateTokenPair(
 		user.ID,
 		user.Email,
@@ -153,12 +172,12 @@ func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Au
 		return nil, err
 	}
 
-	// Step 4: Store active refresh token ID in Redis repository
+	// Step 5: Store active refresh token ID in Redis repository
 	if err := s.refreshRepo.Store(ctx, user.ID, refreshClaims.ID, RefreshTokenDuration); err != nil {
 		return nil, err
 	}
 
-	// Step 5: Return authentication response with token pair
+	// Step 6: Return authentication response with token pair
 	return &dto.AuthResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
@@ -220,9 +239,7 @@ func (s *authService) RefreshToken(ctx context.Context, refreshTokenStr string) 
 	}
 
 	// Step 3: TOKEN REUSE DETECTION (Breach Prevention)
-	// If the refresh token is valid Cryptographically but NOT in Redis, it was already used/stolen!
 	if !isActive {
-		// Revoke all remaining sessions for this user immediately
 		_ = s.refreshRepo.RevokeAllForUser(ctx, claims.UserID)
 		return nil, domain.ErrTokenReuseDetected
 	}
@@ -321,4 +338,141 @@ func (s *authService) ChangePIN(ctx context.Context, userID, oldPIN, newPIN stri
 	}
 
 	return s.userRepo.UpdatePIN(ctx, s.transactor.DB(), userID, newPINHash)
+}
+
+func (s *authService) Setup2FA(ctx context.Context, userID string) (*dto.TwoFactorSetupResponse, error) {
+	// Step 1: Fetch user record
+	user, err := s.userRepo.FindByID(ctx, s.transactor.DB(), userID)
+	if err != nil {
+		return nil, err
+	}
+	if user.IsTwoFactorEnabled {
+		return nil, domain.ErrTwoFactorAlreadyEnabled
+	}
+
+	// Step 2: Generate random 20-byte Base32 secret
+	rawSecret, err := security.GenerateTOTPSecret()
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 3: Encrypt the secret using AES-256-GCM before database storage
+	encryptedSecret, err := security.Encrypt(rawSecret, s.encryptionKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 4: Save encrypted pending secret into `users` table (disabled until verified)
+	if err := s.userRepo.UpdateTwoFactor(ctx, s.transactor.DB(), userID, &encryptedSecret, false); err != nil {
+		return nil, err
+	}
+
+	// Step 5: Return raw secret and QR Code URI for Google Authenticator setup
+	qrCodeURI := security.GenerateTOTPURI(rawSecret, user.Email, "Bastion")
+	return &dto.TwoFactorSetupResponse{
+		Secret:    rawSecret,
+		QRCodeURI: qrCodeURI,
+	}, nil
+}
+
+func (s *authService) Enable2FA(ctx context.Context, userID, code string) error {
+	// Step 1: Fetch user
+	user, err := s.userRepo.FindByID(ctx, s.transactor.DB(), userID)
+	if err != nil {
+		return err
+	}
+	if user.IsTwoFactorEnabled {
+		return domain.ErrTwoFactorAlreadyEnabled
+	}
+	if user.TwoFactorSecret == nil || *user.TwoFactorSecret == "" {
+		return domain.ErrTwoFactorNotEnabled
+	}
+
+	// Step 2: Decrypt stored 2FA secret
+	rawSecret, err := security.Decrypt(*user.TwoFactorSecret, s.encryptionKey)
+	if err != nil {
+		return err
+	}
+
+	// Step 3: Validate 6-digit TOTP code
+	if !security.ValidateTOTPCode(rawSecret, code) {
+		return domain.ErrInvalidTwoFactorCode
+	}
+
+	// Step 4: Mark 2FA as permanently enabled
+	return s.userRepo.UpdateTwoFactor(ctx, s.transactor.DB(), userID, user.TwoFactorSecret, true)
+}
+
+func (s *authService) Disable2FA(ctx context.Context, userID, code string) error {
+	// Step 1: Fetch user
+	user, err := s.userRepo.FindByID(ctx, s.transactor.DB(), userID)
+	if err != nil {
+		return err
+	}
+	if !user.IsTwoFactorEnabled || user.TwoFactorSecret == nil {
+		return domain.ErrTwoFactorNotEnabled
+	}
+
+	// Step 2: Decrypt secret and validate code
+	rawSecret, err := security.Decrypt(*user.TwoFactorSecret, s.encryptionKey)
+	if err != nil {
+		return err
+	}
+	if !security.ValidateTOTPCode(rawSecret, code) {
+		return domain.ErrInvalidTwoFactorCode
+	}
+
+	// Step 3: Deactivate 2FA and remove secret
+	return s.userRepo.UpdateTwoFactor(ctx, s.transactor.DB(), userID, nil, false)
+}
+
+func (s *authService) Verify2FALogin(ctx context.Context, req *dto.Verify2FALoginRequest) (*dto.AuthResponse, error) {
+	// Step 1: Parse and validate temporary challenge token
+	claims, err := security.ParseAndValidate2FATempToken(req.TempToken, s.jwtSecret)
+	if err != nil {
+		return nil, domain.ErrInvalidTempToken
+	}
+
+	// Step 2: Fetch user
+	user, err := s.userRepo.FindByID(ctx, s.transactor.DB(), claims.UserID)
+	if err != nil {
+		return nil, domain.ErrUserNotFound
+	}
+	if !user.IsTwoFactorEnabled || user.TwoFactorSecret == nil {
+		return nil, domain.ErrTwoFactorNotEnabled
+	}
+
+	// Step 3: Decrypt stored secret and validate code
+	rawSecret, err := security.Decrypt(*user.TwoFactorSecret, s.encryptionKey)
+	if err != nil {
+		return nil, err
+	}
+	if !security.ValidateTOTPCode(rawSecret, req.Code) {
+		return nil, domain.ErrInvalidTwoFactorCode
+	}
+
+	// Step 4: Issue final Token Pair
+	accessToken, refreshToken, _, refreshClaims, err := security.GenerateTokenPair(
+		user.ID,
+		user.Email,
+		user.Tier,
+		s.jwtSecret,
+		AccessTokenDuration,
+		RefreshTokenDuration,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 5: Store refresh token in Redis
+	if err := s.refreshRepo.Store(ctx, user.ID, refreshClaims.ID, RefreshTokenDuration); err != nil {
+		return nil, err
+	}
+
+	// Step 6: Return full authentication response
+	return &dto.AuthResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User:         dto.ToUserResponse(user),
+	}, nil
 }

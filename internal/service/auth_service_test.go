@@ -112,16 +112,27 @@ func (m *mockUserRepo) UpdatePIN(ctx context.Context, db repository.DBTX, userID
 	return domain.ErrUserNotFound
 }
 
+func (m *mockUserRepo) UpdateTwoFactor(ctx context.Context, db repository.DBTX, userID string, secret *string, enabled bool) error {
+	for _, u := range m.users {
+		if u.ID == userID {
+			u.TwoFactorSecret = secret
+			u.IsTwoFactorEnabled = enabled
+			return nil
+		}
+	}
+	return domain.ErrUserNotFound
+}
+
 type mockWalletRepo struct {
 	wallets map[string]*domain.Wallet
 }
 
 func (m *mockWalletRepo) Create(ctx context.Context, db repository.DBTX, userID string) error {
 	m.wallets[userID] = &domain.Wallet{
-		ID:              "wal_" + userID,
+		ID:              "wallet_" + userID,
 		UserID:          userID,
 		Balance:         0,
-		Currency:        domain.DefaultCurrency,
+		Currency:        "IDR",
 		MaxBalanceLimit: domain.Tier1MaxBalanceLimit,
 	}
 	return nil
@@ -143,7 +154,7 @@ func (m *mockWalletRepo) FindByID(ctx context.Context, db repository.DBTX, walle
 	return nil, domain.ErrWalletNotFound
 }
 
-func (m *mockWalletRepo) GetBalanceForUpdate(ctx context.Context, db repository.DBTX, walletID string) (int64, int64, error) {
+func (m *mockWalletRepo) GetBalanceForUpdate(ctx context.Context, db repository.DBTX, walletID string) (balance int64, maxLimit int64, err error) {
 	for _, w := range m.wallets {
 		if w.ID == walletID {
 			return w.Balance, w.MaxBalanceLimit, nil
@@ -162,85 +173,82 @@ func (m *mockWalletRepo) UpdateBalance(ctx context.Context, db repository.DBTX, 
 	return domain.ErrWalletNotFound
 }
 
-func (m *mockWalletRepo) UpdateMaxLimit(ctx context.Context, db repository.DBTX, userID string, maxLimit int64) error {
+func (m *mockWalletRepo) UpdateMaxLimit(ctx context.Context, db repository.DBTX, userID string, newMaxLimit int64) error {
 	if w, ok := m.wallets[userID]; ok {
-		w.MaxBalanceLimit = maxLimit
+		w.MaxBalanceLimit = newMaxLimit
 		return nil
 	}
 	return domain.ErrWalletNotFound
 }
 
 func TestAuthService_Register(t *testing.T) {
-	usersMap := make(map[string]*domain.User)
-	walletsMap := make(map[string]*domain.Wallet)
-	revokedMap := make(map[string]bool)
+	userRepo := &mockUserRepo{users: make(map[string]*domain.User)}
+	walletRepo := &mockWalletRepo{wallets: make(map[string]*domain.Wallet)}
+	blacklistRepo := &mockTokenBlacklistRepo{revokedTokens: make(map[string]bool)}
 	refreshRepo := newMockRefreshTokenRepo()
-	hashedPw, _ := security.HashPassword("KatakunciKuat123!")
-
-	existingUser := &domain.User{
-		ID:           "usr_123",
-		Email:        "existing@bastion.com",
-		PasswordHash: string(hashedPw),
-	}
-
-	usersMap[existingUser.Email] = existingUser
-	userRepo := &mockUserRepo{users: usersMap}
-	walletRepo := &mockWalletRepo{wallets: walletsMap}
-	blacklistRepo := &mockTokenBlacklistRepo{revokedTokens: revokedMap}
 	transactor := &mockTransactor{}
+	encKey := []byte("01234567890123456789012345678901")
 
-	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, "secret", 24)
+	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, "super_secret_jwt_key_1234567890", 24, encKey)
 
 	t.Run("Success", func(t *testing.T) {
-		req := &dto.RegisterRequest{Email: "new@bastion.com", Password: "StrongPassword1!", FullName: "New User"}
-		res, err := svc.Register(context.Background(), req)
+		req := &dto.RegisterRequest{
+			Email:    "test@example.com",
+			Password: "Password123!",
+			FullName: "John Doe",
+		}
 
+		res, err := svc.Register(context.Background(), req)
 		if err != nil {
-			t.Errorf("expected success, got error: %v", err)
+			t.Fatalf("expected success, got error: %v", err)
 		}
 
 		if res.AccessToken == "" {
-			t.Errorf("expected access token, got empty string")
+			t.Errorf("expected access token, got empty")
 		}
 
 		if res.RefreshToken == "" {
-			t.Errorf("expected refresh token, got empty string")
+			t.Errorf("expected refresh token, got empty")
 		}
 
-		if res.User.Email != "new@bastion.com" {
-			t.Errorf("expected email new@bastion.com, got %s", res.User.Email)
+		if res.User.Email != "test@example.com" {
+			t.Errorf("expected email test@example.com, got %s", res.User.Email)
 		}
 	})
 
 	t.Run("Duplicate Email Error", func(t *testing.T) {
-		req := &dto.RegisterRequest{Email: "existing@bastion.com", Password: "StrongPassword1!", FullName: "Duplicate User"}
-		_, err := svc.Register(context.Background(), req)
+		req := &dto.RegisterRequest{
+			Email:    "test@example.com",
+			Password: "Password123!",
+			FullName: "John Doe",
+		}
 
-		if err == nil {
-			t.Errorf("expected error duplicate email, got nil")
+		_, err := svc.Register(context.Background(), req)
+		if err != domain.ErrEmailAlreadyExists {
+			t.Errorf("expected ErrEmailAlreadyExists, got %v", err)
 		}
 	})
 
 	t.Run("Weak Password Error", func(t *testing.T) {
-		req := &dto.RegisterRequest{Email: "weak@bastion.com", Password: "123", FullName: "Weak User"}
-		_, err := svc.Register(context.Background(), req)
+		req := &dto.RegisterRequest{
+			Email:    "weak@example.com",
+			Password: "123",
+			FullName: "John Doe",
+		}
 
+		_, err := svc.Register(context.Background(), req)
 		if err == nil {
-			t.Errorf("expected error weak password, got nil")
+			t.Errorf("expected error for weak password, got nil")
 		}
 	})
 }
 
 func TestAuthService_RefreshToken(t *testing.T) {
 	usersMap := make(map[string]*domain.User)
-	refreshRepo := newMockRefreshTokenRepo()
-	hashedPw, _ := security.HashPassword("KatakunciKuat123!")
-
 	user := &domain.User{
-		ID:           "usr_refresh_1",
-		Email:        "refresh@bastion.com",
-		PasswordHash: string(hashedPw),
-		Tier:         domain.Tier1,
+		ID:    "usr_123",
+		Email: "refresh@example.com",
+		Tier:  domain.Tier1,
 	}
 	usersMap[user.Email] = user
 	usersMap[user.ID] = user
@@ -248,34 +256,44 @@ func TestAuthService_RefreshToken(t *testing.T) {
 	userRepo := &mockUserRepo{users: usersMap}
 	walletRepo := &mockWalletRepo{wallets: make(map[string]*domain.Wallet)}
 	blacklistRepo := &mockTokenBlacklistRepo{revokedTokens: make(map[string]bool)}
+	refreshRepo := newMockRefreshTokenRepo()
 	transactor := &mockTransactor{}
+	jwtSecret := "super_secret_jwt_key_1234567890"
+	encKey := []byte("01234567890123456789012345678901")
 
-	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, "my_jwt_secret_key_123", 24)
-
-	// Login to get valid token pair
-	loginRes, err := svc.Login(context.Background(), &dto.LoginRequest{Email: "refresh@bastion.com", Password: "KatakunciKuat123!"})
-	if err != nil {
-		t.Fatalf("expected login success, got error: %v", err)
-	}
+	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, jwtSecret, 24, encKey)
 
 	t.Run("Successful Refresh & Rotation", func(t *testing.T) {
-		refreshedRes, err := svc.RefreshToken(context.Background(), loginRes.RefreshToken)
+		_, initialRefreshToken, _, initialRefreshClaims, err := security.GenerateTokenPair(
+			user.ID,
+			user.Email,
+			user.Tier,
+			jwtSecret,
+			15*time.Minute,
+			7*24*time.Hour,
+		)
 		if err != nil {
-			t.Fatalf("expected refresh success, got error: %v", err)
+			t.Fatalf("failed to generate initial token pair: %v", err)
 		}
 
-		if refreshedRes.AccessToken == "" || refreshedRes.RefreshToken == "" {
-			t.Errorf("expected new access and refresh tokens")
+		_ = refreshRepo.Store(context.Background(), user.ID, initialRefreshClaims.ID, 7*24*time.Hour)
+
+		res, err := svc.RefreshToken(context.Background(), initialRefreshToken)
+		if err != nil {
+			t.Fatalf("expected refresh to succeed, got error: %v", err)
 		}
 
-		if refreshedRes.RefreshToken == loginRes.RefreshToken {
-			t.Errorf("expected refresh token to be rotated, but got the same token")
+		if res.AccessToken == "" || res.RefreshToken == "" {
+			t.Errorf("expected new access and refresh tokens, got empty")
 		}
 
-		// Verify old refresh token is now invalidated (Reuse detection)
-		_, reuseErr := svc.RefreshToken(context.Background(), loginRes.RefreshToken)
-		if !errors.Is(reuseErr, domain.ErrTokenReuseDetected) {
-			t.Errorf("expected ErrTokenReuseDetected on old token, got %v", reuseErr)
+		if res.RefreshToken == initialRefreshToken {
+			t.Errorf("expected rotated refresh token to be different from old refresh token")
+		}
+
+		oldActive, _ := refreshRepo.IsActive(context.Background(), user.ID, initialRefreshClaims.ID)
+		if oldActive {
+			t.Errorf("expected old refresh token to be invalidated/revoked from Redis")
 		}
 	})
 
@@ -301,8 +319,9 @@ func TestAuthService_PIN(t *testing.T) {
 	blacklistRepo := &mockTokenBlacklistRepo{revokedTokens: make(map[string]bool)}
 	refreshRepo := newMockRefreshTokenRepo()
 	transactor := &mockTransactor{}
+	encKey := []byte("01234567890123456789012345678901")
 
-	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, "secret", 24)
+	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, "secret", 24, encKey)
 
 	t.Run("SetPIN Success", func(t *testing.T) {
 		err := svc.SetPIN(context.Background(), "usr_pin_1", "123456")
@@ -332,6 +351,115 @@ func TestAuthService_PIN(t *testing.T) {
 		err := svc.ChangePIN(context.Background(), "usr_pin_1", "999999", "111111")
 		if err != domain.ErrInvalidPIN {
 			t.Errorf("expected ErrInvalidPIN, got %v", err)
+		}
+	})
+}
+
+func TestAuthService_TwoFactorAuth(t *testing.T) {
+	usersMap := make(map[string]*domain.User)
+	passHash, _ := security.HashPassword("Password123!")
+	user := &domain.User{
+		ID:           "usr_2fa_1",
+		Email:        "totpuser@bastion.com",
+		PasswordHash: string(passHash),
+	}
+	usersMap[user.Email] = user
+	usersMap[user.ID] = user
+
+	userRepo := &mockUserRepo{users: usersMap}
+	walletRepo := &mockWalletRepo{wallets: make(map[string]*domain.Wallet)}
+	blacklistRepo := &mockTokenBlacklistRepo{revokedTokens: make(map[string]bool)}
+	refreshRepo := newMockRefreshTokenRepo()
+	transactor := &mockTransactor{}
+	encKey := []byte("01234567890123456789012345678901")
+	jwtSecret := "super_secret_jwt_key_1234567890"
+
+	svc := NewAuthService(transactor, userRepo, walletRepo, blacklistRepo, refreshRepo, jwtSecret, 24, encKey)
+
+	var rawSecret string
+
+	t.Run("Setup 2FA Success", func(t *testing.T) {
+		setupRes, err := svc.Setup2FA(context.Background(), "usr_2fa_1")
+		if err != nil {
+			t.Fatalf("expected setup 2fa success, got error: %v", err)
+		}
+
+		if setupRes.Secret == "" || setupRes.QRCodeURI == "" {
+			t.Errorf("expected secret and qr code uri, got empty")
+		}
+
+		rawSecret = setupRes.Secret
+		if user.TwoFactorSecret == nil {
+			t.Errorf("expected encrypted secret in DB")
+		}
+		if user.IsTwoFactorEnabled {
+			t.Errorf("2FA should not be enabled until verified with code")
+		}
+	})
+
+	t.Run("Enable 2FA with Invalid Code Fails", func(t *testing.T) {
+		err := svc.Enable2FA(context.Background(), "usr_2fa_1", "000000")
+		if err != domain.ErrInvalidTwoFactorCode {
+			t.Errorf("expected ErrInvalidTwoFactorCode, got %v", err)
+		}
+	})
+
+	t.Run("Enable 2FA Success with Valid Code", func(t *testing.T) {
+		validCode, err := security.GenerateTOTPCode(rawSecret, time.Now())
+		if err != nil {
+			t.Fatalf("failed to generate valid TOTP code: %v", err)
+		}
+
+		err = svc.Enable2FA(context.Background(), "usr_2fa_1", validCode)
+		if err != nil {
+			t.Fatalf("expected enable 2fa success, got error: %v", err)
+		}
+
+		if !user.IsTwoFactorEnabled {
+			t.Errorf("expected 2FA to be enabled")
+		}
+	})
+
+	t.Run("Login with 2FA Enabled Returns Challenge", func(t *testing.T) {
+		loginRes, err := svc.Login(context.Background(), &dto.LoginRequest{
+			Email:    "totpuser@bastion.com",
+			Password: "Password123!",
+		})
+		if err != nil {
+			t.Fatalf("expected login challenge success, got error: %v", err)
+		}
+
+		if !loginRes.TwoFactorRequired {
+			t.Errorf("expected TwoFactorRequired true")
+		}
+		if loginRes.TempToken == "" {
+			t.Errorf("expected TempToken in challenge response")
+		}
+
+		// Verify 2FA Login Challenge
+		validCode, _ := security.GenerateTOTPCode(rawSecret, time.Now())
+		verifyRes, err := svc.Verify2FALogin(context.Background(), &dto.Verify2FALoginRequest{
+			TempToken: loginRes.TempToken,
+			Code:      validCode,
+		})
+		if err != nil {
+			t.Fatalf("expected 2FA login verification success, got error: %v", err)
+		}
+
+		if verifyRes.AccessToken == "" || verifyRes.RefreshToken == "" {
+			t.Errorf("expected AccessToken and RefreshToken after 2FA verification")
+		}
+	})
+
+	t.Run("Disable 2FA Success", func(t *testing.T) {
+		validCode, _ := security.GenerateTOTPCode(rawSecret, time.Now())
+		err := svc.Disable2FA(context.Background(), "usr_2fa_1", validCode)
+		if err != nil {
+			t.Fatalf("expected disable 2fa success, got error: %v", err)
+		}
+
+		if user.IsTwoFactorEnabled {
+			t.Errorf("expected 2FA to be disabled")
 		}
 	})
 }

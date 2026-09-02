@@ -15,6 +15,7 @@ type UserRepository interface {
 	FindByID(ctx context.Context, db DBTX, id string) (*domain.User, error)
 	UpdateTierAndVerification(ctx context.Context, db DBTX, userID string, tier string, isVerified bool) error
 	UpdatePIN(ctx context.Context, db DBTX, userID string, pinHash string) error
+	UpdateTwoFactor(ctx context.Context, db DBTX, userID string, secret *string, enabled bool) error
 }
 
 type userRepo struct{}
@@ -27,8 +28,8 @@ func NewUserRepository() UserRepository {
 // Create inserts a new user record into the `users` table and populates generated ID and timestamps.
 func (r *userRepo) Create(ctx context.Context, db DBTX, user *domain.User) error {
 	query := `
-		INSERT INTO users (email, password_hash, pin_hash, full_name, role, tier, is_verified) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7) 
+		INSERT INTO users (email, password_hash, pin_hash, two_factor_secret, is_two_factor_enabled, full_name, role, tier, is_verified) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
 		RETURNING id, created_at, updated_at
 	`
 	return db.QueryRow(
@@ -36,6 +37,8 @@ func (r *userRepo) Create(ctx context.Context, db DBTX, user *domain.User) error
 		user.Email,
 		user.PasswordHash,
 		user.PINHash,
+		user.TwoFactorSecret,
+		user.IsTwoFactorEnabled,
 		user.FullName,
 		user.Role,
 		user.Tier,
@@ -46,7 +49,7 @@ func (r *userRepo) Create(ctx context.Context, db DBTX, user *domain.User) error
 // FindByEmail retrieves a user by their unique email address.
 func (r *userRepo) FindByEmail(ctx context.Context, db DBTX, email string) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, pin_hash, full_name, role, tier, is_verified, created_at, updated_at 
+		SELECT id, email, password_hash, pin_hash, two_factor_secret, is_two_factor_enabled, full_name, role, tier, is_verified, created_at, updated_at 
 		FROM users 
 		WHERE email = $1
 	`
@@ -56,6 +59,8 @@ func (r *userRepo) FindByEmail(ctx context.Context, db DBTX, email string) (*dom
 		&user.Email,
 		&user.PasswordHash,
 		&user.PINHash,
+		&user.TwoFactorSecret,
+		&user.IsTwoFactorEnabled,
 		&user.FullName,
 		&user.Role,
 		&user.Tier,
@@ -75,7 +80,7 @@ func (r *userRepo) FindByEmail(ctx context.Context, db DBTX, email string) (*dom
 // FindByID retrieves a user by their primary key UUID string.
 func (r *userRepo) FindByID(ctx context.Context, db DBTX, id string) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, pin_hash, full_name, role, tier, is_verified, created_at, updated_at 
+		SELECT id, email, password_hash, pin_hash, two_factor_secret, is_two_factor_enabled, full_name, role, tier, is_verified, created_at, updated_at 
 		FROM users 
 		WHERE id = $1
 	`
@@ -85,6 +90,8 @@ func (r *userRepo) FindByID(ctx context.Context, db DBTX, id string) (*domain.Us
 		&user.Email,
 		&user.PasswordHash,
 		&user.PINHash,
+		&user.TwoFactorSecret,
+		&user.IsTwoFactorEnabled,
 		&user.FullName,
 		&user.Role,
 		&user.Tier,
@@ -120,5 +127,16 @@ func (r *userRepo) UpdatePIN(ctx context.Context, db DBTX, userID string, pinHas
 		WHERE id = $2
 	`
 	_, err := db.Exec(ctx, query, pinHash, userID)
+	return err
+}
+
+// UpdateTwoFactor updates a user's 2FA secret and enabled status.
+func (r *userRepo) UpdateTwoFactor(ctx context.Context, db DBTX, userID string, secret *string, enabled bool) error {
+	query := `
+		UPDATE users
+		SET two_factor_secret = $1, is_two_factor_enabled = $2, updated_at = NOW()
+		WHERE id = $3
+	`
+	_, err := db.Exec(ctx, query, secret, enabled, userID)
 	return err
 }

@@ -37,21 +37,24 @@ type RefreshTokenRequest struct {
 
 // AuthResponse represents the JSON response returned after successful login, registration, or token refresh.
 type AuthResponse struct {
-	AccessToken  string        `json:"access_token"`
-	RefreshToken string        `json:"refresh_token,omitempty"`
-	User         *UserResponse `json:"user,omitempty"`
+	AccessToken       string        `json:"access_token,omitempty"`
+	RefreshToken      string        `json:"refresh_token,omitempty"`
+	TwoFactorRequired bool          `json:"two_factor_required,omitempty"`
+	TempToken         string        `json:"temp_token,omitempty"`
+	User              *UserResponse `json:"user,omitempty"`
 }
 
 // UserResponse represents the safe public user profile excluding sensitive fields.
 type UserResponse struct {
-	ID         string    `json:"id"`
-	Email      string    `json:"email"`
-	FullName   string    `json:"full_name"`
-	Role       string    `json:"role"`
-	Tier       string    `json:"tier"`
-	IsVerified bool      `json:"is_verified"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID                 string    `json:"id"`
+	Email              string    `json:"email"`
+	FullName           string    `json:"full_name"`
+	Role               string    `json:"role"`
+	Tier               string    `json:"tier"`
+	IsVerified         bool      `json:"is_verified"`
+	IsTwoFactorEnabled bool      `json:"is_two_factor_enabled"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
 }
 
 // ToUserResponse safely transforms a User domain entity into a UserResponse DTO, stripping sensitive data.
@@ -60,14 +63,15 @@ func ToUserResponse(u *domain.User) *UserResponse {
 		return nil
 	}
 	return &UserResponse{
-		ID:         u.ID,
-		Email:      u.Email,
-		FullName:   u.FullName,
-		Role:       u.Role,
-		Tier:       u.Tier,
-		IsVerified: u.IsVerified,
-		CreatedAt:  u.CreatedAt,
-		UpdatedAt:  u.UpdatedAt,
+		ID:                 u.ID,
+		Email:              u.Email,
+		FullName:           u.FullName,
+		Role:               u.Role,
+		Tier:               u.Tier,
+		IsVerified:         u.IsVerified,
+		IsTwoFactorEnabled: u.IsTwoFactorEnabled,
+		CreatedAt:          u.CreatedAt,
+		UpdatedAt:          u.UpdatedAt,
 	}
 }
 
@@ -78,4 +82,21 @@ type SetPINRequest struct {
 type ChangePINRequest struct {
 	OldPIN string `json:"old_pin" binding:"required,len=6"`
 	NewPIN string `json:"new_pin" binding:"required,len=6"`
+}
+
+// TwoFactorSetupResponse represents the QR code setup payload for 2FA activation.
+type TwoFactorSetupResponse struct {
+	Secret    string `json:"secret"`
+	QRCodeURI string `json:"qr_code_uri"`
+}
+
+// Verify2FALoginRequest defines the payload to complete 2FA login challenge.
+type Verify2FALoginRequest struct {
+	TempToken string `json:"temp_token" binding:"required"`
+	Code      string `json:"code" binding:"required,len=6"`
+}
+
+// TwoFactorCodeRequest defines the payload for enabling or disabling 2FA.
+type TwoFactorCodeRequest struct {
+	Code string `json:"code" binding:"required,len=6"`
 }

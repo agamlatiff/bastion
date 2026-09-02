@@ -80,6 +80,15 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	if response.TwoFactorRequired {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "success",
+			"message": "Two-factor authentication required",
+			"data":    response,
+		})
+		return
+	}
+
 	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
 		UserID:    &response.User.ID,
 		Action:    "USER_LOGIN",
@@ -94,6 +103,153 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		"status":  "success",
 		"message": "Login successfully",
 		"data":    response,
+	})
+}
+
+func (h *AuthHandler) Verify2FALogin(c *gin.Context) {
+	var req dto.Verify2FALoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	response, err := h.authService.Verify2FALogin(c.Request.Context(), &req)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
+		UserID:    &response.User.ID,
+		Action:    "USER_LOGIN_2FA",
+		IPAddress: c.ClientIP(),
+		UserAgent: c.Request.UserAgent(),
+		Metadata: map[string]any{
+			"email": response.User.Email,
+		},
+	})
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "2FA Login successful",
+		"data":    response,
+	})
+}
+
+func (h *AuthHandler) Setup2FA(c *gin.Context) {
+	user, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
+			"error":  "unauthorized",
+		})
+		return
+	}
+
+	currentUser := user.(*domain.User)
+	response, err := h.authService.Setup2FA(c.Request.Context(), currentUser.ID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Scan this QR code in Google Authenticator or enter the secret manually",
+		"data":    response,
+	})
+}
+
+func (h *AuthHandler) Enable2FA(c *gin.Context) {
+	user, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
+			"error":  "unauthorized",
+		})
+		return
+	}
+
+	currentUser := user.(*domain.User)
+
+	var req dto.TwoFactorCodeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	if err := h.authService.Enable2FA(c.Request.Context(), currentUser.ID, req.Code); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
+		UserID:    &currentUser.ID,
+		Action:    "2FA_ENABLED",
+		IPAddress: c.ClientIP(),
+		UserAgent: c.Request.UserAgent(),
+	})
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Two-factor authentication has been successfully activated",
+	})
+}
+
+func (h *AuthHandler) Disable2FA(c *gin.Context) {
+	user, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
+			"error":  "unauthorized",
+		})
+		return
+	}
+
+	currentUser := user.(*domain.User)
+
+	var req dto.TwoFactorCodeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	if err := h.authService.Disable2FA(c.Request.Context(), currentUser.ID, req.Code); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	_ = h.auditRepo.Create(c.Request.Context(), h.db, &domain.AuditLog{
+		UserID:    &currentUser.ID,
+		Action:    "2FA_DISABLED",
+		IPAddress: c.ClientIP(),
+		UserAgent: c.Request.UserAgent(),
+	})
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Two-factor authentication has been deactivated",
 	})
 }
 
