@@ -70,10 +70,34 @@ func handleError(c *gin.Context, err error) {
 		statusCode = http.StatusForbidden // 403
 		errorCode = "KYC_REQUIRED"
 		message = err.Error()
-	case errors.Is(err, domain.ErrInvalidReceiver) || errors.Is(err, domain.ErrWalletNotFound) || err.Error() == "receiver wallet not found":
+	case errors.Is(err, domain.ErrPINNotSet):
+		statusCode = http.StatusBadRequest // 400
+		errorCode = "PIN_NOT_SET"
+		message = err.Error()
+	case errors.Is(err, domain.ErrInvalidPIN):
+		statusCode = http.StatusUnauthorized // 401
+		errorCode = "INVALID_PIN"
+		message = err.Error()
+	case errors.Is(err, domain.ErrInvalidPINFormat):
+		statusCode = http.StatusBadRequest // 400
+		errorCode = "INVALID_PIN_FORMAT"
+		message = err.Error()
+	case errors.Is(err, domain.ErrReceiverNotFound) || err.Error() == "receiver user not found":
 		statusCode = http.StatusNotFound // 404
-		errorCode = "INVALID_RECEIVER"
+		errorCode = "RECEIVER_NOT_FOUND"
+		message = "receiver user not found"
+	case errors.Is(err, domain.ErrReceiverWalletNotFound) || errors.Is(err, domain.ErrInvalidReceiver) || errors.Is(err, domain.ErrWalletNotFound) || err.Error() == "receiver wallet not found":
+		statusCode = http.StatusNotFound // 404
+		errorCode = "RECEIVER_WALLET_NOT_FOUND"
 		message = "receiver wallet not found"
+	case errors.Is(err, domain.ErrDailyLimitExceeded):
+		statusCode = http.StatusUnprocessableEntity // 422
+		errorCode = "DAILY_LIMIT_EXCEEDED"
+		message = err.Error()
+	case errors.Is(err, domain.ErrMonthlyLimitExceeded):
+		statusCode = http.StatusUnprocessableEntity // 422
+		errorCode = "MONTHLY_LIMIT_EXCEEDED"
+		message = err.Error()
 	case errors.Is(err, domain.ErrConcurrentRequest) || err.Error() == "concurrent request detected for the same idempotency key":
 		statusCode = http.StatusConflict // 409
 		errorCode = "CONCURRENT_REQUEST"
