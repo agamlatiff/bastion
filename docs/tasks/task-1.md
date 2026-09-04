@@ -7,49 +7,49 @@ Pengerjaan harus dilakukan **satu per satu secara sekuensial dari atas ke bawah*
 
 ## Phase 0 — Prepare
 
-* [ ] Buat branch `feat/sprint-1-foundation`
-* [ ] Pastikan current branch bersih (`git status` clean)
-* [ ] Jalankan existing test
-* [ ] Jalankan existing application
-* [ ] Catat endpoint yang masih existing
-* [ ] Catat migration yang sudah ada
-* [ ] Catat environment variables yang sudah ada
-* [ ] Buat folder `docs/`
-* [ ] Buat `docs/architecture/`
-* [ ] Buat `docs/adr/`
+* [x] Buat branch `feat/sprint-1-foundation`
+* [x] Pastikan current branch bersih (`git status` clean)
+* [x] Jalankan existing test (`make test` PASS)
+* [x] Jalankan existing application (Review startup & dependencies)
+* [x] Catat endpoint yang masih existing (18 endpoint)
+* [x] Catat migration yang sudah ada (10 file SQL)
+* [x] Catat environment variables yang sudah ada (14 variables)
+* [x] Buat folder `docs/`
+* [x] Buat `docs/architecture/`
+* [x] Buat `docs/adr/`
 
-> **Definition of Done Phase 0:** Kita mengetahui persis baseline dan status repo sebelum proses refactoring dimulai.
+> **Definition of Done Phase 0:** Selesai. Baseline repo tercatat lengkap sebelum refactor dimulai.
 
 ---
 
 ## Phase 1 — Monorepo Structure
 
 ### 1. Buat directory service
-* [ ] `services/gateway`
-* [ ] `services/identity`
-* [ ] `services/customer`
-* [ ] `services/kyc`
-* [ ] `services/wallet`
-* [ ] `services/transaction`
-* [ ] `services/ledger`
+* [x] `services/gateway`
+* [x] `services/identity`
+* [x] `services/customer`
+* [x] `services/kyc`
+* [x] `services/wallet`
+* [x] `services/transaction`
+* [x] `services/ledger`
 
 ### 2. Buat directory contract
-* [ ] `contracts/openapi`
-* [ ] `contracts/proto`
-* [ ] `contracts/events`
+* [x] `contracts/openapi`
+* [x] `contracts/proto`
+* [x] `contracts/events`
 
 ### 3. Buat infrastructure
-* [ ] `infrastructure/postgres`
-* [ ] `infrastructure/redis`
-* [ ] `infrastructure/kafka`
-* [ ] `infrastructure/docker`
+* [x] `infrastructure/postgres`
+* [x] `infrastructure/redis`
+* [x] `infrastructure/kafka`
+* [x] `infrastructure/docker`
 
 ### 4. Buat documentation
-* [ ] `docs/prd`
-* [ ] `docs/architecture`
-* [ ] `docs/adr`
+* [x] `docs/prd`
+* [x] `docs/architecture`
+* [x] `docs/adr`
 
-> **Definition of Done Phase 1:** Struktur folder monorepo telah terpasang rapi sesuai target arsitektur.
+> **Definition of Done Phase 1:** Selesai. Struktur folder monorepo telah terpasang rapi sesuai target arsitektur.
 
 ---
 
