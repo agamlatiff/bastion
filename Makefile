@@ -36,3 +36,6 @@ migrate-down:
 
 table-postgresql:
 	docker exec -it bastion_postgres psql -U bastion -d bastion_db
+
+kafka-topics:
+	docker exec bastion_redpanda rpk topic create bastion.identity.events bastion.customer.events bastion.wallet.events bastion.transaction.events bastion.ledger.events

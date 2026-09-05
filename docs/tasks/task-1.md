@@ -56,39 +56,39 @@ Pengerjaan harus dilakukan **satu per satu secara sekuensial dari atas ke bawah*
 ## Phase 2 — Local Infrastructure
 
 ### PostgreSQL
-* [ ] Buat PostgreSQL Docker container
-* [ ] Buat database `identity_db`
-* [ ] Buat database `customer_db`
-* [ ] Buat database `kyc_db`
-* [ ] Buat database `wallet_db`
-* [ ] Buat database `transaction_db`
-* [ ] Buat database `ledger_db`
-* [ ] Buat user/password dari environment variable
-* [ ] Test koneksi dari host
-* [ ] Test koneksi dari container
+* [x] Buat PostgreSQL Docker container
+* [x] Buat database `identity_db`
+* [x] Buat database `customer_db`
+* [x] Buat database `kyc_db`
+* [x] Buat database `wallet_db`
+* [x] Buat database `transaction_db`
+* [x] Buat database `ledger_db`
+* [x] Buat user/password dari environment variable
+* [x] Test koneksi dari host
+* [x] Test koneksi dari container
 
 ### Redis
-* [ ] Tambahkan Redis ke Docker Compose
-* [ ] Test connection
-* [ ] Tambahkan healthcheck
+* [x] Tambahkan Redis ke Docker Compose
+* [x] Test connection
+* [x] Tambahkan healthcheck
 
 ### Kafka / Redpanda
-* [ ] Tambahkan Kafka / Redpanda
-* [ ] Pastikan container hidup
-* [ ] Buat topic event standar:
-  * [ ] `bastion.identity.events`
-  * [ ] `bastion.customer.events`
-  * [ ] `bastion.wallet.events`
-  * [ ] `bastion.transaction.events`
-  * [ ] `bastion.ledger.events`
+* [x] Tambahkan Kafka / Redpanda
+* [x] Pastikan container hidup
+* [x] Buat topic event standar:
+  * [x] `bastion.identity.events`
+  * [x] `bastion.customer.events`
+  * [x] `bastion.wallet.events`
+  * [x] `bastion.transaction.events`
+  * [x] `bastion.ledger.events`
 
 ### Test Local Infrastructure
-* [ ] `docker compose up` berjalan tanpa error
-* [ ] PostgreSQL healthy
-* [ ] Redis healthy
-* [ ] Kafka healthy
+* [x] `docker compose up` berjalan tanpa error
+* [x] PostgreSQL healthy
+* [x] Redis healthy
+* [x] Kafka healthy
 
-> **Checkpoint 1:** Seluruh shared infrastructure lokal telah berjalan dan siap dihubungkan ke masing-masing service.
+> **Checkpoint 1:** Seluruh shared infrastructure lokal telah berjalan dan siap dihubungkan ke masing-masing service. Selesai pada Phase 2.
 
 ---
 

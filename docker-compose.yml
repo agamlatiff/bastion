@@ -13,12 +13,13 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./infra/postgres/migrations:/docker-entrypoint-initdb.d
+      - ./infrastructure/postgres/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U bastion -d bastion_db" ]
       interval: 10s
       timeout: 5s
       retries: 5
+
   redis:
     image: redis:7-alpine
     container_name: bastion_redis
@@ -30,20 +31,24 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  api:
-    build: .
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.1.2
+    container_name: bastion_redpanda
+    restart: unless-stopped
+    command:
+      - redpanda start
+      - --smp 1
+      - --memory 512M
+      - --overprovisioned
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
     ports:
-      - "8080:8080"
-    environment:
-      - APP_PORT=8080
-      - DATABASE_URL=postgres://bastion:bastion_secret@postgres:5432/bastion_db?sslmode=disable
-      - REDIS_ADDR=redis:6379
-      - JWT_SECRET=kunci_rahasia_bastion_v2!
-      - JWT_EXPIRY_HOURS=24
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - "19092:19092"
+      - "9644:9644"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+
 volumes:
   postgres_data:
+  redpanda_data:
