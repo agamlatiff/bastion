@@ -94,21 +94,21 @@ Pengerjaan harus dilakukan **satu per satu secara sekuensial dari atas ke bawah*
 
 ## Phase 3 — Configuration
 
-* [ ] Buat `.env.example`
-* [ ] Tambahkan `APP_ENV`
-* [ ] Tambahkan `APP_PORT`
-* [ ] Tambahkan `DATABASE_URL`
-* [ ] Tambahkan `REDIS_URL`
-* [ ] Tambahkan `KAFKA_BROKERS`
-* [ ] Tambahkan `JWT_SECRET`
-* [ ] Tambahkan `DATA_ENCRYPTION_KEY`
-* [ ] Pisahkan konfigurasi local / test / production
-* [ ] Hapus hardcoded production secret
-* [ ] Hapus fallback encryption key untuk production
-* [ ] Jadikan DB SSL configurable
-* [ ] Pastikan production gagal startup (*fail-fast*) jika secret wajib tidak ada
+* [x] Buat `.env.example`
+* [x] Tambahkan `APP_ENV`
+* [x] Tambahkan `APP_PORT`
+* [x] Tambahkan `DATABASE_URL`
+* [x] Tambahkan `REDIS_URL`
+* [x] Tambahkan `KAFKA_BROKERS`
+* [x] Tambahkan `JWT_SECRET`
+* [x] Tambahkan `DATA_ENCRYPTION_KEY`
+* [x] Pisahkan konfigurasi local / test / production
+* [x] Hapus hardcoded production secret
+* [x] Hapus fallback encryption key untuk production
+* [x] Jadikan DB SSL configurable
+* [x] Pastikan production gagal startup (*fail-fast*) jika secret wajib tidak ada
 
-> **Definition of Done Phase 3:** Manajemen konfigurasi independen dari secret yang tertanam di source code.
+> **Definition of Done Phase 3:** Selesai. Manajemen konfigurasi independen dari secret yang tertanam di source code dan memiliki validasi fail-fast.
 
 ---
 
