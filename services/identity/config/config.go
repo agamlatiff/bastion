@@ -14,6 +14,7 @@ type Config struct {
 	JWTSecret              string
 	AccessTokenExpiryMins  int
 	RefreshTokenExpiryDays int
+	KafkaBrokers           string
 }
 
 // Load loads configuration from environment variables with sensible defaults.
@@ -25,6 +26,7 @@ func Load() *Config {
 		JWTSecret:              getEnv("JWT_SECRET", "super_secret_bastion_key_change_in_production_12345"),
 		AccessTokenExpiryMins:  getEnvAsInt("ACCESS_TOKEN_EXPIRY_MINS", 15),
 		RefreshTokenExpiryDays: getEnvAsInt("REFRESH_TOKEN_EXPIRY_DAYS", 7),
+		KafkaBrokers:           getEnv("KAFKA_BROKERS", "localhost:19092"),
 	}
 }
 
