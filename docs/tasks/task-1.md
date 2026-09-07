@@ -115,40 +115,41 @@ Pengerjaan harus dilakukan **satu per satu secara sekuensial dari atas ke bawah*
 ## Phase 4 — Gateway
 
 ### Bootstrap
-* [ ] Buat `services/gateway`
-* [ ] Setup Go module (`go.mod`)
-* [ ] Buat HTTP server
-* [ ] Buat config loader
-* [ ] Tambahkan graceful shutdown
+* [x] Buat `services/gateway`
+* [x] Setup Go module (`go.mod`)
+* [x] Buat HTTP server
+* [x] Buat config loader
+* [x] Tambahkan graceful shutdown
 
 ### Middleware
-* [ ] Request ID
-* [ ] Logger
-* [ ] Recovery
-* [ ] Timeout
-* [ ] Body size limit
-* [ ] CORS
-* [ ] Security headers
+* [x] Request ID
+* [x] Logger
+* [x] Recovery
+* [x] Timeout
+* [x] Body size limit
+* [x] CORS
+* [x] Security headers
 
 ### Request ID
-* [ ] Terima `X-Request-ID` dari caller
-* [ ] Validasi format UUID
-* [ ] Generate UUID jika header kosong
-* [ ] Propagasi ke downstream services
+* [x] Terima `X-Request-ID` dari caller
+* [x] Validasi format UUID
+* [x] Generate UUID jika header kosong
+* [x] Propagasi ke downstream services
 
 ### Health Checks
-* [ ] Endpoint `GET /livez`
-* [ ] Endpoint `GET /readyz`
+* [x] Endpoint `GET /livez`
+* [x] Endpoint `GET /readyz`
 
 ### Metrics
-* [ ] Tambahkan endpoint metrics
-* [ ] Pastikan `/metrics` diproteksi (tidak bebas diakses publik)
+* [x] Tambahkan endpoint metrics
+* [x] Pastikan `/metrics` diproteksi (tidak bebas diakses publik)
 
 > **Checkpoint 2:**
 > ```text
-> GET /livez  → 200 OK
-> GET /readyz → 200 OK
+> GET /livez  → 200 OK (Verified)
+> GET /readyz → 200 OK (Verified)
 > ```
+> Selesai pada Phase 4.
 
 ---
 
