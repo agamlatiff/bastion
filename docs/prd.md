@@ -851,8 +851,7 @@ Go
 Technology:
 
 ```text
-Java
-Spring Boot
+Go
 ```
 
 Responsibilities:

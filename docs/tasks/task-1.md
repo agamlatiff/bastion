@@ -153,87 +153,88 @@ Pengerjaan harus dilakukan **satu per satu secara sekuensial dari atas ke bawah*
 
 ---
 
-## Phase 5 — Identity Service (Java / Spring Boot)
+## Phase 5 — Identity Service (Go)
 
 ### Bootstrap
-* [ ] Buat `services/identity`
-* [ ] Setup Spring Boot
-* [ ] Setup Spring Security
-* [ ] Setup PostgreSQL connection
-* [ ] Setup Flyway migration
-* [ ] Setup Redis connection
-* [ ] Setup test framework (JUnit 5 + Testcontainers)
+* [x] Buat `services/identity`
+* [x] Setup Go module (`go.mod`)
+* [x] Setup HTTP server & routing
+* [x] Setup PostgreSQL connection (`identity_db`)
+* [x] Setup database migration
+* [x] Setup Redis connection (Rate limiting)
+* [x] Setup test suite & health checks
 
 ### Database Migration
-Buat skrip migrasi Flyway:
-* [ ] `users`
-* [ ] `sessions`
-* [ ] `roles`
-* [ ] `user_roles`
-* [ ] `security_audits`
+Buat skrip migrasi database (`identity_db`):
+* [x] `users`
+* [x] `sessions`
+* [x] `roles`
+* [x] `user_roles`
+* [x] `security_audits`
 
 ### User Management
-* [ ] UUID user ID
-* [ ] Normalize email (`LOWER(email)`)
-* [ ] Unique email constraint & index
-* [ ] Password hashing (BCrypt / Argon2id)
-* [ ] User status validation
+* [x] UUID user ID
+* [x] Normalize email (`LOWER(email)`)
+* [x] Unique email constraint & index
+* [x] Password hashing (Argon2id)
+* [x] User status validation
 
 ### Register (`POST /v1/auth/register`)
-* [ ] Request validation
-* [ ] Email normalization
-* [ ] Duplicate email handling (409 Conflict)
-* [ ] Password hashing
-* [ ] Create user
-* [ ] Return user ID
+* [x] Request validation
+* [x] Email normalization
+* [x] Duplicate email handling (409 Conflict)
+* [x] Password hashing
+* [x] Create user
+* [x] Return user ID
 
 ### Login (`POST /v1/auth/login`)
-* [ ] Find user
-* [ ] Verify password
-* [ ] Generate access token
-* [ ] Generate refresh token
-* [ ] Store refresh token hash di DB/Redis
-* [ ] Return token pair
+* [x] Find user
+* [x] Verify password
+* [x] Generate access token
+* [x] Generate refresh token
+* [x] Store refresh token hash di DB
+* [x] Return token pair
 
 ### JWT Implementation
-* [ ] Validate signature
-* [ ] Validate algorithm
-* [ ] Validate expiration (`exp`)
-* [ ] Validate issued at (`iat`)
-* [ ] Validate token identifier (`jti`)
-* [ ] Validate token type
+* [x] Validate signature
+* [x] Validate algorithm
+* [x] Validate expiration (`exp`)
+* [x] Validate issued at (`iat`)
+* [x] Validate token identifier (`jti`)
+* [x] Validate token type
 
 ### Refresh (`POST /v1/auth/refresh`)
-* [ ] Validate refresh token
-* [ ] Detect revoked token
-* [ ] Rotate refresh token
-* [ ] Revoke old session / token
-* [ ] Issue new access token
+* [x] Validate refresh token
+* [x] Detect revoked token
+* [x] Rotate refresh token
+* [x] Revoke old session / token
+* [x] Issue new access token
 
 ### Logout (`POST /v1/auth/logout`)
-* [ ] Revoke session
-* [ ] Reject subsequent refresh attempts
+* [x] Revoke session
+* [x] Reject subsequent refresh attempts
 
 ### Rate Limiting
-* [ ] Register rate limit
-* [ ] Login rate limit
-* [ ] Refresh rate limit
+* [x] Register rate limit (Redis)
+* [x] Login rate limit (Redis)
+* [x] Refresh rate limit (Redis)
 
 ### Tests
-* [ ] Register success
-* [ ] Duplicate email rejected
-* [ ] Wrong password rejected
-* [ ] Login success
-* [ ] Expired token rejected
-* [ ] Invalid token rejected
-* [ ] Refresh success
-* [ ] Refresh token reuse detection & revocation
-* [ ] Logout invalidates token
+* [x] Register success
+* [x] Duplicate email rejected
+* [x] Wrong password rejected
+* [x] Login success
+* [x] Expired token rejected
+* [x] Invalid token rejected
+* [x] Refresh success
+* [x] Refresh token reuse detection & revocation
+* [x] Logout invalidates token
 
 > **Checkpoint 3:**
 > ```text
-> register → login → access token → refresh → logout
+> register → login → access token → refresh → logout (Verified)
 > ```
+> Selesai pada Phase 5.
 
 ---
 
