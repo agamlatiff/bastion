@@ -40,9 +40,11 @@ func main() {
 	// 1. Load runtime configuration
 	cfg := config.Load()
 
-	// 2. Setup Gin router (Release Mode)
+	// 2. Setup Gin router (Release Mode with disabled auto-redirect to avoid proxy loops)
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
+	r.RedirectTrailingSlash = false
+	r.RedirectFixedPath = false
 
 	// 3. Attach standard gateway security and observability middlewares
 	r.Use(middleware.Recovery())
@@ -72,13 +74,16 @@ func main() {
 	metricsGroup.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	// 6. Public API Reverse Proxy Routing
-	// Notice: Internal endpoints (/internal/*) are NOT exposed here, shielding them from the internet!
+	// Explicitly map exact root and wildcard subpaths to prevent redirect loops
 	proxyIdentity := createReverseProxy(cfg.IdentityServiceURL)
 	proxyCustomer := createReverseProxy(cfg.CustomerServiceURL)
 	proxyWallet := createReverseProxy(cfg.WalletServiceURL)
 
+	r.Any("/v1/auth", proxyIdentity)
 	r.Any("/v1/auth/*path", proxyIdentity)
+	r.Any("/v1/customers", proxyCustomer)
 	r.Any("/v1/customers/*path", proxyCustomer)
+	r.Any("/v1/wallets", proxyWallet)
 	r.Any("/v1/wallets/*path", proxyWallet)
 
 	// 7. Configure HTTP Server

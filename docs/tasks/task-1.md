@@ -465,27 +465,27 @@ Create Ledger Account
 Verifikasi end-to-end dari kondisi database kosong (*clean slate*):
 
 1. **Register** (`POST /v1/auth/register`)
-   * [ ] User baru berhasil dibuat di `identity_db`
+   * [x] User baru berhasil dibuat di `identity_db`
 2. **Login** (`POST /v1/auth/login`)
-   * [ ] Access token & refresh token diterima
+   * [x] Access token & refresh token diterima
 3. **Customer Profile** (`GET /v1/customers/me`)
-   * [ ] Customer otomatis terbentuk dari event `UserRegistered`
+   * [x] Customer otomatis terbentuk dari event `UserRegistered`
 4. **Create Wallet** (`POST /v1/wallets`)
-   * [ ] Wallet masuk status `CREATING`
-   * [ ] Ledger account terbentuk di `ledger_db`
-   * [ ] Wallet terupdate menjadi `ACTIVE`
+   * [x] Wallet masuk status `CREATING`
+   * [x] Ledger account terbentuk di `ledger_db`
+   * [x] Wallet terupdate menjadi `ACTIVE`
 5. **Get Wallet** (`GET /v1/wallets/{id}`)
-   * [ ] Status `ACTIVE`, balance `0`, currency `IDR`
+   * [x] Status `ACTIVE`, balance `0`, currency `IDR`
 6. **Check Balance** (`GET /v1/wallets/{id}/balance`)
-   * [ ] Return `0 IDR`
+   * [x] Return `0 IDR`
 7. **Freeze Wallet** (`POST /v1/wallets/{id}/freeze`)
-   * [ ] Status berubah menjadi `FROZEN`
+   * [x] Status berubah menjadi `FROZEN`
 8. **Unfreeze Wallet** (`POST /v1/wallets/{id}/unfreeze`)
-   * [ ] Status berubah kembali menjadi `ACTIVE`
+   * [x] Status berubah kembali menjadi `ACTIVE`
 9. **Token Refresh** (`POST /v1/auth/refresh`)
-   * [ ] Token baru diterbitkan, refresh token lama ditolak
+   * [x] Token baru diterbitkan, refresh token lama ditolak
 10. **Logout** (`POST /v1/auth/logout`)
-    * [ ] Sesi direvoke, refresh token lama tidak lagi valid
+    * [x] Sesi direvoke, refresh token lama tidak lagi valid
 
 ---
 
@@ -493,35 +493,35 @@ Verifikasi end-to-end dari kondisi database kosong (*clean slate*):
 
 Sebelum menyatakan **Sprint 1 DONE**, seluruh item berikut wajib tercentang:
 
-* [ ] Monorepo structure
-* [ ] Docker Compose
-* [ ] PostgreSQL databases
-* [ ] Redis
-* [ ] Kafka / Redpanda
-* [ ] Environment configuration
-* [ ] Gateway
-* [ ] Liveness / readiness
-* [ ] Identity
-* [ ] Register
-* [ ] Login
-* [ ] Refresh rotation
-* [ ] Logout
-* [ ] Customer
-* [ ] UserRegistered event
-* [ ] Wallet
-* [ ] Wallet lifecycle
-* [ ] Ledger account
-* [ ] Wallet $\leftrightarrow$ Ledger integration
-* [ ] Outbox pattern
-* [ ] Idempotent consumer
-* [ ] Service authentication
-* [ ] Structured logging
-* [ ] Metrics
-* [ ] Unit tests
-* [ ] Integration tests
-* [ ] E2E test
-* [ ] README
-* [ ] Architecture docs
+* [x] Monorepo structure
+* [x] Docker Compose
+* [x] PostgreSQL databases
+* [x] Redis
+* [x] Kafka / Redpanda
+* [x] Environment configuration
+* [x] Gateway
+* [x] Liveness / readiness
+* [x] Identity
+* [x] Register
+* [x] Login
+* [x] Refresh rotation
+* [x] Logout
+* [x] Customer
+* [x] UserRegistered event
+* [x] Wallet
+* [x] Wallet lifecycle
+* [x] Ledger account
+* [x] Wallet $\leftrightarrow$ Ledger integration
+* [x] Outbox pattern
+* [x] Idempotent consumer
+* [x] Service authentication
+* [x] Structured logging
+* [x] Metrics
+* [x] Unit tests
+* [x] Integration tests
+* [x] E2E test
+* [x] README
+* [x] Architecture docs
 
 ---
 
