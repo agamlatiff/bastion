@@ -10,48 +10,45 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/agamlatiff/bastion/services/wallet/client"
-	"github.com/agamlatiff/bastion/services/wallet/config"
-	"github.com/agamlatiff/bastion/services/wallet/handler"
-	"github.com/agamlatiff/bastion/services/wallet/middleware"
-	"github.com/agamlatiff/bastion/services/wallet/repository"
-	"github.com/agamlatiff/bastion/services/wallet/service"
+	"github.com/agamlatiff/bastion/services/ledger/config"
+	"github.com/agamlatiff/bastion/services/ledger/handler"
+	"github.com/agamlatiff/bastion/services/ledger/middleware"
+	"github.com/agamlatiff/bastion/services/ledger/repository"
+	"github.com/agamlatiff/bastion/services/ledger/service"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
 	cfg := config.Load()
-	log.Println("[Wallet Service] Starting service...")
+	log.Println("[Ledger Service] Starting service...")
 
-	// 1. Database Connection Pool
+	// 1. PostgreSQL Connection Pool
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	poolConfig, err := pgxpool.ParseConfig(cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("[Wallet Service] Failed to parse database URL: %v", err)
+		log.Fatalf("[Ledger Service] Failed to parse database URL: %v", err)
 	}
 	poolConfig.MaxConns = 25
 	poolConfig.MinConns = 5
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
-		log.Fatalf("[Wallet Service] Failed to connect to database: %v", err)
+		log.Fatalf("[Ledger Service] Failed to connect to database: %v", err)
 	}
 	defer pool.Close()
 
 	if err := pool.Ping(ctx); err != nil {
-		log.Fatalf("[Wallet Service] Database ping failed: %v", err)
+		log.Fatalf("[Ledger Service] Database ping failed: %v", err)
 	}
-	log.Println("[Wallet Service] Connected to PostgreSQL (wallet_db)")
+	log.Println("[Ledger Service] Connected to PostgreSQL (ledger_db)")
 
 	// 2. Initialize Layers
-	ledgerClient := client.NewLedgerClient(cfg.LedgerServiceURL, cfg.InternalAuth)
-	walletRepo := repository.NewWalletRepository(pool)
-	walletService := service.NewWalletService(walletRepo, ledgerClient)
-	walletHandler := handler.NewWalletHandler(walletService)
-
+	ledgerRepo := repository.NewLedgerRepository(pool)
+	ledgerService := service.NewLedgerService(ledgerRepo)
+	ledgerHandler := handler.NewLedgerHandler(ledgerService)
 
 	// 3. Router Setup
 	router := gin.Default()
@@ -72,16 +69,13 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "READY"})
 	})
 
-	// Protected Routes (JWT Bearer Token Required)
-	v1 := router.Group("/v1/wallets")
-	v1.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+	// Internal Routes (Protected by Shared Secret Header)
+	internal := router.Group("/internal/v1/ledger")
+	internal.Use(middleware.InternalAuthMiddleware(cfg.InternalAuth))
 	{
-		v1.POST("", walletHandler.CreateWallet)
-		v1.GET("", walletHandler.ListCustomerWallets)
-		v1.GET("/:id", walletHandler.GetWallet)
-		v1.GET("/:id/balance", walletHandler.GetBalance)
-		v1.POST("/:id/freeze", walletHandler.FreezeWallet)
-		v1.POST("/:id/unfreeze", walletHandler.UnfreezeWallet)
+		internal.POST("/accounts", ledgerHandler.CreateAccount)
+		internal.GET("/accounts/:id", ledgerHandler.GetAccount)
+		internal.GET("/accounts/by-code/:code", ledgerHandler.GetAccountByCode)
 	}
 
 	// 4. HTTP Server with Graceful Shutdown
@@ -94,9 +88,9 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("[Wallet Service] HTTP Server listening on port %s", cfg.Port)
+		log.Printf("[Ledger Service] HTTP Server listening on port %s", cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("[Wallet Service] Server error: %v", err)
+			log.Fatalf("[Ledger Service] Server error: %v", err)
 		}
 	}()
 
@@ -104,14 +98,14 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Println("[Wallet Service] Shutting down gracefully...")
+	log.Println("[Ledger Service] Shutting down gracefully...")
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("[Wallet Service] Forced shutdown error: %v", err)
+		log.Fatalf("[Ledger Service] Forced shutdown error: %v", err)
 	}
 
-	log.Println("[Wallet Service] Service exited cleanly")
+	log.Println("[Ledger Service] Service exited cleanly")
 }

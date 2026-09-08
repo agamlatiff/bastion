@@ -8,19 +8,23 @@ import (
 
 // Config holds runtime configuration for Wallet Service.
 type Config struct {
-	Port        string
-	DatabaseURL string
-	RedisAddr   string
-	JWTSecret   string
+	Port             string
+	DatabaseURL      string
+	RedisAddr        string
+	JWTSecret        string
+	LedgerServiceURL string
+	InternalAuth     string
 }
 
 // Load loads configuration from environment variables with sensible defaults.
 func Load() *Config {
 	return &Config{
-		Port:        getEnv("PORT", "8083"), // Port 8083 (Identity: 8081, Customer: 8082)
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://bastion:bastion_secret@localhost:5433/wallet_db?sslmode=disable"),
-		RedisAddr:   getEnv("REDIS_ADDR", "localhost:6379"),
-		JWTSecret:   getEnv("JWT_SECRET", "super_secret_bastion_key_change_in_production_12345"),
+		Port:             getEnv("PORT", "8083"),
+		DatabaseURL:      getEnv("DATABASE_URL", "postgres://bastion:bastion_secret@localhost:5433/wallet_db?sslmode=disable"),
+		RedisAddr:        getEnv("REDIS_ADDR", "localhost:6379"),
+		JWTSecret:        getEnv("JWT_SECRET", "super_secret_bastion_key_change_in_production_12345"),
+		LedgerServiceURL: getEnv("LEDGER_SERVICE_URL", "http://localhost:8084"),
+		InternalAuth:     getEnv("INTERNAL_API_SECRET", "bastion_internal_service_secret_2026"),
 	}
 }
 

@@ -350,26 +350,26 @@ CREATING → ACTIVE → FROZEN → ACTIVE
 > **Catatan:** Tahap ini **belum** mencakup transfer atau top-up, melainkan fondasi akun akuntansi.
 
 ### Bootstrap
-* [ ] Buat `services/ledger`
-* [ ] Setup Go module
-* [ ] PostgreSQL connection
-* [ ] Migration runner
-* [ ] Internal HTTP / gRPC API
+* [x] Buat `services/ledger`
+* [x] Setup Go module
+* [x] PostgreSQL connection
+* [x] Migration runner
+* [x] Internal HTTP / gRPC API
 
 ### Database
-* [ ] Buat tabel `ledger_accounts`
-* [ ] Buat tabel `account_balances`
-* [ ] Buat tabel `ledger_transactions`
-* [ ] Buat tabel `ledger_entries`
+* [x] Buat tabel `ledger_accounts`
+* [x] Buat tabel `account_balances`
+* [x] Buat tabel `ledger_transactions`
+* [x] Buat tabel `ledger_entries`
 
 ### Account Management
 Implement `POST /internal/v1/ledger/accounts`:
-* [ ] Create account
-* [ ] Account ID (UUID)
-* [ ] Account code unique (e.g. `CUSTOMER_WALLET_<wallet_id>_<currency>`)
-* [ ] Currency (`CHAR(3)`)
-* [ ] Owner type & Owner ID
-* [ ] Account status
+* [x] Create account
+* [x] Account ID (UUID)
+* [x] Account code unique (e.g. `CUSTOMER_WALLET_<wallet_id>_<currency>`)
+* [x] Currency (`CHAR(3)`)
+* [x] Owner type & Owner ID
+* [x] Account status
 
 ### Wallet $\leftrightarrow$ Ledger Handshake
 ```text
@@ -381,10 +381,10 @@ Create Ledger Account
          ├── Sukses ──► Wallet berubah ACTIVE
          └── Gagal  ──► Wallet tetap CREATING (atau FAILED)
 ```
-* [ ] Wallet berstatus `CREATING` saat request masuk
-* [ ] Wallet meminta Ledger membuat account secara synchronous
-* [ ] Jika Ledger account berhasil dibuat $\rightarrow$ Wallet update status menjadi `ACTIVE`
-* [ ] Jika Ledger gagal $\rightarrow$ Wallet tidak pernah menjadi `ACTIVE`
+* [x] Wallet berstatus `CREATING` saat request masuk
+* [x] Wallet meminta Ledger membuat account secara synchronous
+* [x] Jika Ledger account berhasil dibuat $\rightarrow$ Wallet update status menjadi `ACTIVE`
+* [x] Jika Ledger gagal $\rightarrow$ Wallet tidak pernah menjadi `ACTIVE`
 
 ---
 
