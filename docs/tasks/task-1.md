@@ -439,24 +439,24 @@ Create Ledger Account
 ## Phase 11 — Observability & Tracing
 
 ### Logging
-* [ ] Structured JSON logging
-* [ ] Label `service`
-* [ ] Label `request_id`
-* [ ] Label `correlation_id`
-* [ ] Label `timestamp`
-* [ ] Label `level`
+* [x] Structured JSON logging
+* [x] Label `service`
+* [x] Label `request_id`
+* [x] Label `correlation_id`
+* [x] Label `timestamp`
+* [x] Label `level`
 
 ### Metrics
-* [ ] Request count & throughput
-* [ ] Request latency / duration histogram
-* [ ] Error rate & HTTP status code metrics
-* [ ] Database connection pool & error metrics
-* [ ] Redis connection & cache error metrics
-* [ ] Kafka consumer lag & publish error metrics
+* [x] Request count & throughput
+* [x] Request latency / duration histogram
+* [x] Error rate & HTTP status code metrics
+* [x] Database connection pool & error metrics
+* [x] Redis connection & cache error metrics
+* [x] Kafka consumer lag & publish error metrics
 
 ### Correlation Validation
-* [ ] Uji alur: `Gateway` $\rightarrow$ `Identity` $\rightarrow$ `Customer` $\rightarrow$ `Wallet` $\rightarrow$ `Ledger`
-* [ ] Pastikan `correlation_id` yang sama terbawa tanpa terputus di sepanjang call chain
+* [x] Uji alur: `Gateway` $\rightarrow$ `Identity` $\rightarrow$ `Customer` $\rightarrow$ `Wallet` $\rightarrow$ `Ledger`
+* [x] Pastikan `correlation_id` yang sama terbawa tanpa terputus di sepanjang call chain
 
 ---
 

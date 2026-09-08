@@ -13,30 +13,34 @@ import (
 )
 
 // RequestID handles distributed tracing headers. It validates that incoming
-// X-Request-ID headers are valid UUIDs, generating a fresh UUID if missing or invalid.
+// X-Request-ID or X-Correlation-ID headers are valid UUIDs, generating a fresh UUID if missing.
 func RequestID() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rawID := strings.TrimSpace(c.GetHeader("X-Request-ID"))
+		rawID := strings.TrimSpace(c.GetHeader("X-Correlation-ID"))
+		if rawID == "" {
+			rawID = strings.TrimSpace(c.GetHeader("X-Request-ID"))
+		}
 
-		var requestID string
+		var traceID string
 		if rawID != "" {
-			// Validate that the caller-provided ID is a valid UUID
 			if parsed, err := uuid.Parse(rawID); err == nil {
-				requestID = parsed.String()
+				traceID = parsed.String()
 			}
 		}
 
-		// If missing or invalid UUID format, generate a new one
-		if requestID == "" {
-			requestID = uuid.New().String()
+		if traceID == "" {
+			traceID = uuid.New().String()
 		}
 
-		// Store in context for downstream handlers and inject into response headers
-		c.Set("RequestID", requestID)
-		c.Header("X-Request-ID", requestID)
+		// Store in context for downstream handlers and propagate in response headers
+		c.Set("RequestID", traceID)
+		c.Set("CorrelationID", traceID)
+		c.Header("X-Request-ID", traceID)
+		c.Header("X-Correlation-ID", traceID)
 
-		// Propagate to downstream HTTP request headers
-		c.Request.Header.Set("X-Request-ID", requestID)
+		// Propagate to downstream HTTP reverse proxy request headers
+		c.Request.Header.Set("X-Request-ID", traceID)
+		c.Request.Header.Set("X-Correlation-ID", traceID)
 
 		c.Next()
 	}
@@ -86,12 +90,11 @@ func CORS(allowedOrigins []string) gin.HandlerFunc {
 		if origin != "" && originMap[origin] {
 			c.Header("Access-Control-Allow-Origin", origin)
 			c.Header("Access-Control-Allow-Credentials", "true")
-			c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Authorization, X-Request-ID, Accept, Origin")
+			c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Authorization, X-Request-ID, X-Correlation-ID, Accept, Origin")
 			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
 			c.Header("Vary", "Origin")
 		}
 
-		// Handle preflight requests
 		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
@@ -101,20 +104,31 @@ func CORS(allowedOrigins []string) gin.HandlerFunc {
 	}
 }
 
-// JSONLogger logs structured JSON access records with trace correlation IDs.
+// JSONLogger logs structured JSON access records with full observability labels
 func JSONLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
 
+		status := c.Writer.Status()
+		level := "INFO"
+		if status >= 500 {
+			level = "ERROR"
+		} else if status >= 400 {
+			level = "WARN"
+		}
+
 		logEntry := map[string]any{
-			"timestamp":  time.Now().UTC().Format(time.RFC3339),
-			"request_id": c.GetString("RequestID"),
-			"method":     c.Request.Method,
-			"path":       c.Request.URL.Path,
-			"status":     c.Writer.Status(),
-			"latency_ms": time.Since(start).Milliseconds(),
-			"client_ip":  c.ClientIP(),
+			"service":        "api-gateway",
+			"level":          level,
+			"timestamp":      time.Now().UTC().Format(time.RFC3339),
+			"request_id":     c.GetString("RequestID"),
+			"correlation_id": c.GetString("CorrelationID"),
+			"method":         c.Request.Method,
+			"path":           c.Request.URL.Path,
+			"status":         status,
+			"latency_ms":     time.Since(start).Milliseconds(),
+			"client_ip":      c.ClientIP(),
 		}
 
 		if len(c.Errors) > 0 {
