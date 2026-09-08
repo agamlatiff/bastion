@@ -90,8 +90,10 @@ api.interceptors.response.use(
                 { refresh_token: refreshToken }
             );
 
-            const newAccessToken = data.data?.access_token;
-            const newRefreshToken = data.data?.refresh_token;
+            const resData = data as unknown as Record<string, unknown>;
+            const nestedData = resData?.data as Record<string, unknown> | undefined;
+            const newAccessToken = (resData?.access_token || nestedData?.access_token) as string | undefined;
+            const newRefreshToken = (resData?.refresh_token || nestedData?.refresh_token) as string | undefined;
 
             if (!newAccessToken) {
                 throw new Error('No access token in refresh response');
