@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,6 +17,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+func createReverseProxy(target string) gin.HandlerFunc {
+	targetURL, err := url.Parse(target)
+	if err != nil {
+		log.Fatalf("[GATEWAY FATAL] Invalid target URL %s: %v", target, err)
+	}
+
+	proxy := httputil.NewSingleHostReverseProxy(targetURL)
+	originalDirector := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		originalDirector(req)
+		req.Host = targetURL.Host
+	}
+
+	return func(c *gin.Context) {
+		proxy.ServeHTTP(c.Writer, c.Request)
+	}
+}
 
 func main() {
 	// 1. Load runtime configuration
@@ -28,7 +48,6 @@ func main() {
 	r.Use(middleware.Recovery())
 	r.Use(middleware.RequestID())
 	r.Use(middleware.SecurityHeaders())
-
 	r.Use(middleware.Timeout(time.Duration(cfg.RequestTimeoutSec) * time.Second))
 	r.Use(middleware.BodyLimit(cfg.MaxBodyBytes))
 	r.Use(middleware.CORS(cfg.AllowedOrigins))
@@ -52,7 +71,17 @@ func main() {
 	}))
 	metricsGroup.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
-	// 6. Configure HTTP Server
+	// 6. Public API Reverse Proxy Routing
+	// Notice: Internal endpoints (/internal/*) are NOT exposed here, shielding them from the internet!
+	proxyIdentity := createReverseProxy(cfg.IdentityServiceURL)
+	proxyCustomer := createReverseProxy(cfg.CustomerServiceURL)
+	proxyWallet := createReverseProxy(cfg.WalletServiceURL)
+
+	r.Any("/v1/auth/*path", proxyIdentity)
+	r.Any("/v1/customers/*path", proxyCustomer)
+	r.Any("/v1/wallets/*path", proxyWallet)
+
+	// 7. Configure HTTP Server
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
 		Handler:      r,
@@ -61,7 +90,7 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// 7. Start server in a background goroutine
+	// 8. Start server in a background goroutine
 	go func() {
 		log.Printf("[GATEWAY] Service started successfully on port %s\n", cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -69,10 +98,10 @@ func main() {
 		}
 	}()
 
-	// 8. Graceful Shutdown listener
+	// 9. Graceful Shutdown listener
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit // Block execution until interrupt signal received
+	<-quit
 	log.Println("[GATEWAY] Shutdown signal received, gracefully draining connections...")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

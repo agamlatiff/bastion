@@ -423,16 +423,16 @@ Create Ledger Account
 
 ## Phase 10 — Security Hardening
 
-* [ ] Password / secret tidak pernah tercetak di log
-* [ ] JWT / bearer token tidak bocor di log
-* [ ] Refresh token hash tidak bocor di log
-* [ ] Encryption key & database password tidak tercatat di log
-* [ ] PIN tidak pernah masuk log
-* [ ] Internal endpoint (Ledger / Internal APIs) tidak dapat diakses dari luar Gateway
-* [ ] Autentikasi service-to-service aktif (mTLS / Shared Internal Secret)
-* [ ] Validasi otorisasi user aktif di setiap service
-* [ ] CORS hanya mengizinkan domain allowlist
-* [ ] Production secret wajib diisi (tidak ada default fallback)
+* [x] Password / secret tidak pernah tercetak di log
+* [x] JWT / bearer token tidak bocor di log
+* [x] Refresh token hash tidak bocor di log
+* [x] Encryption key & database password tidak tercatat di log
+* [x] PIN tidak pernah masuk log
+* [x] Internal endpoint (Ledger / Internal APIs) tidak dapat diakses dari luar Gateway
+* [x] Autentikasi service-to-service aktif (mTLS / Shared Internal Secret)
+* [x] Validasi otorisasi user aktif di setiap service
+* [x] CORS hanya mengizinkan domain allowlist
+* [x] Production secret wajib diisi (tidak ada default fallback)
 
 ---
 
