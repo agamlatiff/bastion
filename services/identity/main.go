@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/agamlatiff/bastion/services/identity/config"
+	"github.com/agamlatiff/bastion/services/identity/event"
 	"github.com/agamlatiff/bastion/services/identity/handler"
 	"github.com/agamlatiff/bastion/services/identity/repository"
 	"github.com/agamlatiff/bastion/services/identity/service"
@@ -62,7 +63,9 @@ func main() {
 
 	// 4. Initialize layers (Clean Architecture / Dependency Injection)
 	repo := repository.New(dbPool)
-	authSvc := service.NewAuthService(repo, cfg)
+	eventProducer := event.NewKafkaProducer(cfg.KafkaBrokers, "bastion.identity.events")
+	defer eventProducer.Close()
+	authSvc := service.NewAuthService(repo, cfg, eventProducer)
 	authHdr := handler.NewAuthHandler(authSvc)
 
 	// 5. Setup Gin HTTP router

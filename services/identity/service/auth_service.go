@@ -9,6 +9,7 @@ import (
 
 	"github.com/agamlatiff/bastion/services/identity/config"
 	"github.com/agamlatiff/bastion/services/identity/domain"
+	"github.com/agamlatiff/bastion/services/identity/event"
 	"github.com/agamlatiff/bastion/services/identity/repository"
 	"github.com/agamlatiff/bastion/services/identity/security"
 	"github.com/google/uuid"
@@ -31,15 +32,17 @@ type AuthService interface {
 }
 
 type authService struct {
-	repo repository.Repository
-	cfg  *config.Config
+	repo     repository.Repository
+	cfg      *config.Config
+	producer event.EventProducer 
 }
 
 // NewAuthService creates a new instance of AuthService.
-func NewAuthService(repo repository.Repository, cfg *config.Config) AuthService {
+func NewAuthService(repo repository.Repository, cfg *config.Config, producer event.EventProducer) AuthService {
 	return &authService{
-		repo: repo,
-		cfg:  cfg,
+		repo:     repo,
+		cfg:      cfg,
+		producer: producer,
 	}
 }
 
@@ -69,6 +72,13 @@ func (s *authService) Register(ctx context.Context, req domain.RegisterRequest, 
 
 	// Record security audit event
 	s.repo.LogSecurityAudit(ctx, &user.ID, "USER_REGISTERED", requestID, ip)
+
+	// Publish UserRegistered event to Kafka
+	if s.producer != nil {
+		if err := s.producer.PublishUserRegistered(ctx, user.ID.String(), user.Email, "CUSTOMER", string(user.Status), requestID); err != nil {
+			fmt.Printf("[EVENT WARN] failed to publish UserRegistered event: %v\n", err)
+		}
+	}
 
 	return &domain.UserResponse{
 		ID:        user.ID,

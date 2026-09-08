@@ -241,47 +241,47 @@ Buat skrip migrasi database (`identity_db`):
 ## Phase 6 — Customer Service (Java / Spring Boot)
 
 ### Bootstrap
-* [ ] Buat `services/customer`
-* [ ] Setup Spring Boot
-* [ ] PostgreSQL connection
-* [ ] Flyway migration
-* [ ] REST API controllers
+* [x] Buat `services/customer`
+* [x] Setup Spring Boot
+* [x] PostgreSQL connection
+* [x] Flyway migration
+* [x] REST API controllers
 
 ### Database
-* [ ] Create `customers` table
-* [ ] Create `customer_metadata` table
-* [ ] Unique index on `identity_user_id`
+* [x] Create `customers` table
+* [x] Create `customer_metadata` table
+* [x] Unique index on `identity_user_id`
 
 ### Event Definition
-* [ ] Define event `UserRegistered`:
-  * Envelope
-  * Event version
-  * Event ID
-  * Correlation ID
+* [x] Define event `UserRegistered`:
+  * [x] Envelope
+  * [x] Event version
+  * [x] Event ID
+  * [x] Correlation ID
 
 ### Consumer
-* [ ] Customer consume `UserRegistered`
-* [ ] Create customer record
-* [ ] Handle duplicate event idempotently (no duplicate customer)
+* [x] Customer consume `UserRegistered`
+* [x] Create customer record
+* [x] Handle duplicate event idempotently (no duplicate customer)
 
 ### API Endpoints
-* [ ] `GET /v1/customers/me`
-* [ ] `PATCH /v1/customers/me`
+* [x] `GET /v1/customers/me`
+* [x] `PATCH /v1/customers/me`
 
 ### Authorization
-* [ ] User hanya bisa membaca customer profil miliknya
-* [ ] User hanya bisa mengupdate customer profil miliknya
+* [x] User hanya bisa membaca customer profil miliknya
+* [x] User hanya bisa mengupdate customer profil miliknya
 
 ### Tests
-* [ ] `UserRegistered` → customer created
-* [ ] Duplicate event → no duplicate customer
-* [ ] `GET /v1/customers/me`
-* [ ] `PATCH /v1/customers/me`
-* [ ] Unauthorized access rejected (403 Forbidden)
+* [x] `UserRegistered` → customer created
+* [x] Duplicate event → no duplicate customer
+* [x] `GET /v1/customers/me`
+* [x] `PATCH /v1/customers/me`
+* [x] Unauthorized access rejected (403/401)
 
 > **Checkpoint 4:**
 > ```text
-> Register User → UserRegistered Event → Customer Created → GET /v1/customers/me
+> Register User → UserRegistered Event → Customer Created → GET /v1/customers/me (Verified)
 > ```
 
 ---
