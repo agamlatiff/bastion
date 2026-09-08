@@ -14,6 +14,7 @@ import (
 	"github.com/agamlatiff/bastion/services/wallet/config"
 	"github.com/agamlatiff/bastion/services/wallet/handler"
 	"github.com/agamlatiff/bastion/services/wallet/middleware"
+	"github.com/agamlatiff/bastion/services/wallet/outbox"
 	"github.com/agamlatiff/bastion/services/wallet/repository"
 	"github.com/agamlatiff/bastion/services/wallet/service"
 	"github.com/gin-gonic/gin"
@@ -52,8 +53,13 @@ func main() {
 	walletService := service.NewWalletService(walletRepo, ledgerClient)
 	walletHandler := handler.NewWalletHandler(walletService)
 
+	// 3. Start Outbox Publisher Background Worker
+	outboxPublisher := outbox.NewOutboxPublisher(walletRepo, cfg.KafkaBrokers, cfg.KafkaTopic)
+	outboxCtx, outboxCancel := context.WithCancel(context.Background())
+	defer outboxCancel()
+	go outboxPublisher.Start(outboxCtx)
 
-	// 3. Router Setup
+	// 4. Router Setup
 	router := gin.Default()
 
 	// Health Check Endpoints
@@ -84,7 +90,7 @@ func main() {
 		v1.POST("/:id/unfreeze", walletHandler.UnfreezeWallet)
 	}
 
-	// 4. HTTP Server with Graceful Shutdown
+	// 5. HTTP Server with Graceful Shutdown
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
 		Handler:      router,
@@ -105,6 +111,8 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("[Wallet Service] Shutting down gracefully...")
+
+	outboxCancel() // Stop outbox background worker
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()

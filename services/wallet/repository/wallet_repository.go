@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -12,14 +13,20 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// WalletRepository defines persistence operations for wallets.
+// WalletRepository defines persistence operations for wallets and transactional outbox.
 type WalletRepository interface {
 	Create(ctx context.Context, wallet *domain.Wallet) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Wallet, error)
 	GetByCustomerID(ctx context.Context, customerID uuid.UUID) ([]*domain.Wallet, error)
 	GetActiveByCustomerAndCurrency(ctx context.Context, customerID uuid.UUID, currency string) (*domain.Wallet, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, fromStatus, toStatus domain.WalletStatus) error
+	UpdateStatusWithOutbox(ctx context.Context, id uuid.UUID, fromStatus, toStatus domain.WalletStatus, event *domain.EventEnvelope) error
 	CreateSnapshot(ctx context.Context, walletID uuid.UUID, balance int64) error
+
+	// Outbox operations
+	SaveOutboxEvent(ctx context.Context, event *domain.EventEnvelope) error
+	GetPendingOutboxEvents(ctx context.Context, limit int) ([]*domain.OutboxEvent, error)
+	MarkOutboxEventPublished(ctx context.Context, id uuid.UUID) error
 }
 
 type postgresWalletRepository struct {
@@ -54,7 +61,6 @@ func (r *postgresWalletRepository) Create(ctx context.Context, wallet *domain.Wa
 	)
 	if err != nil {
 		var pgErr *pgconn.PgError
-		// Postgres error 23505 = unique_violation (idx_wallets_customer_currency_active)
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return domain.ErrDuplicateWallet
 		}
@@ -150,7 +156,6 @@ func (r *postgresWalletRepository) GetActiveByCustomerAndCurrency(ctx context.Co
 }
 
 func (r *postgresWalletRepository) UpdateStatus(ctx context.Context, id uuid.UUID, fromStatus, toStatus domain.WalletStatus) error {
-	// Atomic state transition using WHERE status = fromStatus
 	query := `
 		UPDATE wallets
 		SET status = $1, updated_at = $2
@@ -162,7 +167,6 @@ func (r *postgresWalletRepository) UpdateStatus(ctx context.Context, id uuid.UUI
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		// Verify if wallet exists or was already transitioned
 		existing, getErr := r.GetByID(ctx, id)
 		if getErr != nil {
 			return getErr
@@ -175,11 +179,111 @@ func (r *postgresWalletRepository) UpdateStatus(ctx context.Context, id uuid.UUI
 	return nil
 }
 
+// UpdateStatusWithOutbox atomik memperbarui status wallet dan menyimpan event ke outbox dalam 1 transaksi DB
+func (r *postgresWalletRepository) UpdateStatusWithOutbox(ctx context.Context, id uuid.UUID, fromStatus, toStatus domain.WalletStatus, event *domain.EventEnvelope) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// 1. Update wallet status
+	query := `
+		UPDATE wallets
+		SET status = $1, updated_at = $2
+		WHERE id = $3 AND status = $4
+	`
+	now := time.Now().UTC()
+	tag, err := tx.Exec(ctx, query, toStatus, now, id, fromStatus)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrInvalidTransition
+	}
+
+	// 2. Insert outbox event in the same ACID transaction
+	if event != nil {
+		payloadBytes, err := json.Marshal(event)
+		if err != nil {
+			return err
+		}
+		outboxQuery := `
+			INSERT INTO outbox_events (id, aggregate_type, aggregate_id, event_type, payload, status, created_at)
+			VALUES ($1, $2, $3, $4, $5, 'PENDING', $6)
+		`
+		_, err = tx.Exec(ctx, outboxQuery, event.EventID, "WALLET", event.AggregateID, event.EventType, payloadBytes, now)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
 func (r *postgresWalletRepository) CreateSnapshot(ctx context.Context, walletID uuid.UUID, balance int64) error {
 	query := `
 		INSERT INTO wallet_balance_snapshots (id, wallet_id, balance, snapshot_at)
 		VALUES ($1, $2, $3, $4)
 	`
 	_, err := r.pool.Exec(ctx, query, uuid.New(), walletID, balance, time.Now().UTC())
+	return err
+}
+
+func (r *postgresWalletRepository) SaveOutboxEvent(ctx context.Context, event *domain.EventEnvelope) error {
+	payloadBytes, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+	query := `
+		INSERT INTO outbox_events (id, aggregate_type, aggregate_id, event_type, payload, status, created_at)
+		VALUES ($1, $2, $3, $4, $5, 'PENDING', $6)
+	`
+	_, err = r.pool.Exec(ctx, query, event.EventID, "WALLET", event.AggregateID, event.EventType, payloadBytes, time.Now().UTC())
+	return err
+}
+
+func (r *postgresWalletRepository) GetPendingOutboxEvents(ctx context.Context, limit int) ([]*domain.OutboxEvent, error) {
+	query := `
+		SELECT id, aggregate_type, aggregate_id, event_type, payload, status, created_at, published_at
+		FROM outbox_events
+		WHERE status = 'PENDING'
+		ORDER BY created_at ASC
+		LIMIT $1
+		FOR UPDATE SKIP LOCKED
+	`
+	rows, err := r.pool.Query(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []*domain.OutboxEvent
+	for rows.Next() {
+		var e domain.OutboxEvent
+		if err := rows.Scan(
+			&e.ID,
+			&e.AggregateType,
+			&e.AggregateID,
+			&e.EventType,
+			&e.Payload,
+			&e.Status,
+			&e.CreatedAt,
+			&e.PublishedAt,
+		); err != nil {
+			return nil, err
+		}
+		events = append(events, &e)
+	}
+	return events, rows.Err()
+}
+
+func (r *postgresWalletRepository) MarkOutboxEventPublished(ctx context.Context, id uuid.UUID) error {
+	query := `
+		UPDATE outbox_events
+		SET status = 'PUBLISHED', published_at = $1
+		WHERE id = $2
+	`
+	_, err := r.pool.Exec(ctx, query, time.Now().UTC(), id)
 	return err
 }

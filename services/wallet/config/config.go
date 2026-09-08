@@ -14,6 +14,8 @@ type Config struct {
 	JWTSecret        string
 	LedgerServiceURL string
 	InternalAuth     string
+	KafkaBrokers     []string
+	KafkaTopic       string
 }
 
 // Load loads configuration from environment variables with sensible defaults.
@@ -25,6 +27,8 @@ func Load() *Config {
 		JWTSecret:        getEnv("JWT_SECRET", "super_secret_bastion_key_change_in_production_12345"),
 		LedgerServiceURL: getEnv("LEDGER_SERVICE_URL", "http://localhost:8084"),
 		InternalAuth:     getEnv("INTERNAL_API_SECRET", "bastion_internal_service_secret_2026"),
+		KafkaBrokers:     strings.Split(getEnv("KAFKA_BROKERS", "localhost:19092"), ","),
+		KafkaTopic:       getEnv("WALLET_EVENTS_TOPIC", "bastion.wallet.events"),
 	}
 }
 

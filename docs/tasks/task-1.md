@@ -391,11 +391,11 @@ Create Ledger Account
 ## Phase 9 — Transactional Outbox & Event Ingestion
 
 ### Wallet Outbox
-* [ ] Tabel `outbox_events` di Wallet DB
-* [ ] Insert event dalam satu DB transaction dengan mutasi wallet
-* [ ] Outbox background publisher membaca record belum terbit
-* [ ] Publish ke Kafka broker
-* [ ] Tandai `published_at` setelah ACK diterima
+* [x] Tabel `outbox_events` di Wallet DB
+* [x] Insert event dalam satu DB transaction dengan mutasi wallet
+* [x] Outbox background publisher membaca record belum terbit
+* [x] Publish ke Kafka broker
+* [x] Tandai `published_at` setelah ACK diterima
 
 ### Event Schema
 ```json
@@ -409,15 +409,15 @@ Create Ledger Account
   "data": {}
 }
 ```
-* [ ] Implement `WalletCreated`
-* [ ] Implement `WalletFrozen`
-* [ ] Implement `WalletUnfrozen`
+* [x] Implement `WalletCreated`
+* [x] Implement `WalletFrozen`
+* [x] Implement `WalletUnfrozen`
 
 ### Idempotency Consumer
-* [ ] Buat tabel `processed_events`
-* [ ] Primary key `(consumer_name, event_id)`
-* [ ] Consumer memverifikasi record sebelum memproses event
-* [ ] Duplicate event tidak memicu duplicate side effect
+* [x] Buat tabel `processed_events`
+* [x] Primary key `(consumer_name, event_id)`
+* [x] Consumer memverifikasi record sebelum memproses event
+* [x] Duplicate event tidak memicu duplicate side effect
 
 ---
 

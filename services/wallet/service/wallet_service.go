@@ -61,13 +61,24 @@ func (s *walletService) CreateWallet(ctx context.Context, customerID uuid.UUID, 
 	// 3. Wallet <-> Ledger Handshake: Synchronously create official LIABILITY account in Ledger
 	if s.ledgerClient != nil {
 		if err := s.ledgerClient.CreateCustomerWalletAccount(ctx, wallet.ID, customerID, currency); err != nil {
-			// Handshake failed! Wallet remains in CREATING status and is NEVER promoted to ACTIVE
 			return nil, fmt.Errorf("ledger handshake failed: %w", err)
 		}
 	}
 
-	// 4. Ledger Account successfully created -> Promote state CREATING -> ACTIVE
-	if err := s.repo.UpdateStatus(ctx, wallet.ID, domain.StatusCreating, domain.StatusActive); err != nil {
+	// 4. Ledger Account successfully created -> Promote CREATING -> ACTIVE and atomically save WalletCreated to outbox
+	createdPayload := domain.WalletCreatedPayload{
+		WalletID:   wallet.ID,
+		CustomerID: customerID,
+		Currency:   wallet.Currency,
+		Balance:    wallet.Balance,
+		Status:     string(domain.StatusActive),
+	}
+	event, err := domain.NewEventEnvelope("WalletCreated", wallet.ID, createdPayload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create event envelope: %w", err)
+	}
+
+	if err := s.repo.UpdateStatusWithOutbox(ctx, wallet.ID, domain.StatusCreating, domain.StatusActive, event); err != nil {
 		return nil, err
 	}
 	wallet.Status = domain.StatusActive
@@ -122,7 +133,20 @@ func (s *walletService) FreezeWallet(ctx context.Context, walletID uuid.UUID, cu
 		return nil, domain.ErrInvalidTransition
 	}
 
-	if err := s.repo.UpdateStatus(ctx, walletID, wallet.Status, domain.StatusFrozen); err != nil {
+	// Atomically update status to FROZEN and save WalletFrozen event to outbox
+	frozenPayload := domain.WalletStatusChangedPayload{
+		WalletID:   walletID,
+		CustomerID: customerID,
+		Currency:   wallet.Currency,
+		FromStatus: string(wallet.Status),
+		ToStatus:   string(domain.StatusFrozen),
+	}
+	event, err := domain.NewEventEnvelope("WalletFrozen", walletID, frozenPayload)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.repo.UpdateStatusWithOutbox(ctx, walletID, wallet.Status, domain.StatusFrozen, event); err != nil {
 		return nil, err
 	}
 
@@ -144,7 +168,20 @@ func (s *walletService) UnfreezeWallet(ctx context.Context, walletID uuid.UUID, 
 		return nil, domain.ErrInvalidTransition
 	}
 
-	if err := s.repo.UpdateStatus(ctx, walletID, wallet.Status, domain.StatusActive); err != nil {
+	// Atomically update status to ACTIVE and save WalletUnfrozen event to outbox
+	unfrozenPayload := domain.WalletStatusChangedPayload{
+		WalletID:   walletID,
+		CustomerID: customerID,
+		Currency:   wallet.Currency,
+		FromStatus: string(wallet.Status),
+		ToStatus:   string(domain.StatusActive),
+	}
+	event, err := domain.NewEventEnvelope("WalletUnfrozen", walletID, unfrozenPayload)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.repo.UpdateStatusWithOutbox(ctx, walletID, wallet.Status, domain.StatusActive, event); err != nil {
 		return nil, err
 	}
 
