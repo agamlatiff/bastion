@@ -289,24 +289,24 @@ Buat skrip migrasi database (`identity_db`):
 ## Phase 7 — Wallet Service (Go)
 
 ### Bootstrap
-* [ ] Buat `services/wallet`
-* [ ] Setup Go module
-* [ ] PostgreSQL connection
-* [ ] Redis connection
-* [ ] Migration runner (golang-migrate)
-* [ ] HTTP server
+* [x] Buat `services/wallet`
+* [x] Setup Go module
+* [x] PostgreSQL connection
+* [x] Redis connection
+* [x] Migration runner (golang-migrate)
+* [x] HTTP server
 
 ### Database
-* [ ] Buat tabel `wallets`
-* [ ] Buat tabel `wallet_balance_snapshots`
-* [ ] Buat tabel `outbox_events`
+* [x] Buat tabel `wallets`
+* [x] Buat tabel `wallet_balance_snapshots`
+* [x] Buat tabel `outbox_events`
 
 ### Wallet Rules & Constraints
-* [ ] Currency wajib 3-letter ISO 4217 code (`CHAR(3)`)
-* [ ] Balance menggunakan integer minor unit (`BIGINT`), tidak boleh float
-* [ ] Balance tidak boleh negatif (`balance >= 0`)
-* [ ] Max balance limit harus `>= 0`
-* [ ] Wallet status tervalidasi
+* [x] Currency wajib 3-letter ISO 4217 code (`CHAR(3)`)
+* [x] Balance menggunakan integer minor unit (`BIGINT`), tidak boleh float
+* [x] Balance tidak boleh negatif (`balance >= 0`)
+* [x] Max balance limit harus `>= 0`
+* [x] Wallet status tervalidasi
 
 ### Wallet State Machine
 ```text
@@ -315,33 +315,33 @@ CREATING → ACTIVE → FROZEN → ACTIVE
              ▼         ▼
           CLOSED    CLOSED
 ```
-* [ ] `CREATING` $\rightarrow$ `ACTIVE`
-* [ ] `ACTIVE` $\rightarrow$ `FROZEN`
-* [ ] `FROZEN` $\rightarrow$ `ACTIVE`
-* [ ] `ACTIVE` $\rightarrow$ `CLOSED`
-* [ ] `FROZEN` $\rightarrow$ `CLOSED`
-* [ ] `CLOSED` adalah terminal state (tidak bisa diaktifkan kembali)
+* [x] `CREATING` $\rightarrow$ `ACTIVE`
+* [x] `ACTIVE` $\rightarrow$ `FROZEN`
+* [x] `FROZEN` $\rightarrow$ `ACTIVE`
+* [x] `ACTIVE` $\rightarrow$ `CLOSED`
+* [x] `FROZEN` $\rightarrow$ `CLOSED`
+* [x] `CLOSED` adalah terminal state (tidak bisa diaktifkan kembali)
 
 ### API Endpoints
-* [ ] `POST /v1/wallets`
+* [x] `POST /v1/wallets`
   * Validate currency
   * Validate customer
   * Prevent duplicate active wallet per currency
   * Create wallet (Initial status: `CREATING`, balance: `0`)
-* [ ] `GET /v1/wallets/{wallet_id}` (Ownership check & authorization)
-* [ ] `GET /v1/wallets/{wallet_id}/balance` (Return integer amount & currency, no Redis-as-authority)
-* [ ] `POST /v1/wallets/{wallet_id}/freeze`
-* [ ] `POST /v1/wallets/{wallet_id}/unfreeze`
+* [x] `GET /v1/wallets/{wallet_id}` (Ownership check & authorization)
+* [x] `GET /v1/wallets/{wallet_id}/balance` (Return integer amount & currency, no Redis-as-authority)
+* [x] `POST /v1/wallets/{wallet_id}/freeze`
+* [x] `POST /v1/wallets/{wallet_id}/unfreeze`
 
 ### Tests
-* [ ] Create wallet
-* [ ] Duplicate wallet rejected
-* [ ] Get wallet detail
-* [ ] Get wallet balance
-* [ ] Freeze wallet
-* [ ] Unfreeze wallet
-* [ ] Mutation on closed wallet rejected
-* [ ] Unauthorized wallet access rejected
+* [x] Create wallet
+* [x] Duplicate wallet rejected
+* [x] Get wallet detail
+* [x] Get wallet balance
+* [x] Freeze wallet
+* [x] Unfreeze wallet
+* [x] Mutation on closed wallet rejected
+* [x] Unauthorized wallet access rejected
 
 ---
 
