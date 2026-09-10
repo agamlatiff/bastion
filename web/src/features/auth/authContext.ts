@@ -1,11 +1,12 @@
 import { createContext, useContext } from 'react';
-import type { User, LoginRequest } from '../../types/auth';
+import type { User, LoginRequest, AuthResponse } from '../../types/auth';
 
 export interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (credentials: LoginRequest) => Promise<void>;
+    login: (credentials: LoginRequest) => Promise<AuthResponse>;
+    verify2FA: (tempToken: string, code: string) => Promise<void>;
     logout: () => Promise<void>;
     setUser: (user: User | null) => void;
 }

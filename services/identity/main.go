@@ -66,7 +66,7 @@ func main() {
 	eventProducer := event.NewKafkaProducer(cfg.KafkaBrokers, "bastion.identity.events")
 	defer eventProducer.Close()
 	authSvc := service.NewAuthService(repo, cfg, eventProducer)
-	authHdr := handler.NewAuthHandler(authSvc)
+	authHdr := handler.NewAuthHandler(authSvc, cfg.JWTSecret)
 
 	// 5. Setup Gin HTTP router
 	router := gin.New()

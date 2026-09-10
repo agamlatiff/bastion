@@ -1,18 +1,43 @@
 openapi: 3.0.3
 info:
-  title: Bastion Backend API
-  version: 1.0.0
-  description: High-performance Fintech & E-Wallet Backend Engine
+  title: Bastion Core Banking & FinTech API
+  version: 2.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  description: |
+    API Gateway reverse proxy untuk microservices Bastion:
+    - **Identity Service** (:8081) -> `/v1/auth/*`
+    - **Customer Service** (:8082) -> `/v1/customers/*`
+    - **Wallet Service** (:8083) -> `/v1/wallets/*`
+    
+    *Catatan FinTech:* Semua nominal saldo (`balance`) menggunakan satuan **minor unit** (misal IDR Rp 10.000,00 = `1000000`).
+servers:
+  - url: http://localhost:8080
+    description: Bastion API Gateway (Local Development)
+
+tags:
+  - name: 🔐 Identity & Auth
+    description: Autentikasi, penerbitan JWT, dan manajemen sesi
+  - name: 👤 Customer Profile
+    description: Data nasabah dan identitas kepemilikan
+  - name: 💳 Wallet & Balance
+    description: Dompet multi-valas dan kontrol status saldo
+  - name: 🩺 System Health
+    description: Probe liveness & readiness gateway
 
 paths:
-  # ==========================================
-  # 🔐 1. AUTH ENDPOINTS
-  # ==========================================
-  /api/v1/auth/register:
+  # =========================================================================
+  # 🔐 IDENTITY & AUTH ENDPOINTS (/v1/auth)
+  # =========================================================================
+  /v1/auth/register:
     post:
-      summary: User Registration
+      operationId: register
       tags:
-        - Auth
+        - 🔐 Identity & Auth
+      summary: Registrasi Pengguna Baru
+      description: Mendaftarkan akun baru, menyimpan password hash bcrypt, dan menerbitkan token sesi awal.
+      security: []
       requestBody:
         required: true
         content:
@@ -22,56 +47,35 @@ paths:
               required:
                 - email
                 - password
-                - full_name
               properties:
                 email:
                   type: string
                   format: email
-                  example: "agam@test.com"
+                  example: user@bastion.id
                 password:
                   type: string
                   minLength: 8
-                  example: "password123"
-                full_name:
-                  type: string
-                  example: "Agam Latiff"
+                  example: RahasiaBank123!
       responses:
         "201":
-          description: User registered successfully
+          description: Registrasi berhasil
           content:
             application/json:
-              example:
-                status: "success"
-                message: "user registered successfully"
-                data:
-                  token: "eyJhbGciOiJIUzI1NiIs..."
-                  user:
-                    id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
-                    email: "agam@test.com"
-                    full_name: "Agam Latiff"
-                    tier: "tier_1"
-                    is_verified: false
-                    created_at: "2026-08-17T10:00:00Z"
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
         "400":
-          description: Validation error
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "password must be at least 8 characters"
+          description: Payload tidak valid atau password terlalu pendek
         "409":
-          description: Email already exists
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "email already registered"
+          description: Email sudah terdaftar sebelumnya
 
-  /api/v1/auth/login:
+  /v1/auth/login:
     post:
-      summary: User Login
+      operationId: login
       tags:
-        - Auth
+        - 🔐 Identity & Auth
+      summary: Login Pengguna
+      description: "Verifikasi kredensial email & password. Jika 2FA aktif, mengembalikan temp_token (5 menit) dan flag two_factor_required: true."
+      security: []
       requestBody:
         required: true
         content:
@@ -85,104 +89,28 @@ paths:
                 email:
                   type: string
                   format: email
-                  example: "agam@test.com"
+                  example: user@bastion.id
                 password:
                   type: string
-                  example: "password123"
+                  example: RahasiaBank123!
       responses:
         "200":
-          description: Login successful (or 2FA challenge if enabled)
+          description: Login berhasil atau tantangan 2FA diberikan
           content:
             application/json:
-              examples:
-                login_success:
-                  summary: Normal login — returns token pair
-                  value:
-                    status: "success"
-                    message: "Login successfully"
-                    data:
-                      access_token: "eyJhbGciOiJIUzI1NiIs..."
-                      refresh_token: "eyJhbGciOiJIUzI1NiIs..."
-                      user:
-                        id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
-                        email: "agam@test.com"
-                        full_name: "Agam Latiff"
-                        tier: "tier_1"
-                        is_two_factor_enabled: false
-                        created_at: "2026-08-17T10:00:00Z"
-                two_factor_required:
-                  summary: 2FA challenge — client must verify TOTP code
-                  value:
-                    status: "success"
-                    message: "Two-factor authentication required"
-                    data:
-                      two_factor_required: true
-                      temp_token: "eyJhbGciOiJIUzI1NiIs..."
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
         "401":
-          description: Invalid credentials
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "invalid email or password"
+          description: Email atau password salah
 
-  /api/v1/auth/profile:
-    get:
-      summary: Get Current User Profile
-      tags:
-        - Auth
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: User profile retrieved
-          content:
-            application/json:
-              example:
-                status: "success"
-                data:
-                  id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
-                  email: "agam@test.com"
-                  full_name: "Agam Latiff"
-                  tier: "tier_1"
-                  is_verified: false
-                  created_at: "2026-08-17T10:00:00Z"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "unauthorized"
-
-  /api/v1/auth/logout:
+  /v1/auth/refresh:
     post:
-      summary: User Logout (Blacklist Token)
+      operationId: refreshToken
       tags:
-        - Auth
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: Logout successful
-          content:
-            application/json:
-              example:
-                status: "success"
-                message: "successfully logged out"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "unauthorized"
-
-  /api/v1/auth/refresh:
-    post:
-      summary: Refresh Access Token (Rotate refresh token)
-      tags:
-        - Auth
+        - 🔐 Identity & Auth
+      summary: Silent Refresh Token
+      description: Memperbarui Access Token yang kedaluwarsa menggunakan Refresh Token yang valid.
+      security: []
       requestBody:
         required: true
         content:
@@ -194,33 +122,37 @@ paths:
               properties:
                 refresh_token:
                   type: string
-                  example: "eyJhbGciOiJIUzI1NiIs..."
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
       responses:
         "200":
-          description: New token pair issued (old refresh token invalidated)
+          description: Token berhasil diperbarui
           content:
             application/json:
-              example:
-                status: "success"
-                message: "Token refreshed successfully"
-                data:
-                  access_token: "eyJhbGciOiJIUzI1NiIs..."
-                  refresh_token: "eyJhbGciOiJIUzI1NiIs..."
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                  token_type:
+                    type: string
+                    example: Bearer
+                  expires_in:
+                    type: integer
+                    example: 900
         "401":
-          description: Invalid or expired refresh token
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "invalid or expired refresh token"
+          description: Refresh token kedaluwarsa atau tidak valid
 
-  /api/v1/auth/pin:
+  /v1/auth/logout:
     post:
-      summary: Set Transaction PIN (first time setup)
+      operationId: logout
       tags:
-        - Auth
+        - 🔐 Identity & Auth
+      summary: Logout & Cabut Sesi
       security:
-        - bearerAuth: []
+        - BearerAuth: []
+      description: Memasukkan Access Token ke Redis blacklist dan mencabut session di database.
       requestBody:
         required: true
         content:
@@ -228,499 +160,182 @@ paths:
             schema:
               type: object
               required:
-                - pin
+                - refresh_token
               properties:
-                pin:
+                refresh_token:
                   type: string
-                  pattern: "^[0-9]{6}$"
-                  example: "123456"
       responses:
         "200":
-          description: PIN set successfully
+          description: Berhasil logout
           content:
             application/json:
-              example:
-                status: "success"
-                message: "Transaction PIN has been successfully set"
-        "400":
-          description: PIN already set or invalid format
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "pin already set"
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Logged out successfully
         "401":
-          description: Unauthorized
+          description: Token tidak valid
+
+  /v1/auth/2fa/setup:
+    post:
+      operationId: setup2FA
+      tags:
+        - 🔐 Identity & Auth
+      summary: Inisialisasi 2FA TOTP
+      description: Menghasilkan shared secret Base32 baru dan otpauth:// URI untuk Google Authenticator. Secret disimpan terenkripsi AES-256-GCM.
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Secret key dan URI berhasil dibuat
           content:
             application/json:
-              example:
-                status: "error"
-                error: "unauthorized"
-    put:
-      summary: Change Transaction PIN
+              schema:
+                $ref: '#/components/schemas/TwoFactorSetupResponse'
+        "401":
+          description: Belum terautentikasi
+
+  /v1/auth/2fa/enable:
+    post:
+      operationId: enable2FA
       tags:
-        - Auth
+        - 🔐 Identity & Auth
+      summary: Konfirmasi & Aktivasi 2FA
+      description: "Memvalidasi 6-digit kode OTP dari aplikasi authenticator pengguna dan mengaktifkan two_factor_enabled: true."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - old_pin
-                - new_pin
-              properties:
-                old_pin:
-                  type: string
-                  example: "123456"
-                new_pin:
-                  type: string
-                  example: "654321"
+              $ref: '#/components/schemas/TwoFactorEnableRequest'
       responses:
         "200":
-          description: PIN changed successfully
+          description: 2FA berhasil diaktifkan
           content:
             application/json:
-              example:
-                status: "success"
-                message: "Transaction PIN has been successfully changed"
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Two-factor authentication enabled successfully
         "400":
-          description: Invalid old PIN or invalid format
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "invalid pin"
+          description: Kode OTP tidak valid atau setup belum diinisialisasi
         "401":
-          description: Unauthorized
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "unauthorized"
+          description: Belum terautentikasi
 
-  /api/v1/auth/2fa/setup:
+  /v1/auth/2fa/verify:
     post:
-      summary: Setup 2FA — Generate secret & QR code URI
-      description: Returns a Base32 secret and an otpauth:// URI to be scanned by Google Authenticator or Authy. Call /enable after scanning to activate.
+      operationId: verify2FA
       tags:
-        - Auth (2FA)
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: 2FA secret and QR URI generated
-          content:
-            application/json:
-              example:
-                status: "success"
-                message: "Scan this QR code in Google Authenticator or enter the secret manually"
-                data:
-                  secret: "JBSWY3DPEHPK3PXP"
-                  otp_auth_url: "otpauth://totp/Bastion:agam@test.com?secret=JBSWY3DPEHPK3PXP&issuer=Bastion"
-        "400":
-          description: 2FA already enabled
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "two-factor authentication is already enabled"
-        "401":
-          description: Unauthorized
-
-  /api/v1/auth/2fa/enable:
-    post:
-      summary: Enable 2FA — Confirm with TOTP code from authenticator app
-      tags:
-        - Auth (2FA)
-      security:
-        - bearerAuth: []
+        - 🔐 Identity & Auth
+      summary: Verifikasi Tantangan Login 2FA
+      description: Memverifikasi temp_token dan 6-digit OTP saat login, lalu menerbitkan access & refresh token penuh.
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - code
-              properties:
-                code:
-                  type: string
-                  pattern: "^[0-9]{6}$"
-                  example: "123456"
+              $ref: '#/components/schemas/TwoFactorVerifyRequest'
       responses:
         "200":
-          description: 2FA activated successfully
+          description: Verifikasi 2FA sukses, token sesi diterbitkan
           content:
             application/json:
-              example:
-                status: "success"
-                message: "Two-factor authentication has been successfully activated"
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
         "400":
-          description: Invalid TOTP code or 2FA not set up yet
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "invalid two-factor authentication code"
+          description: Format temp_token atau kode OTP tidak valid
         "401":
-          description: Unauthorized
+          description: Kode OTP salah atau temp_token telah kedaluwarsa
 
-  /api/v1/auth/2fa/disable:
+  /v1/auth/2fa/disable:
     post:
-      summary: Disable 2FA — Confirm with TOTP code
+      operationId: disable2FA
       tags:
-        - Auth (2FA)
+        - 🔐 Identity & Auth
+      summary: Nonaktifkan 2FA
+      description: Memerlukan verifikasi password akun sebelum menghapus secret TOTP dan menonaktifkan two_factor_enabled.
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - code
-              properties:
-                code:
-                  type: string
-                  example: "123456"
+              $ref: '#/components/schemas/TwoFactorDisableRequest'
       responses:
         "200":
-          description: 2FA deactivated successfully
+          description: 2FA berhasil dinonaktifkan
           content:
             application/json:
-              example:
-                status: "success"
-                message: "Two-factor authentication has been deactivated"
-        "400":
-          description: Invalid code or 2FA not enabled
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "two-factor authentication is not enabled"
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Two-factor authentication disabled successfully
         "401":
-          description: Unauthorized
+          description: Password akun salah atau sesi tidak valid
 
-  /api/v1/auth/2fa/verify:
-    post:
-      summary: Verify 2FA Login — Submit TOTP code after login challenge
-      description: After receiving two_factor_required=true from /login, submit the temp_token and TOTP code here to receive a full token pair.
-      tags:
-        - Auth (2FA)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - temp_token
-                - code
-              properties:
-                temp_token:
-                  type: string
-                  description: Short-lived 5-minute token received from /login
-                  example: "eyJhbGciOiJIUzI1NiIs..."
-                code:
-                  type: string
-                  pattern: "^[0-9]{6}$"
-                  example: "123456"
-      responses:
-        "200":
-          description: 2FA verified — full token pair issued
-          content:
-            application/json:
-              example:
-                status: "success"
-                message: "2FA Login successful"
-                data:
-                  access_token: "eyJhbGciOiJIUzI1NiIs..."
-                  refresh_token: "eyJhbGciOiJIUzI1NiIs..."
-                  user:
-                    id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
-                    email: "agam@test.com"
-                    full_name: "Agam Latiff"
-                    tier: "tier_1"
-                    is_two_factor_enabled: true
-        "401":
-          description: Invalid or expired temp_token, or wrong TOTP code
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "invalid two-factor authentication code"
-
-  # ==========================================
-  # 💳 2. WALLET ENDPOINTS
-  # ==========================================
-  /api/v1/wallet/balance:
+  # =========================================================================
+  # 👤 CUSTOMER PROFILE ENDPOINTS (/v1/customers)
+  # =========================================================================
+  /v1/customers/me:
     get:
-      summary: Get Wallet Balance & Tier Limits
+      operationId: getMyProfile
       tags:
-        - Wallet
+        - 👤 Customer Profile
+      summary: Ambil Profil Nasabah Saya
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       responses:
         "200":
-          description: Current wallet balance returned
+          description: Data profil nasabah
           content:
             application/json:
-              example:
-                status: "success"
-                data:
-                  wallet_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                  user_id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
-                  balance: 500000
-                  currency: "IDR"
-                  max_balance_limit: 2000000
+              schema:
+                $ref: '#/components/schemas/CustomerProfile'
         "401":
-          description: Unauthorized
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "unauthorized"
-
-  /api/v1/wallet/topup:
-    post:
-      summary: Top-Up Wallet Balance
-      tags:
-        - Wallet
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - amount
-                - idempotency_key
-              properties:
-                amount:
-                  type: integer
-                  format: int64
-                  minimum: 1
-                  example: 100000
-                idempotency_key:
-                  type: string
-                  format: uuid
-                  example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
-                description:
-                  type: string
-                  example: "Top-up saldo bulanan"
-      responses:
-        "200":
-          description: Top-up successful
-          content:
-            application/json:
-              example:
-                status: "success"
-                message: "top-up successful"
-                data:
-                  id: "tx-uuid-12345"
-                  amount: 100000
-                  fee_amount: 0
-                  type: "topup"
-                  status: "success"
-                  description: "Top-up saldo bulanan"
-                  created_at: "2026-08-17T10:00:00Z"
-        "400":
-          description: Exceeds tier limit or invalid amount
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "top-up amount exceeds maximum wallet balance limit"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "unauthorized"
-
-  /api/v1/wallet/transactions:
-    get:
-      summary: Get Paginated Transaction History
-      tags:
-        - Wallet
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: limit
-          in: query
-          description: Number of records to return
-          schema:
-            type: integer
-            default: 10
-        - name: offset
-          in: query
-          description: Number of records to skip
-          schema:
-            type: integer
-            default: 0
-      responses:
-        "200":
-          description: List of transactions returned
-          content:
-            application/json:
-              example:
-                status: "success"
-                data:
-                  - id: "tx-123"
-                    amount: 100000
-                    type: "topup"
-                    status: "success"
-                    created_at: "2026-08-17T10:00:00Z"
-                limit: 10
-                offset: 0
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "unauthorized"
-  /api/v1/wallet/transfer:
-    post:
-      summary: P2P Wallet Balance Transfer (Sprint 1.4)
-      tags:
-        - Wallet
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - receiver_email
-                - amount
-                - idempotency_key
-              properties:
-                receiver_email:
-                  type: string
-                  format: email
-                  example: "jack@test.com"
-                amount:
-                  type: integer
-                  format: int64
-                  minimum: 1
-                  example: 50000
-                idempotency_key:
-                  type: string
-                  format: uuid
-                  example: "transfer-uuid-789"
-                description:
-                  type: string
-                  example: "Lunch money"
-      responses:
-        "200":
-          description: Transfer successful
-          content:
-            application/json:
-              example:
-                status: "success"
-                message: "transfer successful"
-                data:
-                  id: "tx-uuid-999"
-                  idempotency_key: "transfer-uuid-789"
-                  sender_wallet_id: "wallet-uuid-111"
-                  receiver_wallet_id: "wallet-uuid-222"
-                  amount: 50000
-                  fee_amount: 0
-                  type: "transfer"
-                  status: "success"
-                  description: "Lunch money"
-                  created_at: "2026-08-17T10:00:00Z"
-        "400":
-          description: Invalid request body or PIN not set
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "pin not set"
-        "401":
-          description: Unauthorized or wrong transaction PIN
-          content:
-            application/json:
-              examples:
-                unauthorized:
-                  value:
-                    status: "error"
-                    error: "unauthorized"
-                invalid_pin:
-                  value:
-                    status: "error"
-                    error: "invalid pin"
-        "403":
-          description: KYC Tier 2 required to make transfers
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "kyc verification required to perform this action"
+          description: Belum terautentikasi
         "404":
-          description: Receiver user or wallet not found
-          content:
-            application/json:
-              examples:
-                receiver_not_found:
-                  value:
-                    status: "error"
-                    error: "receiver user not found"
-                wallet_not_found:
-                  value:
-                    status: "error"
-                    error: "receiver wallet not found"
-        "409":
-          description: Self-transfer or concurrent request conflict
-          content:
-            application/json:
-              examples:
-                self_transfer:
-                  value:
-                    status: "error"
-                    error: "cannot transfer to yourself"
-                concurrent:
-                  value:
-                    status: "error"
-                    error: "a transfer is already in progress"
-        "422":
-          description: Insufficient balance or exceeds tier/daily limit
-          content:
-            application/json:
-              examples:
-                insufficient_balance:
-                  value:
-                    status: "error"
-                    error: "insufficient balance"
-                exceeds_limit:
-                  value:
-                    status: "error"
-                    error: "transfer amount exceeds maximum wallet balance limit"
-                daily_limit:
-                  value:
-                    status: "error"
-                    error: "daily transfer limit exceeded"
+          description: Profil customer belum dibuat
 
-  # ==========================================
-  # 🪪 3. KYC ENDPOINTS
-  # ==========================================
-  /api/v1/auth/kyc:
-    post:
-      summary: Submit KYC Identity Verification (Upgrade to Tier 2)
+  # =========================================================================
+  # 💳 WALLET ENDPOINTS (/v1/wallets)
+  # =========================================================================
+  /v1/wallets:
+    get:
+      operationId: listWallets
       tags:
-        - KYC
+        - 💳 Wallet & Balance
+      summary: Ambil Daftar Dompet Nasabah
       security:
-        - bearerAuth: []
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Daftar seluruh dompet aktif nasabah
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Wallet'
+        "401":
+          description: Tidak memiliki akses
+
+    post:
+      operationId: createWallet
+      tags:
+        - 💳 Wallet & Balance
+      summary: Buat Dompet Valas Baru
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -728,201 +343,276 @@ paths:
             schema:
               type: object
               required:
-                - id_card_number
-                - id_card_image_url
-                - selfie_image_url
+                - currency
               properties:
-                id_card_number:
+                currency:
                   type: string
-                  example: "3171012345670001"
-                id_card_image_url:
-                  type: string
-                  example: "https://storage.bastion.com/ktp/user-123.jpg"
-                selfie_image_url:
-                  type: string
-                  example: "https://storage.bastion.com/selfie/user-123.jpg"
+                  enum: [IDR, USD]
+                  example: USD
       responses:
         "201":
-          description: KYC application submitted successfully
+          description: Dompet berhasil dibuat
           content:
             application/json:
-              example:
-                status: "success"
-                message: "KYC application submitted successfully"
-                data:
-                  id: "kyc-uuid-123"
-                  user_id: "usr-uuid-456"
-                  id_card_number: "3171012345670001"
-                  id_card_image_url: "https://storage.bastion.com/ktp/user-123.jpg"
-                  selfie_image_url: "https://storage.bastion.com/selfie/user-123.jpg"
-                  status: "pending"
-                  submitted_at: "2026-08-17T10:00:00Z"
+              schema:
+                $ref: '#/components/schemas/Wallet'
         "400":
-          description: Validation error or user already tier 2
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "user is already verified as tier 2"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "unauthorized"
+          description: Request body tidak valid
+        "409":
+          description: Dompet dengan mata uang ini sudah ada
 
-  /api/v1/auth/kyc/status:
+  /v1/wallets/{id}:
     get:
-      summary: Get KYC Application Status
+      operationId: getWallet
       tags:
-        - KYC
+        - 💳 Wallet & Balance
+      summary: Ambil Detail & Saldo Dompet Spesifik
       security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: KYC status returned
-          content:
-            application/json:
-              example:
-                status: "success"
-                data:
-                  id: "kyc-uuid-123"
-                  user_id: "usr-uuid-456"
-                  id_card_number: "3171012345670001"
-                  status: "approved"
-                  submitted_at: "2026-08-17T10:00:00Z"
-                  verified_at: "2026-08-17T10:05:00Z"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "unauthorized"
-        "404":
-          description: No KYC submission found
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "kyc application not found"
-
-  /api/v1/auth/kyc/review:
-    post:
-      summary: Review & Approve KYC (Upgrade User Tier 1 -> Tier 2)
-      tags:
-        - KYC
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - status
-              properties:
-                status:
-                  type: string
-                  enum: [approved, rejected]
-                  example: "approved"
-                rejection_reason:
-                  type: string
-                  example: ""
-      responses:
-        "200":
-          description: KYC reviewed and user upgraded to Tier 2 (if approved)
-          content:
-            application/json:
-              example:
-                status: "success"
-                message: "KYC review processed successfully"
-                data:
-                  id: "kyc-uuid-123"
-                  status: "approved"
-                  verified_at: "2026-08-17T10:05:00Z"
-        "400":
-          description: Invalid review status or no pending submission
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "only pending KYC applications can be reviewed"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              example:
-                status: "error"
-                error: "unauthorized"
-
-  # ==========================================
-  # 📜 4. AUDIT LOG ENDPOINTS
-  # ==========================================
-  /api/v1/auth/audit-logs:
-    get:
-      summary: Get User Activity & Security Audit Logs
-      tags:
-        - Audit
-      security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
-        - name: limit
-          in: query
-          description: Number of audit log records to return (default 20, max 100)
-          required: false
+        - name: id
+          in: path
+          required: true
           schema:
-            type: integer
-            default: 20
-            example: 20
-        - name: offset
-          in: query
-          description: Number of records to skip for pagination (default 0)
-          required: false
-          schema:
-            type: integer
-            default: 0
-            example: 0
+            type: string
+            format: uuid
       responses:
         "200":
-          description: List of user activity audit logs
+          description: Detail dompet
           content:
             application/json:
-              example:
-                status: "success"
-                data:
-                  logs:
-                    - id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-                      user_id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
-                      action: "LOGIN"
-                      ip_address: "127.0.0.1"
-                      user_agent: "PostmanRuntime/7.39.0"
-                      metadata:
-                        email: "agam@test.com"
-                      created_at: "2026-08-20T22:30:00Z"
-                    - id: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
-                      user_id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
-                      action: "TRANSFER"
-                      ip_address: "127.0.0.1"
-                      user_agent: "PostmanRuntime/7.39.0"
-                      metadata:
-                        amount: 50000
-                        receiver_email: "receiver@test.com"
-                        idempotency_key: "transfer-uuid-123"
-                      created_at: "2026-08-20T22:32:00Z"
+              schema:
+                $ref: '#/components/schemas/Wallet'
         "401":
-          description: Unauthorized
+          description: Akses ditolak
+        "404":
+          description: Dompet tidak ditemukan
+
+  /v1/wallets/{id}/freeze:
+    post:
+      operationId: freezeWallet
+      tags:
+        - 💳 Wallet & Balance
+      summary: Bekukan Dompet (Emergency Kill-Switch)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Dompet berhasil dibekukan
           content:
             application/json:
-              example:
-                status: "error"
-                error: "unauthorized"
+              schema:
+                $ref: '#/components/schemas/Wallet'
+        "401":
+          description: Akses ditolak
+        "404":
+          description: Dompet tidak ditemukan
 
+  /v1/wallets/{id}/unfreeze:
+    post:
+      operationId: unfreezeWallet
+      tags:
+        - 💳 Wallet & Balance
+      summary: Buka Kembali Pembekuan Dompet
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Dompet kembali aktif
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+        "401":
+          description: Akses ditolak
+        "404":
+          description: Dompet tidak ditemukan
+
+  # =========================================================================
+  # 🩺 SYSTEM HEALTH
+  # =========================================================================
+  /livez:
+    get:
+      operationId: livez
+      tags:
+        - 🩺 System Health
+      summary: Liveness Probe
+      security: []
+      responses:
+        "200":
+          description: Gateway menyala dan menerima koneksi
+        "500":
+          description: Gateway mengalami kegagalan internal
+
+  /readyz:
+    get:
+      operationId: readyz
+      tags:
+        - 🩺 System Health
+      summary: Readiness Probe
+      security: []
+      responses:
+        "200":
+          description: Seluruh koneksi dependency siap melayani traffic
+        "503":
+          description: Layanan dependency belum siap
+
+# ===========================================================================
+# COMPONENTS / SCHEMAS
+# ===========================================================================
 components:
   securitySchemes:
-    bearerAuth:
+    BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            email:
+              type: string
+              format: email
+            status:
+              type: string
+              example: ACTIVE
+            two_factor_enabled:
+              type: boolean
+              example: false
+            created_at:
+              type: string
+              format: date-time
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          example: 900
+        two_factor_required:
+          type: boolean
+          example: false
+        temp_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    TwoFactorSetupResponse:
+      type: object
+      properties:
+        secret:
+          type: string
+          example: JBSWY3DPEHPK3PXP
+        otpauth_url:
+          type: string
+          example: otpauth://totp/Bastion:user@bastion.id?secret=JBSWY3DPEHPK3PXP&issuer=Bastion
+
+    TwoFactorEnableRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          pattern: '^[0-9]{6}$'
+          example: "123456"
+
+    TwoFactorVerifyRequest:
+      type: object
+      required:
+        - temp_token
+        - code
+      properties:
+        temp_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        code:
+          type: string
+          pattern: '^[0-9]{6}$'
+          example: "123456"
+
+    TwoFactorDisableRequest:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+          example: RahasiaBank123!
+
+    CustomerProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+          example: Agam
+        last_name:
+          type: string
+          example: Latiff
+        phone_number:
+          type: string
+          example: "+6281234567890"
+        status:
+          type: string
+          example: VERIFIED
+
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        currency:
+          type: string
+          example: IDR
+        balance:
+          type: integer
+          format: int64
+          description: Minor units (misal 24500000 = Rp 245.000,00)
+          example: 24500000
+        max_balance_limit:
+          type: integer
+          format: int64
+          example: 10000000000
+        status:
+          type: string
+          enum: [ACTIVE, FROZEN, CLOSED]
+          example: ACTIVE
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time

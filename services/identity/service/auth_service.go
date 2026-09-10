@@ -16,11 +16,15 @@ import (
 )
 
 var (
-	ErrInvalidCredentials = errors.New("invalid email or password")
-	ErrAccountInactive    = errors.New("account is inactive or suspended")
-	ErrInvalidToken       = errors.New("invalid or expired token")
-	ErrTokenRevoked       = errors.New("token has been revoked")
-	ErrTokenReused        = errors.New("token reuse detected, session terminated")
+	ErrInvalidCredentials     = errors.New("invalid email or password")
+	ErrAccountInactive        = errors.New("account is inactive or suspended")
+	ErrInvalidToken           = errors.New("invalid or expired token")
+	ErrTokenRevoked           = errors.New("token has been revoked")
+	ErrTokenReused            = errors.New("token reuse detected, session terminated")
+	ErrTwoFactorAlreadyEnabled = errors.New("two-factor authentication is already enabled")
+	ErrTwoFactorNotEnabled     = errors.New("two-factor authentication is not enabled")
+	ErrInvalidTwoFactorCode    = errors.New("invalid two-factor authentication code")
+	ErrInvalidTempToken        = errors.New("invalid or expired two-factor challenge token")
 )
 
 // AuthService defines the business logic operations for authentication and identity.
@@ -29,6 +33,10 @@ type AuthService interface {
 	Login(ctx context.Context, req domain.LoginRequest, requestID, ip, userAgent string) (*domain.AuthResponse, error)
 	RefreshToken(ctx context.Context, refreshToken, requestID, ip, userAgent string) (*domain.AuthResponse, error)
 	Logout(ctx context.Context, refreshToken, requestID, ip string) error
+	Setup2FA(ctx context.Context, userID uuid.UUID) (*domain.TwoFactorSetupResponse, error)
+	Enable2FA(ctx context.Context, userID uuid.UUID, code string, requestID, ip string) error
+	Disable2FA(ctx context.Context, userID uuid.UUID, code string, requestID, ip string) error
+	Verify2FALogin(ctx context.Context, req domain.TwoFactorVerifyRequest, requestID, ip, userAgent string) (*domain.AuthResponse, error)
 }
 
 type authService struct {
@@ -110,6 +118,26 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest, reques
 	if user.Status != domain.StatusActive {
 		s.repo.LogSecurityAudit(ctx, &user.ID, "LOGIN_FAILED_INACTIVE_ACCOUNT", requestID, ip)
 		return nil, ErrAccountInactive
+	}
+
+	// If 2FA is enabled, issue short-lived challenge token instead of full session
+	if user.TwoFactorEnabled {
+		tempToken, err := security.Generate2FATempToken(user.ID.String(), user.Email, s.cfg.JWTSecret)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate 2fa challenge token: %w", err)
+		}
+		s.repo.LogSecurityAudit(ctx, &user.ID, "LOGIN_2FA_CHALLENGE_ISSUED", requestID, ip)
+		return &domain.AuthResponse{
+			TwoFactorRequired: true,
+			TempToken:         tempToken,
+			User: domain.UserResponse{
+				ID:        user.ID,
+				Email:     user.Email,
+				Status:    user.Status,
+				Roles:     user.Roles,
+				CreatedAt: user.CreatedAt,
+			},
+		}, nil
 	}
 
 	primaryRole := "CUSTOMER"
@@ -264,9 +292,200 @@ func (s *authService) Logout(ctx context.Context, refreshToken, requestID, ip st
 	return nil
 }
 
+// Setup2FA generates a new TOTP secret and saves it in pending state (enabled = false).
+func (s *authService) Setup2FA(ctx context.Context, userID uuid.UUID) (*domain.TwoFactorSetupResponse, error) {
+	user, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if user.TwoFactorEnabled {
+		return nil, ErrTwoFactorAlreadyEnabled
+	}
+
+	rawSecret, err := security.GenerateTOTPSecret()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate totp secret: %w", err)
+	}
+
+	encryptionKey, err := security.ParseEncryptionKey(s.cfg.EncryptionKey)
+	if err != nil {
+		return nil, fmt.Errorf("invalid encryption key config: %w", err)
+	}
+
+	encryptedSecret, err := security.Encrypt(rawSecret, encryptionKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encrypt totp secret: %w", err)
+	}
+
+	if err := s.repo.UpdateTwoFactor(ctx, userID, &encryptedSecret, false); err != nil {
+		return nil, err
+	}
+
+	qrCodeURI := security.GenerateTOTPURI(rawSecret, user.Email, "Bastion")
+	return &domain.TwoFactorSetupResponse{
+		Secret:    rawSecret,
+		QRCodeURI: qrCodeURI,
+	}, nil
+}
+
+// Enable2FA verifies the 6-digit TOTP code and marks 2FA as permanently enabled.
+func (s *authService) Enable2FA(ctx context.Context, userID uuid.UUID, code string, requestID, ip string) error {
+	user, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if user.TwoFactorEnabled {
+		return ErrTwoFactorAlreadyEnabled
+	}
+	if user.TwoFactorSecretEncrypted == nil || *user.TwoFactorSecretEncrypted == "" {
+		return ErrTwoFactorNotEnabled
+	}
+
+	encryptionKey, err := security.ParseEncryptionKey(s.cfg.EncryptionKey)
+	if err != nil {
+		return fmt.Errorf("invalid encryption key config: %w", err)
+	}
+
+	rawSecret, err := security.Decrypt(*user.TwoFactorSecretEncrypted, encryptionKey)
+	if err != nil {
+		return fmt.Errorf("failed to decrypt totp secret: %w", err)
+	}
+
+	if !security.ValidateTOTPCode(rawSecret, code) {
+		s.repo.LogSecurityAudit(ctx, &userID, "2FA_ENABLE_FAILED_INVALID_CODE", requestID, ip)
+		return ErrInvalidTwoFactorCode
+	}
+
+	if err := s.repo.UpdateTwoFactor(ctx, userID, user.TwoFactorSecretEncrypted, true); err != nil {
+		return err
+	}
+
+	s.repo.LogSecurityAudit(ctx, &userID, "2FA_ENABLED", requestID, ip)
+	return nil
+}
+
+// Disable2FA validates the 6-digit TOTP code and deactivates 2FA.
+func (s *authService) Disable2FA(ctx context.Context, userID uuid.UUID, code string, requestID, ip string) error {
+	user, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if !user.TwoFactorEnabled || user.TwoFactorSecretEncrypted == nil {
+		return ErrTwoFactorNotEnabled
+	}
+
+	encryptionKey, err := security.ParseEncryptionKey(s.cfg.EncryptionKey)
+	if err != nil {
+		return fmt.Errorf("invalid encryption key config: %w", err)
+	}
+
+	rawSecret, err := security.Decrypt(*user.TwoFactorSecretEncrypted, encryptionKey)
+	if err != nil {
+		return fmt.Errorf("failed to decrypt totp secret: %w", err)
+	}
+
+	if !security.ValidateTOTPCode(rawSecret, code) {
+		s.repo.LogSecurityAudit(ctx, &userID, "2FA_DISABLE_FAILED_INVALID_CODE", requestID, ip)
+		return ErrInvalidTwoFactorCode
+	}
+
+	if err := s.repo.UpdateTwoFactor(ctx, userID, nil, false); err != nil {
+		return err
+	}
+
+	s.repo.LogSecurityAudit(ctx, &userID, "2FA_DISABLED", requestID, ip)
+	return nil
+}
+
+// Verify2FALogin verifies a temporary 2FA challenge token + 6-digit OTP and issues full tokens.
+func (s *authService) Verify2FALogin(ctx context.Context, req domain.TwoFactorVerifyRequest, requestID, ip, userAgent string) (*domain.AuthResponse, error) {
+	claims, err := security.Validate2FATempToken(req.TempToken, s.cfg.JWTSecret)
+	if err != nil {
+		return nil, ErrInvalidTempToken
+	}
+
+	userID, err := uuid.Parse(claims.UserID)
+	if err != nil {
+		return nil, ErrInvalidTempToken
+	}
+
+	user, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+	if !user.TwoFactorEnabled || user.TwoFactorSecretEncrypted == nil {
+		return nil, ErrTwoFactorNotEnabled
+	}
+
+	encryptionKey, err := security.ParseEncryptionKey(s.cfg.EncryptionKey)
+	if err != nil {
+		return nil, fmt.Errorf("invalid encryption key config: %w", err)
+	}
+
+	rawSecret, err := security.Decrypt(*user.TwoFactorSecretEncrypted, encryptionKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt totp secret: %w", err)
+	}
+
+	if !security.ValidateTOTPCode(rawSecret, req.Code) {
+		s.repo.LogSecurityAudit(ctx, &user.ID, "LOGIN_2FA_FAILED_BAD_CODE", requestID, ip)
+		return nil, ErrInvalidTwoFactorCode
+	}
+
+	primaryRole := "CUSTOMER"
+	if len(user.Roles) > 0 {
+		primaryRole = user.Roles[0]
+	}
+
+	tokenPair, err := security.GenerateTokenPair(
+		user.ID.String(),
+		user.Email,
+		primaryRole,
+		s.cfg.JWTSecret,
+		s.cfg.AccessTokenExpiryMins,
+		s.cfg.RefreshTokenExpiryDays,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate token pair: %w", err)
+	}
+
+	tokenHash := security.HashRefreshToken(tokenPair.RefreshToken)
+	now := time.Now().UTC()
+	session := &domain.Session{
+		ID:               uuid.New(),
+		UserID:           user.ID,
+		RefreshTokenHash: tokenHash,
+		UserAgent:        stringPtr(userAgent),
+		IPAddress:        stringPtr(ip),
+		ExpiresAt:        now.Add(time.Duration(s.cfg.RefreshTokenExpiryDays) * 24 * time.Hour),
+		CreatedAt:        now,
+	}
+
+	if err := s.repo.CreateSession(ctx, session); err != nil {
+		return nil, fmt.Errorf("failed to create session: %w", err)
+	}
+
+	s.repo.LogSecurityAudit(ctx, &user.ID, "LOGIN_2FA_SUCCESS", requestID, ip)
+
+	return &domain.AuthResponse{
+		AccessToken:  tokenPair.AccessToken,
+		RefreshToken: tokenPair.RefreshToken,
+		TokenType:    "Bearer",
+		ExpiresIn:    tokenPair.ExpiresInSeconds,
+		User: domain.UserResponse{
+			ID:        user.ID,
+			Email:     user.Email,
+			Status:    user.Status,
+			Roles:     user.Roles,
+			CreatedAt: user.CreatedAt,
+		},
+	}, nil
+}
+
 func stringPtr(s string) *string {
 	if s == "" {
 		return nil
 	}
 	return &s
 }
+

@@ -24,3 +24,24 @@ export async function logoutApi(refreshToken: string): Promise<ApiResponse> {
     });
     return response.data;
 }
+
+export async function verify2FAApi(data: { temp_token: string; code: string }): Promise<AuthResponse> {
+    const response = await api.post<AuthResponse>('/auth/2fa/verify', data);
+    return response.data;
+}
+
+export async function setup2FAApi(): Promise<{ secret: string; qr_code_uri: string }> {
+    const response = await api.post<{ secret: string; qr_code_uri: string }>('/auth/2fa/setup');
+    return response.data;
+}
+
+export async function enable2FAApi(code: string): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>('/auth/2fa/enable', { code });
+    return response.data;
+}
+
+export async function disable2FAApi(code: string): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>('/auth/2fa/disable', { code });
+    return response.data;
+}
+

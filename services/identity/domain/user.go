@@ -72,10 +72,30 @@ type LogoutRequest struct {
 }
 
 type AuthResponse struct {
-	AccessToken  string       `json:"access_token"`
-	RefreshToken string       `json:"refresh_token"`
-	TokenType    string       `json:"token_type"`
-	ExpiresIn    int64        `json:"expires_in"`
-	User         UserResponse `json:"user"`
+	AccessToken        string       `json:"access_token,omitempty"`
+	RefreshToken       string       `json:"refresh_token,omitempty"`
+	TokenType          string       `json:"token_type,omitempty"`
+	ExpiresIn          int64        `json:"expires_in,omitempty"`
+	User               UserResponse `json:"user,omitempty"`
+	TwoFactorRequired  bool         `json:"two_factor_required,omitempty"`
+	TempToken          string       `json:"temp_token,omitempty"`
+}
+
+type TwoFactorSetupResponse struct {
+	Secret    string `json:"secret"`
+	QRCodeURI string `json:"qr_code_uri"`
+}
+
+type TwoFactorEnableRequest struct {
+	Code string `json:"code" binding:"required,len=6"`
+}
+
+type TwoFactorDisableRequest struct {
+	Code string `json:"code" binding:"required,len=6"`
+}
+
+type TwoFactorVerifyRequest struct {
+	TempToken string `json:"temp_token" binding:"required"`
+	Code      string `json:"code" binding:"required,len=6"`
 }
 

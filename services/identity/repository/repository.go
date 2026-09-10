@@ -23,7 +23,9 @@ var (
 type Repository interface {
 	CreateUser(ctx context.Context, user *domain.User) error
 	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
+	GetUserByID(ctx context.Context, id uuid.UUID) (*domain.User, error)
 	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]string, error)
+	UpdateTwoFactor(ctx context.Context, userID uuid.UUID, secretEncrypted *string, enabled bool) error
 	CreateSession(ctx context.Context, session *domain.Session) error
 	GetSessionByTokenHash(ctx context.Context, tokenHash string) (*domain.Session, error)
 	RevokeSession(ctx context.Context, sessionID uuid.UUID) error
@@ -136,6 +138,56 @@ func (r *pgxRepository) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]s
 		}
 	}
 	return roles, nil
+}
+
+// GetUserByID fetches a user by UUID.
+func (r *pgxRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	query := `
+		SELECT id, email, password_hash, status, two_factor_enabled, two_factor_secret_encrypted, created_at, updated_at
+		FROM users
+		WHERE id = $1
+	`
+	user := &domain.User{}
+	err := r.db.QueryRow(ctx, query, id).Scan(
+		&user.ID,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Status,
+		&user.TwoFactorEnabled,
+		&user.TwoFactorSecretEncrypted,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to query user by id: %w", err)
+	}
+
+	roles, err := r.GetUserRoles(ctx, user.ID)
+	if err == nil {
+		user.Roles = roles
+	}
+
+	return user, nil
+}
+
+// UpdateTwoFactor updates the two-factor authentication secret and enabled status for a user.
+func (r *pgxRepository) UpdateTwoFactor(ctx context.Context, userID uuid.UUID, secretEncrypted *string, enabled bool) error {
+	query := `
+		UPDATE users 
+		SET two_factor_secret_encrypted = $1, two_factor_enabled = $2, updated_at = $3 
+		WHERE id = $4
+	`
+	tag, err := r.db.Exec(ctx, query, secretEncrypted, enabled, time.Now().UTC(), userID)
+	if err != nil {
+		return fmt.Errorf("failed to update two factor authentication: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+	return nil
 }
 
 // CreateSession records a new refresh token session.

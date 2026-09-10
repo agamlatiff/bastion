@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { loginApi, logoutApi } from './api';
+import { loginApi, logoutApi, verify2FAApi } from './api';
 import { AuthContext } from './authContext';
-import type { User, LoginRequest } from '../../types/auth';
+import type { User, LoginRequest, AuthResponse } from '../../types/auth';
 
 function getInitialUser(): User | null {
     try {
@@ -27,20 +27,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const queryClient = useQueryClient();
 
     const login = useCallback(
-        async (credentials: LoginRequest) => {
+        async (credentials: LoginRequest): Promise<AuthResponse> => {
             setIsLoading(true);
             try {
                 const response = await loginApi(credentials);
-                localStorage.setItem('access_token', response.access_token);
-                localStorage.setItem('refresh_token', response.refresh_token);
-                localStorage.setItem('user', JSON.stringify(response.user));
-                setUser(response.user);
-                navigate('/app/dashboard', { replace: true });
+                if (!response.two_factor_required && response.access_token && response.refresh_token && response.user) {
+                    localStorage.setItem('access_token', response.access_token);
+                    localStorage.setItem('refresh_token', response.refresh_token);
+                    localStorage.setItem('user', JSON.stringify(response.user));
+                    setUser(response.user);
+                }
+                return response;
             } finally {
                 setIsLoading(false);
             }
         },
-        [navigate]
+        []
+    );
+
+    const verify2FA = useCallback(
+        async (tempToken: string, code: string) => {
+            setIsLoading(true);
+            try {
+                const response = await verify2FAApi({ temp_token: tempToken, code });
+                if (response.access_token && response.refresh_token && response.user) {
+                    localStorage.setItem('access_token', response.access_token);
+                    localStorage.setItem('refresh_token', response.refresh_token);
+                    localStorage.setItem('user', JSON.stringify(response.user));
+                    setUser(response.user);
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        []
     );
 
     const logout = useCallback(async () => {
@@ -66,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user && !!localStorage.getItem('access_token'),
         isLoading,
         login,
+        verify2FA,
         logout,
         setUser,
     };

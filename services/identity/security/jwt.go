@@ -17,6 +17,7 @@ type TokenType string
 const (
 	TokenTypeAccess  TokenType = "access"
 	TokenTypeRefresh TokenType = "refresh"
+	TokenType2FATemp TokenType = "2fa_temp"
 )
 
 // TokenClaims represents the custom JWT claims used across the platform.
@@ -117,4 +118,31 @@ func ValidateToken(tokenString, secret string, expectedType TokenType) (*TokenCl
 func HashRefreshToken(token string) string {
 	hash := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(hash[:])
+}
+
+// Generate2FATempToken generates a short-lived (5-minute) token used solely to verify the 2FA OTP code.
+func Generate2FATempToken(userID, email, secret string) (string, error) {
+	now := time.Now().UTC()
+	expiry := now.Add(5 * time.Minute)
+
+	claims := TokenClaims{
+		UserID:    userID,
+		Email:     email,
+		Role:      "",
+		TokenType: TokenType2FATemp,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        uuid.New().String(),
+			Subject:   userID,
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(expiry),
+			Issuer:    "bastion-identity-2fa",
+		},
+	}
+
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
+}
+
+// Validate2FATempToken validates the temporary 2FA challenge token.
+func Validate2FATempToken(tokenString, secret string) (*TokenClaims, error) {
+	return ValidateToken(tokenString, secret, TokenType2FATemp)
 }
