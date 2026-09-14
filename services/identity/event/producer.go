@@ -17,7 +17,7 @@ type EventEnvelope struct {
 	EventVersion  string      `json:"event_version"`
 	CorrelationID string      `json:"correlation_id"`
 	Timestamp     time.Time   `json:"timestamp"`
-	Data          interface{} `json:"data"`
+	Data          UserRegisteredPayload `json:"data"`
 }
 
 // UserRegisteredPayload holds the domain data for UserRegistered events.
