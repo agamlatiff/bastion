@@ -9,6 +9,9 @@ Dokumen ini mencatat daftar **Technical Debt (Hutang Teknis)**, risiko arsitektu
 | ID | Komponen | Judul Masalah | Tingkat Keparahan | Status |
 | :--- | :--- | :--- | :--- | :--- |
 | **TD-001** | `services/identity` | Dual-Write Problem: Direct Kafka Publishing pada `UserRegistered` Event | **HIGH (Data Consistency)** | 🟡 OPEN (Backlog) |
+| **TD-002** | `services/wallet` | Ketiadaan Caching Layer & Rencana Implementasi Cache-Aside via Repository Pattern | **MEDIUM (Performance & Scalability)** | 🟡 OPEN (Backlog) |
+| **TD-003** | `services/wallet` & `services/transaction` | Ketiadaan Idempotency Key & Distributed Lock (Risiko Double-Debiting / Double-Click) | **HIGH (Financial Integrity)** | 🟡 OPEN (Backlog) |
+| **TD-004** | `services/customer` | Ketiadaan Caching Layer pada Profil Nasabah (`/v1/customers/me`) via Repository Pattern | **MEDIUM (Performance & DB Offloading)** | 🟡 OPEN (Backlog) |
 
 ---
 
@@ -84,3 +87,113 @@ Mengadopsi **Transactional Outbox Pattern**, sama seperti implementasi yang suda
 - [ ] Jalankan goroutine Outbox Publisher saat inisialisasi di `services/identity/main.go`.
 - [ ] Hapus pemanggilan langsung `s.producer.PublishUserRegistered` dari `auth_service.go`.
 - [ ] Uji coba simulasi matikan Kafka saat registrasi: pastikan event tetap tersimpan dan otomatis terkirim begitu Kafka dinyalakan kembali.
+
+---
+
+### TD-002: Ketiadaan Caching Layer & Pola Cache-Aside via Repository Layer
+
+#### 1. Deskripsi Masalah (Context)
+Saat ini pembacaan data dompet pada [`services/wallet/service/wallet_service.go`](file:///c:/Projects/bastion/services/wallet/service/wallet_service.go) (seperti `GetWallet` dan `GetBalance`) selalu melakukan query langsung ke database PostgreSQL (`wallet_db`) melalui `s.repo.GetByID`.
+* Pada skenario produksi *read-heavy* (misal banyak pengguna mengecek saldo/profil dompet secara bersamaan), koneksi database berpotensi menjadi *bottleneck*.
+* Infrastruktur Redis (`redis:7-alpine`) sudah berjalan di `docker-compose.yml` dan konfigurasi `RedisAddr` sudah ada di `config.go`, namun belum dimanfaatkan untuk query caching.
+
+#### 2. Prinsip Arsitektur: Redis di Repository Layer (BUKAN di Service Layer)
+Untuk menjaga kepatuhan terhadap prinsip *Clean Architecture* dan *Hexagonal/Ports-and-Adapters*:
+* **Service Layer harus bebas dari urusan infrastruktur caching:** Service hanya tahu memanggil `repo.GetByID()` dan tidak boleh terkontaminasi oleh import `go-redis` atau logika serialisasi JSON Redis.
+* **Gunakan Repository Decorator Pattern:**
+  Buat implementasi `cachedWalletRepository` yang mengimplementasikan interface `repository.WalletRepository`:
+  ```text
+  [Wallet Service] 
+         │ (memanggil interface WalletRepository)
+         ▼
+  [CachedWalletRepository] ──(Hit)──> [ REDIS CACHE ]
+         │ (Miss / Invalidation)
+         ▼
+  [PostgresWalletRepository] ───────> [ POSTGRESQL DB ]
+  ```
+
+#### 3. Strategi Sinkronisasi & Invalidasi Data (Ketika DB Ada Update)
+Agar data di Redis tidak *stale* (basi) saat ada pembaruan di database:
+
+1. **Read Strategy (`GetByID`):**
+   * Periksa Redis key `wallet:{id}`.
+   * **Jika Cache Hit:** Kembalikan data seketika tanpa menyentuh PostgreSQL.
+   * **Jika Cache Miss:** Query database PostgreSQL $\rightarrow$ simpan hasil ke Redis dengan **TTL (Time-To-Live) 5 menit** $\rightarrow$ kembalikan data.
+
+2. **Write / Invalidation Strategy (`UpdateStatusWithOutbox` / status change):**
+   * Eksekusi transaksi update ke PostgreSQL terlebih dahulu.
+   * Begitu transaksi PostgreSQL berhasil di-`COMMIT`, jalankan:
+     ```go
+     rdb.Del(ctx, "wallet:" + walletID.String())
+     ```
+   * Dengan menghapus key (*cache invalidation*), request pembacaan berikutnya dijamin akan mengambil data status terbaru (`FROZEN`/`ACTIVE`) dari PostgreSQL.
+
+3. **Jaring Pengaman (Dual-Write Protection):**
+   * TTL 5 menit wajib dipasang pada setiap key sebagai batas maksimal toleransi jika koneksi ke Redis sempat terputus saat proses `DEL`.
+
+#### 4. Action Items & Kriteria Selesai (Acceptance Criteria)
+- [ ] Buat file `services/wallet/repository/cached_wallet_repository.go` yang membungkus `WalletRepository` bawaan dan `*redis.Client`.
+- [ ] Inisialisasi koneksi `redis.NewClient` di `services/wallet/main.go`.
+- [ ] Bungkus `walletRepo` dengan `NewCachedWalletRepository(walletRepo, rdb)` saat *dependency injection* di `main.go`.
+- [ ] Pastikan `wallet_service.go` **tetap bersih tanpa import Redis**.
+- [ ] Terapkan invalidasi cache (`rdb.Del`) pada fungsi repository yang melakukan mutasi data status dompet.
+- [ ] Uji skenario:
+  1. Panggil `GetWallet` (harus tersimpan di Redis).
+  2. Panggil `FreezeWallet` (key di Redis harus otomatis terhapus).
+  3. Panggil `GetWallet` kembali (data harus status FROZEN dan tersimpan ulang ke Redis).
+
+---
+
+### TD-003: Ketiadaan Idempotency Key & Distributed Lock pada Mutasi Transaksi
+
+#### 1. Deskripsi Masalah (Context)
+Pada transaksi finansial (seperti pembuatan transaksi, transfer dana, pemotongan saldo, atau top up), pengguna sering kali menekan tombol aksi lebih dari satu kali (*double click*) saat koneksi internet mengalami latensi.
+* Saat ini belum ada mekanisme validasi `Idempotency-Key` atau *Distributed Lock* di layer API/Repository `services/wallet` maupun `services/transaction`.
+* **Risiko Finansial (Critical Impact):** Dua thread atau goroutine terpisah dapat mengeksekusi proses mutasi saldo secara paralel untuk satu intensi transaksi yang sama, mengakibatkan **saldo terpotong ganda (*double-debiting*)** atau terciptanya mutasi duplikat di buku besar.
+
+#### 2. Rekomendasi Solusi (Redis Distributed Lock & Idempotency)
+Memanfaatkan operasi atomik Redis `SET ... NX EX` sebagai pintu gerbang idempotensi:
+1. Client wajib mengirimkan header HTTP: `Idempotency-Key: <UUID>`.
+2. Sebelum mengeksekusi mutasi di database, periksa dan klaim lock di Redis:
+   ```go
+   // Set key hanya jika belum ada (NX) dengan masa berlaku (EX) misal 120 detik
+   acquired, err := rdb.SetArgs(ctx, "idempotency:"+idempotencyKey, "PROCESSING", redis.SetArgs{
+       Mode: "NX",
+       TTL:  120 * time.Second,
+   }).Result()
+   ```
+3. Jika key sudah ada (`acquired == false`):
+   * Jika nilainya `"PROCESSING"`, tolak request dengan HTTP `409 Conflict` (*"Transaction currently being processed"*).
+   * Jika nilainya berisi hasil respons yang sudah selesai di-cache, langsung kembalikan respons tersebut tanpa mengeksekusi ulang ke database.
+4. Setelah transaksi PostgreSQL selesai di-commit:
+   * Update nilai key dengan respons sukses dan perpanjang TTL (misal 24 jam) agar request berulang dengan key yang sama mengembalikan respons identik.
+
+#### 3. Action Items & Kriteria Selesai (Acceptance Criteria)
+- [ ] Buat middleware atau repository decorator `IdempotencyManager` di `services/wallet`.
+- [ ] Terapkan validasi header `Idempotency-Key` pada setiap mutasi finansial (POST / PATCH).
+- [ ] Simpan status dan hasil eksekusi ke Redis secara atomik dengan batas TTL.
+- [ ] Uji coba skenario *concurrent request*: tembakkan 5 request paralel dengan `Idempotency-Key` yang sama; pastikan hanya 1 request yang diproses oleh PostgreSQL/Ledger dan 4 lainnya ditolak dengan aman.
+
+---
+
+### TD-004: Ketiadaan Caching Layer pada Profil Nasabah di Customer Service
+
+#### 1. Deskripsi Masalah (Context)
+Pada [`services/customer`](file:///c:/Projects/bastion/services/customer), endpoint `GET /v1/customers/me` ([CustomerController.java](file:///c:/Projects/bastion/services/customer/src/main/java/com/bastion/customer/controller/CustomerController.java#L27-L38)) dipanggil secara masif oleh aplikasi klien (mobile/web) di hampir setiap navigasi layar untuk memvalidasi identitas nasabah, nama lengkap, nomor telepon, dan status KYC (`PENDING`, `VERIFIED`).
+* Saat ini setiap pemanggilan selalu melakukan query langsung ke database PostgreSQL `customer_db`.
+* Padahal, data profil nasabah memiliki rasio baca berbanding tulis (*read-to-write ratio*) yang sangat tinggi (99% dibaca, <1% diubah).
+
+#### 2. Rekomendasi Solusi: Cache-Aside via Repository Pattern (Spring Data Redis)
+1. **Tambahkan Dependensi Spring Data Redis:**
+   Gunakan `spring-boot-starter-data-redis` di `services/customer/pom.xml`.
+2. **Prinsip Repository Caching:**
+   Bungkus data access layer `CustomerRepository` dengan caching (misal menggunakan `@Cacheable` dan `@CacheEvict` atau implementasi custom `CachedCustomerRepository`):
+   * **Read (`getProfile`):** Cek Redis key `customer:profile:{identityUserId}`. Jika miss, query PostgreSQL dan simpan di Redis dengan TTL 15–30 menit.
+   * **Write (`updateProfile`):** Saat ada perubahan data via `PATCH /v1/customers/me`, update PostgreSQL terlebih dahulu, kemudian evict/hapus key di Redis.
+   * **Event-Driven Invalidation:** Saat event KYC disetujui (misal via Kafka), listener otomatis menghapus cache profil nasabah terkait.
+
+#### 3. Action Items & Kriteria Selesai (Acceptance Criteria)
+- [ ] Konfigurasi `RedisTemplate` dan connection pool di `services/customer`.
+- [ ] Terapkan caching pada pencarian nasabah berdasarkan `identityUserId`.
+- [ ] Terapkan invalidasi cache seketika saat `updateProfile` berhasil di-commit ke DB.
+- [ ] Pastikan respons `GET /v1/customers/me` ter-cache dengan waktu respons < 5ms pada pemanggilan kedua (Cache Hit).
