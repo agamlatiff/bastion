@@ -239,7 +239,7 @@ func (r *pgxRepository) GetSessionByTokenHash(ctx context.Context, tokenHash str
 
 // RevokeSession marks a session as revoked.
 func (r *pgxRepository) RevokeSession(ctx context.Context, sessionID uuid.UUID) error {
-	query := `UPDATE sessions SET revoked_at = $1 WHERE id = $2`
+	query := `UPDATE sessions SET revoked_at = $1 WHERE id = $2 AND revoked_at IS NULL`
 	_, err := r.db.Exec(ctx, query, time.Now().UTC(), sessionID)
 	return err
 }
