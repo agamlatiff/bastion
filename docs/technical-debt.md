@@ -13,6 +13,7 @@ Dokumen ini mencatat daftar **Technical Debt (Hutang Teknis)**, risiko arsitektu
 | **TD-003** | `services/wallet` & `services/transaction` | Ketiadaan Idempotency Key & Distributed Lock (Risiko Double-Debiting / Double-Click) | **HIGH (Financial Integrity)** | 🟡 OPEN (Backlog) |
 | **TD-004** | `services/customer` | Ketiadaan Caching Layer pada Profil Nasabah (`/v1/customers/me`) via Repository Pattern | **MEDIUM (Performance & DB Offloading)** | 🟡 OPEN (Backlog) |
 | **TD-005** | `services/identity` | Fat Config Anti-Pattern: Injeksi Objek Global Config ke dalam Service Layer | **LOW - MEDIUM (Code Quality & Maintainability)** | 🟡 OPEN (Backlog) |
+| **TD-006** | `services/identity` | Leaky Infrastructure Dependency: Injeksi `*redis.Client` ke dalam `AuthHandler.RegisterRoutes` | **LOW (Code Smells & Separation of Concerns)** | 🟡 OPEN (Backlog) |
 
 ---
 
@@ -235,3 +236,41 @@ Gunakan salah satu dari dua pendekatan *Clean Architecture*:
 - [ ] Hapus dependensi `cfg *config.Config` dari dalam struct `authService`.
 - [ ] Sesuaikan inisialisasi dependency injection di `services/identity/main.go`.
 - [ ] Pastikan seluruh unit test (jika ada) dan kompilasi aplikasi (`go build ./...`) berjalan bersih tanpa regresi.
+
+---
+
+### TD-006: Leaky Infrastructure Dependency pada `AuthHandler.RegisterRoutes`
+
+#### 1. Deskripsi Masalah (Context)
+Pada [`services/identity/handler/auth_handler.go:31-36`](file:///c:/Projects/bastion/services/identity/handler/auth_handler.go#L31-L36), method `RegisterRoutes` menerima parameter `rdb *redis.Client` semata-mata untuk diteruskan ke pemanggilan middleware `middleware.RateLimit(rdb, ...)`.
+* Hal ini memaksa file `auth_handler.go` untuk mengimpor dependensi library pihak ketiga: `github.com/redis/go-redis/v9`.
+* Padahal, fungsi-fungsi inti di dalam `AuthHandler` (`Login`, `Register`, `RefreshToken`, `Logout`, `Verify2FA`) sama sekali tidak menggunakan Redis secara langsung.
+
+#### 2. Risiko & Dampak Teknis (Impact)
+* **Leaky Abstraction & Tanggung Jawab Tercampur:** Handler layer yang seharusnya murni menangani parsing HTTP request/response DTO menjadi tahu detail infrastruktur database/cache (Redis Client).
+* **Pelanggaran Konvensi Router:** Method `RegisterRoutes` pada Clean Architecture biasanya hanya menerima router interface murni (`*gin.RouterGroup`) tanpa membawa dependensi infrastruktur backend pihak ketiga.
+* **Testing Friction:** Pengujian routing HTTP handler secara terisolasi menjadi canggung karena harus menyertakan mock/instance Redis client pada parameter method pendaftaran rute.
+
+#### 3. Rekomendasi Solusi (Composition Root di `main.go`)
+Pindahkan perakitan route dan middleware rate limiter ke tempat *Composition Root* aplikasi ([`services/identity/main.go`](file:///c:/Projects/bastion/services/identity/main.go#L91-L94)), di mana router dan middleware memang seharusnya dirakit bersama:
+
+```go
+// Di services/identity/main.go (Composition Root):
+auth := router.Group("/v1/auth")
+{
+    auth.POST("/register", middleware.RateLimit(rdb, "register", 5, time.Minute), authHdr.Register)
+    auth.POST("/login",    middleware.RateLimit(rdb, "login", 5, time.Minute), authHdr.Login)
+    auth.POST("/refresh",  middleware.RateLimit(rdb, "refresh", 10, time.Minute), authHdr.RefreshToken)
+    auth.POST("/logout",   authHdr.Logout)
+    // ...
+}
+```
+Dengan pendekatan ini:
+* `auth_handler.go` menjadi **100% murni** tanpa ada import `"github.com/redis/go-redis/v9"`.
+* Tanggung jawab perakitan middleware satpam (Rate Limiting) sepenuhnya dikembalikan ke layer inisialisasi server (`main.go`).
+
+#### 4. Action Items & Kriteria Selesai (Acceptance Criteria)
+- [ ] Pindahkan konfigurasi rute dan injeksi middleware `RateLimit` ke `services/identity/main.go`.
+- [ ] Bersihkan atau hapus method `RegisterRoutes` yang menerima parameter `rdb *redis.Client` dari `auth_handler.go`.
+- [ ] Hapus baris `import "github.com/redis/go-redis/v9"` dari file `services/identity/handler/auth_handler.go`.
+- [ ] Pastikan seluruh endpoint otentikasi `/v1/auth/*` tetap terproteksi oleh Redis rate limiting yang sama persis.
