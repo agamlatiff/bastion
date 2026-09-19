@@ -12,11 +12,11 @@ import (
 
 // EventEnvelope represents the standard envelope for all domain events.
 type EventEnvelope struct {
-	EventID       string      `json:"event_id"`
-	EventType     string      `json:"event_type"`
-	EventVersion  string      `json:"event_version"`
-	CorrelationID string      `json:"correlation_id"`
-	Timestamp     time.Time   `json:"timestamp"`
+	EventID       string                `json:"event_id"`
+	EventType     string                `json:"event_type"`
+	EventVersion  string                `json:"event_version"`
+	CorrelationID string                `json:"correlation_id"`
+	Timestamp     time.Time             `json:"timestamp"`
 	Data          UserRegisteredPayload `json:"data"`
 }
 

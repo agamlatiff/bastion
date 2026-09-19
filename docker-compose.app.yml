@@ -1,0 +1,74 @@
+version: '3.9'
+
+services:
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    container_name: bastion_gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - IDENTITY_SERVICE_URL=http://identity:8081
+      - WALLET_SERVICE_URL=http://wallet:8083
+      - CUSTOMER_SERVICE_URL=http://customer:8082
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+    depends_on:
+      - identity
+      - wallet
+
+  identity:
+    build:
+      context: ./services/identity
+      dockerfile: Dockerfile
+    container_name: bastion_identity
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - DATABASE_URL=postgres://bastion:bastion_secret@postgres:5432/identity_db?sslmode=disable
+      - REDIS_ADDR=redis:6379
+      - KAFKA_BROKERS=redpanda:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  wallet:
+    build:
+      context: ./services/wallet
+      dockerfile: Dockerfile
+    container_name: bastion_wallet
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+      - DATABASE_URL=postgres://bastion:bastion_secret@postgres:5432/wallet_db?sslmode=disable
+      - REDIS_ADDR=redis:6379
+      - LEDGER_SERVICE_URL=http://ledger:8084
+      - KAFKA_BROKERS=redpanda:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  ledger:
+    build:
+      context: ./services/ledger
+      dockerfile: Dockerfile
+    container_name: bastion_ledger
+    restart: unless-stopped
+    ports:
+      - "8084:8084"
+    environment:
+      - PORT=8084
+      - DATABASE_URL=postgres://bastion:bastion_secret@postgres:5432/ledger_db?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy

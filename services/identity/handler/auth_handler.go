@@ -58,7 +58,6 @@ func (h *AuthHandler) RegisterRoutes(rg *gin.RouterGroup, rdb *redis.Client) {
 	}
 }
 
-
 // Register handles user registration.
 // POST /v1/auth/register
 func (h *AuthHandler) Register(c *gin.Context) {
@@ -302,4 +301,3 @@ func (h *AuthHandler) Verify2FA(c *gin.Context) {
 
 	c.JSON(http.StatusOK, authResp)
 }
-
