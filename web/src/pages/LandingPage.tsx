@@ -954,10 +954,10 @@ export const LandingPage: React.FC = () => {
                     {/* Section Heading */}
                     <div className="text-center max-w-2xl mx-auto space-y-3">
                         <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight font-heading">
-                            Keamanan Finansial Tanpa Kompromi.
+                            Kas Bisnis Anda Dijaga Otomatis, Bebas Khawatir Selisih.
                         </h2>
                         <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xl mx-auto">
-                            Infrastruktur berstandar perbankan yang dirancang untuk melindungi setiap transaksi dan mencegah kebocoran kas bisnis.
+                            Dari kasir yang tak sengaja klik dobel sampai internet yang tiba-tiba ngadat, Bastion memastikan uang kas Anda selalu pas dan aman.
                         </p>
                     </div>
 

@@ -28,15 +28,15 @@ interface LayerInfo {
 const LAYERS: Record<LayerId, LayerInfo> = {
     1: {
         id: 1,
-        name: 'Lapisan 1: Gerbang Anti-Dobel',
-        level: 'Perimeter Transaksi',
-        title: 'Mencegah Saldo Terpotong Dua Kali',
-        description: 'Menyaring setiap permintaan masuk dengan kunci idempoten unik. Menjamin kasir yang panik menekan tombol bayar berulang atau koneksi internet yang putus-nyambung tidak akan pernah menarik uang dua kali.',
-        scenario: 'Kasir salah menekan tombol bayar 2x saat internet lag? Transaksi ke-2 langsung ditahan otomatis.',
-        realBenefit: 'Bebas drama klaim pengembalian uang dari pembeli.',
-        metricLabel: 'Toleransi Dobel Potong',
-        metricValue: '0 Kasus (100% Diblokir)',
-        status: 'Kunci Idempoten Aktif',
+        name: 'Lapisan 1: Anti-Dobel Bayar',
+        level: 'Di Kasir & Pembayaran',
+        title: 'Uang Tidak Pernah Terpotong Dua Kali',
+        description: 'Saat sinyal internet pembeli lemot atau kasir gugup menekan tombol bayar berulang kali, Bastion langsung menyaring transaksi tersebut dan membatalkan pemotongan kedua seketika.',
+        scenario: 'Tombol bayar terpencet 2x saat kasir ramai? Transaksi kedua otomatis ditahan.',
+        realBenefit: 'Bebas drama komplain dari pelanggan dan tidak perlu repot transfer uang balik.',
+        metricLabel: 'Risiko Terpotong 2x',
+        metricValue: 'Nol (0% Terpotong)',
+        status: 'Anti-Dobel Aktif',
         accentColor: {
             glow: 'rgba(56, 189, 248, 0.35)',
             border: 'border-sky-500/40',
@@ -48,15 +48,15 @@ const LAYERS: Record<LayerId, LayerInfo> = {
     },
     2: {
         id: 2,
-        name: 'Lapisan 2: Validasi Saldo Atomik',
-        level: 'Inti Mesin Kas',
-        title: 'Jaminan Saldo Tak Pernah Minus',
-        description: 'Validasi saldo bekerja langsung di tingkat database paling bawah. Sebelum rupiah berpindah, mesin memastikan dana kas mencukupi hingga satuan terkecil. Jika kurang, transaksi otomatis dibatalkan.',
-        scenario: 'Pengeluaran mendadak melebihi sisa kas riil? Sistem langsung menolak transaksi di gerbang inti.',
-        realBenefit: 'Kas bisnis tidak pernah jebol atau berutang tanpa disadari.',
-        metricLabel: 'Pencegahan Saldo Minus',
-        metricValue: '100% Terjaga Pas',
-        status: 'Validasi Atomik Aktif',
+        name: 'Lapisan 2: Anti-Saldo Minus',
+        level: 'Di Pengeluaran Kas',
+        title: 'Saldo Kas Tidak Akan Pernah Minus',
+        description: 'Sebelum uang keluar, sistem selalu mengecek sisa kas riil Anda. Jika dana kurang walaupun hanya seribu rupiah, pengeluaran langsung ditolak sebelum uang sempat berpindah tangan.',
+        scenario: 'Staf ingin bayar nota Rp 2.000.000 padahal kas cuma sisa Rp 1.500.000? Pengeluaran langsung ditolak.',
+        realBenefit: 'Kas operasional usaha Anda tidak akan pernah jebol atau berutang tanpa disadari.',
+        metricLabel: 'Jaminan Saldo',
+        metricValue: 'Selalu Pas & Aman',
+        status: 'Anti-Minus Aktif',
         accentColor: {
             glow: 'rgba(16, 185, 129, 0.35)',
             border: 'border-emerald-500/40',
@@ -68,15 +68,15 @@ const LAYERS: Record<LayerId, LayerInfo> = {
     },
     3: {
         id: 3,
-        name: 'Lapisan 3: Segel Mutasi Permanen',
-        level: 'Kubah Brankas Audit',
-        title: 'Catatan Kas Tidak Bisa Diedit Diam-Diam',
-        description: 'Setiap aliran kas dicatat berpasangan (debit & kredit) dan disegel permanen dalam rantai audit kriptografi. Tidak ada yang bisa menghapus bukti mutasi atau memanipulasi angka di masa lalu.',
-        scenario: 'Ada yang coba mengubah catatan pengeluaran minggu lalu? Segel kriptografi menolak perubahan.',
-        realBenefit: 'Laporan keuangan selalu akurat dan siap diaudit kapan pun.',
-        metricLabel: 'Integritas Buku Kas',
-        metricValue: '100% Tersegel Permanen',
-        status: 'Buku Besar Imutabel',
+        name: 'Lapisan 3: Catatan Terkunci',
+        level: 'Di Buku Kas Utama',
+        title: 'Catatan Kas Tidak Bisa Diubah Diam-Diam',
+        description: 'Setiap rupiah yang masuk atau keluar langsung disegel permanen. Siapa pun, termasuk staf atau kasir, tidak akan bisa menghapus nota atau memanipulasi angka di masa lalu.',
+        scenario: 'Ada yang berniat menghapus riwayat pengeluaran kemarin sore? Catatan terkunci rapat dan sistem menolak perubahan.',
+        realBenefit: 'Pembukuan Anda selalu jujur, rapi, dan siap dicek kapan saja tanpa takut data diakali.',
+        metricLabel: 'Keaslian Catatan',
+        metricValue: '100% Tersegel Rapi',
+        status: 'Catatan Terkunci',
         accentColor: {
             glow: 'rgba(129, 140, 248, 0.35)',
             border: 'border-indigo-500/40',
@@ -107,10 +107,10 @@ export const ConcentricVault: React.FC = () => {
                     <div className="lg:col-span-5 space-y-4">
                         <div className="space-y-2 pb-2">
                             <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight font-heading">
-                                Tiga Cincin Proteksi Kas
+                                Tiga Lapisan Penjaga Kas Usaha
                             </h3>
                             <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                                Klik tiap cincin atau tombol di bawah untuk melihat bagaimana Bastion menjaga uang bisnis Anda dari berbagai sudut risiko.
+                                Klik tiap cincin atau tombol di bawah untuk melihat bagaimana Bastion menjaga uang bisnis Anda dari berbagai risiko di lapangan.
                             </p>
                         </div>
 
@@ -175,7 +175,7 @@ export const ConcentricVault: React.FC = () => {
                             <div className="p-3.5 rounded-xl bg-zinc-950/80 border border-zinc-800/70 flex items-center gap-3">
                                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                                 <span className="text-xs text-zinc-400">
-                                    Ketiga lapisan proteksi ini berjalan otomatis secara bersamaan pada setiap transaksi.
+                                    Semua perlindungan ini bekerja otomatis di latar belakang setiap kali ada uang masuk atau keluar.
                                 </span>
                             </div>
                         </div>
@@ -291,7 +291,7 @@ export const ConcentricVault: React.FC = () => {
                                         letterSpacing="1.5"
                                         fontWeight={activeLayer === 2 ? 'bold' : 'normal'}
                                     >
-                                        LAPISAN 2: SALDO ATOMIK
+                                        LAPISAN 2: ANTI-MINUS
                                     </text>
                                 </g>
 
@@ -333,7 +333,7 @@ export const ConcentricVault: React.FC = () => {
                                         letterSpacing="1.5"
                                         fontWeight={activeLayer === 3 ? 'bold' : 'normal'}
                                     >
-                                        LAPISAN 3: BRANKAS
+                                        LAPISAN 3: BUKU KAS
                                     </text>
                                 </g>
 
