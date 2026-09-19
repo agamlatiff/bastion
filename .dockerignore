@@ -1,0 +1,11 @@
+.git
+.agents
+.vscode
+.env
+.notes
+legacy/
+web/node_modules/
+web/dist/
+target/
+*.exe
+*.log
