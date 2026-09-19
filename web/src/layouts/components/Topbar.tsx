@@ -31,7 +31,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileNav, onOpenCommandPa
                     </svg>
                 </button>
                 <div className="flex items-center gap-2">
-                    <BastionLogo className="w-5 h-5 text-white shrink-0" />
+                    <BastionLogo className="w-6 h-6 text-white shrink-0" />
                     <span className="font-bold tracking-tight text-white text-sm font-heading">Bastion</span>
                 </div>
             </div>

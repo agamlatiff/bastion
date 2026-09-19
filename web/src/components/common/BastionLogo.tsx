@@ -13,7 +13,7 @@ interface BastionLogoProps {
  * Crisp, flat 2D geometry — 100% free of generic shields, locks, or 3D clutter.
  */
 export const BastionLogo: React.FC<BastionLogoProps> = ({
-    className = 'w-5 h-5',
+    className = 'w-6 h-6',
     size,
     variant = 'default',
 }) => {

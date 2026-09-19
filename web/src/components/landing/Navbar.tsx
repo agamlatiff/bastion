@@ -65,7 +65,7 @@ export const Navbar: React.FC = () => {
                 <Link to="/" onClick={closeMobileMenu} className="flex items-center gap-2.5 sm:gap-3 group">
                     <BastionLogo
                         className={`text-white transition-all duration-300 shrink-0 group-hover:scale-105 ${
-                            isScrolled ? 'w-5 h-5 sm:w-5.5 sm:h-5.5' : 'w-6 h-6 sm:w-6.5 sm:h-6.5'
+                            isScrolled ? 'w-6 h-6 sm:w-6.5 sm:h-6.5' : 'w-7 h-7 sm:w-7.5 sm:h-7.5'
                         }`}
                     />
                     <span className={`font-bold text-white tracking-tight transition-all duration-300 ${

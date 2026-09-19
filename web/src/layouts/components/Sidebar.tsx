@@ -9,7 +9,7 @@ export const Sidebar: React.FC = () => {
         <aside className="hidden md:flex flex-col w-60 bg-[#09090b] border-r border-zinc-800/80 p-4 shrink-0 select-none">
             {/* Brand Header */}
             <div className="flex items-center gap-2.5 px-2 py-3 mb-6">
-                <BastionLogo className="w-5 h-5 text-white shrink-0" />
+                <BastionLogo className="w-6 h-6 text-white shrink-0" />
                 <div className="flex items-center gap-1.5">
                     <span className="text-sm font-bold tracking-tight text-white font-heading">Bastion</span>
                     <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest px-1 py-0.2 rounded border border-zinc-800 bg-zinc-900">

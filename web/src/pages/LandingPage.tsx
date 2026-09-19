@@ -240,11 +240,11 @@ export const LandingPage: React.FC = () => {
             <section className="relative pt-32 pb-32 sm:pb-40 md:pt-40 md:pb-48 px-4 sm:px-6 max-w-6xl mx-auto text-center">
                 {/* Hero Content (Lugas & To The Point) */}
                 <div className="space-y-4 sm:space-y-5 max-w-3xl mx-auto relative z-10">
-                    <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.15] text-balance font-heading">
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.12] text-balance font-heading">
                         Kelola Keuangan Bisnis Lebih Tenang<br className="hidden sm:inline" />
                     </h1>
 
-                    <p className="text-sm sm:text-base md:text-lg text-zinc-300 max-w-xl mx-auto leading-relaxed">
+                    <p className="text-base sm:text-lg md:text-xl text-zinc-300 max-w-xl mx-auto leading-relaxed">
                         Semua uang masuk dan keluar tercatat otomatis secara akurat. Bebas salah hitung, tanpa repot rekap manual setiap hari.
                     </p>
 
@@ -370,12 +370,16 @@ export const LandingPage: React.FC = () => {
                 </div>
 
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
-                    {/* Section Heading (Clean & Direct, Zero Eyebrow Pill) */}
-                    <div className="text-center max-w-2xl mx-auto space-y-3">
-                        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight font-heading">
+                    {/* Section Heading */}
+                    <div className="text-center max-w-3xl mx-auto space-y-3.5 sm:space-y-4">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-mono font-medium text-blue-400">
+                            <Activity className="w-3.5 h-3.5" />
+                            <span>DASBOR INTERAKTIF</span>
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight font-heading leading-tight">
                             Dasbor Finansial Modern dalam Genggaman.
                         </h2>
-                        <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xl mx-auto">
+                        <p className="text-sm sm:text-base md:text-lg text-zinc-300 leading-relaxed max-w-2xl mx-auto">
                             Pantau arus kas, verifikasi pembukuan berpasangan, dan uji proteksi anti-minus langsung pada miniatur dasbor Bastion di bawah ini.
                         </p>
                     </div>
@@ -808,11 +812,15 @@ export const LandingPage: React.FC = () => {
                 </div>
 
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-10">
-                    <div className="text-left max-w-xl space-y-2">
-                        <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+                    <div className="text-left max-w-2xl space-y-3.5 sm:space-y-4">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-mono font-medium text-blue-400">
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>KEUNGGULAN UTAMA</span>
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight font-heading leading-tight">
                             Semua yang Bisnis Anda Butuhkan.
                         </h2>
-                        <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                        <p className="text-sm sm:text-base md:text-lg text-zinc-300 leading-relaxed max-w-xl">
                             Praktis seperti dompet digital, akurat seperti pembukuan perbankan.
                         </p>
                     </div>
@@ -949,11 +957,15 @@ export const LandingPage: React.FC = () => {
 
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
                     {/* Section Heading */}
-                    <div className="text-center max-w-2xl mx-auto space-y-3">
-                        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight font-heading">
+                    <div className="text-center max-w-3xl mx-auto space-y-3.5 sm:space-y-4">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-mono font-medium text-cyan-400">
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            <span>ARSITEKTUR KEAMANAN</span>
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight font-heading leading-tight">
                             Kas Bisnis Anda Dijaga Otomatis, Bebas Khawatir Selisih.
                         </h2>
-                        <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xl mx-auto">
+                        <p className="text-sm sm:text-base md:text-lg text-zinc-300 leading-relaxed max-w-2xl mx-auto">
                             Dari kasir yang tak sengaja klik dobel sampai internet yang tiba-tiba ngadat, Bastion memastikan uang kas Anda selalu pas dan aman.
                         </p>
                     </div>
@@ -977,7 +989,7 @@ export const LandingPage: React.FC = () => {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4">
                             <div className="flex items-center gap-2.5">
-                                <BastionLogo className="w-5 h-5 text-white shrink-0" />
+                                <BastionLogo className="w-6 h-6 sm:w-7 sm:h-7 text-white shrink-0" />
                                 <span className="font-bold text-base text-white tracking-tight font-heading">Bastion</span>
                             </div>
                             <span className="hidden sm:inline text-zinc-700">•</span>
