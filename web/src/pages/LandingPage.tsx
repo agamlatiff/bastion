@@ -58,7 +58,7 @@ export const LandingPage: React.FC = () => {
         message: string;
     } | null>(null);
 
-    // Dynamic datasets per timeframe
+    // Dynamic datasets per timeframe (with smooth cubic bezier curves & apex coordinates)
     const timeframeData = {
         today: {
             label: 'Hari Ini',
@@ -67,9 +67,12 @@ export const LandingPage: React.FC = () => {
             baseInflow: 42150000,
             outflow: 14800000,
             txCount: '142 Transaksi',
-            svgPoints: '0,120 90,105 180,125 270,80 360,95 450,40 540,58 600,42',
-            svgArea: 'M0,180 L0,120 L90,105 L180,125 L270,80 L360,95 L450,40 L540,58 L600,42 L600,180 Z',
-            peakText: 'Puncak Penjualan: +Rp 18.500.000 (14:30 WIB)',
+            splinePath: 'M 0,125 C 45,125 45,105 90,105 C 135,105 135,125 180,125 C 225,125 225,80 270,80 C 315,80 315,95 360,95 C 405,95 405,38 450,38 C 495,38 495,58 540,58 C 570,58 570,42 600,42',
+            splineArea: 'M 0,125 C 45,125 45,105 90,105 C 135,105 135,125 180,125 C 225,125 225,80 270,80 C 315,80 315,95 360,95 C 405,95 405,38 450,38 C 495,38 495,58 540,58 C 570,58 570,42 600,42 L 600,180 L 0,180 Z',
+            outflowSpline: 'M 0,155 C 50,150 70,145 130,145 C 190,145 220,160 280,150 C 340,140 380,135 440,130 C 500,125 540,140 600,135',
+            peakCoord: { x: 450, y: 38 },
+            peakValue: '+Rp 18.500.000',
+            peakTime: '14:30 WIB (Puncak Penjualan)',
             xLabels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00'],
         },
         '7d': {
@@ -79,9 +82,12 @@ export const LandingPage: React.FC = () => {
             baseInflow: 195400000,
             outflow: 68200000,
             txCount: '896 Transaksi',
-            svgPoints: '0,135 90,115 180,100 270,85 360,65 450,50 540,32 600,24',
-            svgArea: 'M0,180 L0,135 L90,115 L180,100 L270,85 L360,65 L450,50 L540,32 L600,24 L600,180 Z',
-            peakText: 'Puncak Mingguan: +Rp 64.200.000 (Jumat)',
+            splinePath: 'M 0,140 C 60,130 90,115 150,110 C 210,105 240,90 300,85 C 360,80 400,55 460,45 C 510,35 550,28 600,22',
+            splineArea: 'M 0,140 C 60,130 90,115 150,110 C 210,105 240,90 300,85 C 360,80 400,55 460,45 C 510,35 550,28 600,22 L 600,180 L 0,180 Z',
+            outflowSpline: 'M 0,160 C 60,155 120,150 180,145 C 240,140 300,135 360,125 C 420,115 480,110 540,105 L 600,100',
+            peakCoord: { x: 460, y: 45 },
+            peakValue: '+Rp 64.200.000',
+            peakTime: 'Jumat (Puncak Mingguan)',
             xLabels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
         },
         '30d': {
@@ -91,12 +97,18 @@ export const LandingPage: React.FC = () => {
             baseInflow: 420000000,
             outflow: 180500000,
             txCount: '3.840 Transaksi',
-            svgPoints: '0,145 90,130 180,115 270,95 360,72 450,52 540,36 600,18',
-            svgArea: 'M0,180 L0,145 L90,130 L180,115 L270,95 L360,72 L450,52 L540,36 L600,18 L600,180 Z',
-            peakText: 'Puncak Rekonsiliasi: +Rp 112.000.000 (Tutup Buku)',
+            splinePath: 'M 0,150 C 60,140 100,125 160,115 C 220,105 260,90 320,75 C 380,60 420,40 480,30 C 530,22 570,18 600,15',
+            splineArea: 'M 0,150 C 60,140 100,125 160,115 C 220,105 260,90 320,75 C 380,60 420,40 480,30 C 530,22 570,18 600,15 L 600,180 L 0,180 Z',
+            outflowSpline: 'M 0,165 C 80,160 160,150 240,140 C 320,130 400,115 480,105 L 600,95',
+            peakCoord: { x: 480, y: 30 },
+            peakValue: '+Rp 112.000.000',
+            peakTime: 'Tutup Buku Bulanan',
             xLabels: ['Mgg 1', 'Mgg 2', 'Mgg 3', 'Mgg 4'],
         },
     };
+
+    // Micro Volume pill bars at the base of the chart
+    const volumeBars = [14, 22, 18, 35, 48, 26, 58, 72, 45, 88, 95, 62, 48, 80, 90, 65];
 
     const currentDataset = timeframeData[timeframe];
     const displayBalance = currentDataset.baseBalance + metricModifiers.addedBalance;
@@ -361,12 +373,8 @@ export const LandingPage: React.FC = () => {
                 </div>
 
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
-                    {/* Section Heading */}
+                    {/* Section Heading (Clean & Direct, Zero Eyebrow Pill) */}
                     <div className="text-center max-w-2xl mx-auto space-y-3">
-                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-600/10 border border-blue-500/25 text-blue-400 text-xs font-semibold uppercase tracking-wider font-mono">
-                            <Activity className="w-3.5 h-3.5" />
-                            <span>PRATINJAU DASBOR INTERAKTIF</span>
-                        </div>
                         <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight font-heading">
                             Dasbor Finansial Modern dalam Genggaman.
                         </h2>
@@ -529,75 +537,177 @@ export const LandingPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Glowing SVG Area Chart (Visual Arus Kas) */}
-                            <div className="p-6 rounded-2xl bg-[#111116]/90 border border-white/5 space-y-4 relative overflow-hidden">
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <div className="space-y-0.5">
-                                        <h4 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                                            <span>Tren Arus Kas Terkonsolidasi</span>
-                                            <span className="text-[11px] font-normal text-zinc-500 font-mono">
-                                                ({currentDataset.label})
+                            {/* Ultra-Aesthetic Luminous Spline Chart (Linear / Stripe Grade) */}
+                            <div className="p-6 sm:p-7 rounded-2xl bg-gradient-to-b from-[#14141c]/95 via-[#0f0f14]/95 to-[#0b0b0e]/95 border border-white/10 space-y-5 relative overflow-hidden shadow-2xl">
+                                {/* Ambient Background Lighting Orb */}
+                                <div className="absolute top-0 right-1/4 w-[450px] h-[220px] bg-gradient-to-br from-blue-600/15 via-sky-500/10 to-transparent blur-[80px] pointer-events-none" />
+
+                                {/* Chart Card Header & Legend */}
+                                <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-white/5 relative z-10">
+                                    <div>
+                                        <div className="text-xs text-zinc-400 font-medium">Arus Kas Masuk vs Beban Keluar</div>
+                                        <div className="text-xl sm:text-2xl font-extrabold font-mono text-white tracking-tight flex items-center gap-3 pt-0.5">
+                                            <span>Rp {displayBalance.toLocaleString('id-ID')},00</span>
+                                            <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+                                                {currentDataset.growth}
                                             </span>
-                                        </h4>
-                                        <p className="text-xs text-zinc-400">
-                                            Garis kurva pergerakan kas masuk dan debit operasional secara real-time.
-                                        </p>
+                                        </div>
                                     </div>
-                                    <div className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300 font-medium flex items-center gap-1.5">
-                                        <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-                                        <span>{currentDataset.peakText}</span>
+
+                                    {/* Sleek Legend Indicators */}
+                                    <div className="flex items-center gap-2.5 text-xs">
+                                        <div className="flex items-center gap-1.5 text-sky-300 font-medium bg-sky-500/10 border border-sky-500/20 px-3 py-1 rounded-full">
+                                            <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                                            <span>Uang Masuk</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-indigo-300 font-medium bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full">
+                                            <span className="w-2 h-0.5 bg-indigo-400 rounded-full" />
+                                            <span>Beban Keluar</span>
+                                        </div>
+                                        <div className="hidden sm:flex items-center gap-1.5 text-emerald-400 font-medium bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                                            <span>Nol Selisih</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Area Chart Canvas */}
-                                <div className="relative w-full h-44 sm:h-52 pt-2">
+                                {/* Main Chart Area */}
+                                <div className="relative w-full h-48 sm:h-56 pt-2">
+                                    {/* Floating Jewel Apex Badge */}
+                                    <div
+                                        style={{ left: `${(currentDataset.peakCoord.x / 600) * 100}%` }}
+                                        className="absolute top-1 -translate-x-1/2 pointer-events-none hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-sky-400/40 backdrop-blur-xl shadow-[0_10px_25px_rgba(56,189,248,0.25)] ring-1 ring-white/15 text-xs font-semibold text-white z-20"
+                                    >
+                                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                        <span className="font-mono text-sky-300 font-bold">{currentDataset.peakValue}</span>
+                                        <span className="text-zinc-400 font-normal text-[11px]">• {currentDataset.peakTime}</span>
+                                    </div>
+
+                                    {/* SVG Graphic Canvas */}
                                     <svg
                                         viewBox="0 0 600 180"
                                         className="w-full h-full overflow-visible"
                                         preserveAspectRatio="none"
                                     >
                                         <defs>
-                                            <linearGradient id="chartGradientGlow" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.35" />
-                                                <stop offset="60%" stopColor="#2563eb" stopOpacity="0.08" />
+                                            {/* Luminous Area Gradient */}
+                                            <linearGradient id="luminousAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.45" />
+                                                <stop offset="30%" stopColor="#6366f1" stopOpacity="0.2" />
+                                                <stop offset="70%" stopColor="#2563eb" stopOpacity="0.05" />
                                                 <stop offset="100%" stopColor="#09090b" stopOpacity="0" />
                                             </linearGradient>
+
+                                            {/* Chromatic Multi-stop Glowing Stroke */}
+                                            <linearGradient id="chromaticSpline" x1="0" y1="0" x2="1" y2="0">
+                                                <stop offset="0%" stopColor="#38bdf8" />
+                                                <stop offset="40%" stopColor="#60a5fa" />
+                                                <stop offset="75%" stopColor="#818cf8" />
+                                                <stop offset="100%" stopColor="#34d399" />
+                                            </linearGradient>
+
+                                            {/* Soft Glow Filter */}
+                                            <filter id="splineGlow" x="-20%" y="-20%" width="140%" height="140%">
+                                                <feGaussianBlur stdDeviation="6" result="blur" />
+                                                <feMerge>
+                                                    <feMergeNode in="blur" />
+                                                    <feMergeNode in="SourceGraphic" />
+                                                </feMerge>
+                                            </filter>
+
+                                            {/* Dot Matrix Pattern */}
+                                            <pattern id="matrixDots" width="32" height="32" patternUnits="userSpaceOnUse">
+                                                <circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.05)" />
+                                            </pattern>
                                         </defs>
 
-                                        {/* Horizontal Reference Lines */}
-                                        <line x1="0" y1="45" x2="600" y2="45" stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" />
-                                        <line x1="0" y1="90" x2="600" y2="90" stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" />
-                                        <line x1="0" y1="135" x2="600" y2="135" stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" />
+                                        {/* Background Dot Matrix Pattern */}
+                                        <rect width="600" height="180" fill="url(#matrixDots)" />
 
-                                        {/* Filled Glowing Area */}
+                                        {/* Architectural Hairline Reference Lines */}
+                                        <line x1="0" y1="45" x2="600" y2="45" stroke="rgba(255,255,255,0.04)" strokeDasharray="3 4" />
+                                        <line x1="0" y1="90" x2="600" y2="90" stroke="rgba(255,255,255,0.04)" strokeDasharray="3 4" />
+                                        <line x1="0" y1="135" x2="600" y2="135" stroke="rgba(255,255,255,0.04)" strokeDasharray="3 4" />
+
+                                        {/* Micro Volume Pill Bars at Base */}
+                                        {volumeBars.map((bar, i) => (
+                                            <rect
+                                                key={i}
+                                                x={15 + i * 36}
+                                                y={172 - bar}
+                                                width="5"
+                                                height={bar}
+                                                rx="2.5"
+                                                fill="rgba(56, 189, 248, 0.18)"
+                                            />
+                                        ))}
+
+                                        {/* Ghost Outflow Wave (3D Depth Layer) */}
                                         <path
-                                            d={currentDataset.svgArea}
-                                            fill="url(#chartGradientGlow)"
-                                            className="transition-all duration-500 ease-out"
+                                            d={currentDataset.outflowSpline}
+                                            fill="none"
+                                            stroke="#a78bfa"
+                                            strokeWidth="1.5"
+                                            strokeDasharray="4 4"
+                                            opacity="0.5"
                                         />
 
-                                        {/* Crisp Glowing Stroke Path */}
-                                        <polyline
+                                        {/* Main Filled Glowing Area */}
+                                        <path
+                                            d={currentDataset.splineArea}
+                                            fill="url(#luminousAreaGradient)"
+                                            className="transition-all duration-700 ease-out"
+                                        />
+
+                                        {/* Bloom Glow Layer */}
+                                        <path
+                                            d={currentDataset.splinePath}
                                             fill="none"
-                                            stroke="#38bdf8"
-                                            strokeWidth="2.5"
+                                            stroke="url(#chromaticSpline)"
+                                            strokeWidth="6"
+                                            opacity="0.4"
+                                            filter="url(#splineGlow)"
+                                            className="transition-all duration-700 ease-out"
+                                        />
+
+                                        {/* Crisp Foreground Chromatic Stroke */}
+                                        <path
+                                            d={currentDataset.splinePath}
+                                            fill="none"
+                                            stroke="url(#chromaticSpline)"
+                                            strokeWidth="2.75"
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
-                                            points={currentDataset.svgPoints}
-                                            className="transition-all duration-500 ease-out drop-shadow-[0_0_8px_rgba(56,189,248,0.6)]"
+                                            className="transition-all duration-700 ease-out"
                                         />
 
-                                        {/* Peak Highlight Circle */}
+                                        {/* Jeweled Apex Node & Pulse Rings */}
                                         <circle
-                                            cx="450"
-                                            cy="40"
-                                            r="5"
-                                            className="fill-sky-400 stroke-zinc-950 stroke-[2] shadow-lg animate-pulse"
+                                            cx={currentDataset.peakCoord.x}
+                                            cy={currentDataset.peakCoord.y}
+                                            r="14"
+                                            fill="#38bdf8"
+                                            opacity="0.15"
+                                            className="animate-ping"
+                                        />
+                                        <circle
+                                            cx={currentDataset.peakCoord.x}
+                                            cy={currentDataset.peakCoord.y}
+                                            r="7"
+                                            fill="#09090b"
+                                            stroke="#38bdf8"
+                                            strokeWidth="2.5"
+                                        />
+                                        <circle
+                                            cx={currentDataset.peakCoord.x}
+                                            cy={currentDataset.peakCoord.y}
+                                            r="3"
+                                            fill="#ffffff"
                                         />
                                     </svg>
 
                                     {/* X-Axis Labels */}
-                                    <div className="flex items-center justify-between text-[11px] text-zinc-500 pt-2 font-mono">
+                                    <div className="flex items-center justify-between text-[11px] text-zinc-500 pt-3 font-mono">
                                         {currentDataset.xLabels.map((label, idx) => (
                                             <span key={idx}>{label}</span>
                                         ))}
@@ -771,9 +881,6 @@ export const LandingPage: React.FC = () => {
 
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-10">
                     <div className="text-left max-w-xl space-y-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400 font-mono">
-                            KEUNGGULAN UTAMA
-                        </span>
                         <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">
                             Semua yang Bisnis Anda Butuhkan.
                         </h2>
@@ -916,11 +1023,6 @@ export const LandingPage: React.FC = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                         {/* Kiri */}
                         <div className="lg:col-span-7 space-y-5 text-left">
-                            <div className="inline-flex items-center gap-2 text-xs text-emerald-400 font-medium">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                                <span>KEAMANAN TINGGI • AMAN & TERPERCAYA</span>
-                            </div>
-
                             <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-[1.1]">
                                 Uang Bisnis Aman. <br />
                                 <span className="text-zinc-500">Saldo Pasti Tepat.</span>
@@ -954,9 +1056,6 @@ export const LandingPage: React.FC = () => {
                         <div className="lg:col-span-5 text-left">
                             <div className="rounded-3xl border border-zinc-800 bg-[#111114] p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
                                 <div className="space-y-1.5">
-                                    <span className="text-[11px] text-blue-400 uppercase tracking-wider font-semibold block font-mono">
-                                        MULAI HARI INI
-                                    </span>
                                     <h3 className="text-2xl font-bold text-white tracking-tight">
                                         Rapikan Keuangan Bisnis Anda
                                     </h3>
