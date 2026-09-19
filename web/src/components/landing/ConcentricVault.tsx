@@ -363,9 +363,9 @@ export const ConcentricVault: React.FC = () => {
                                 </g>
                             </svg>
 
-                            {/* Centered HTML Bastion Logo */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-600/30 to-zinc-900 border border-blue-500/50 flex items-center justify-center text-blue-400 shadow-[0_0_25px_rgba(37,99,235,0.4)] pointer-events-none">
-                                <BastionLogo className="w-5 h-5 sm:w-7 sm:h-7" />
+                            {/* Centered Pure Bastion Logo */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+                                <BastionLogo className="w-10 h-10 sm:w-13 sm:h-13 text-white drop-shadow-[0_0_25px_rgba(0,229,255,0.6)]" />
                             </div>
                         </div>
 

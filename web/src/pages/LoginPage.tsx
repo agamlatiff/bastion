@@ -88,9 +88,7 @@ export const LoginPage: React.FC = () => {
             {/* Top Brand Logo */}
             <div>
                 <Link to="/" className="inline-flex items-center gap-2.5 group">
-                    <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center shadow-sm group-hover:border-blue-400 transition-colors">
-                        <BastionLogo className="w-4 h-4 stroke-[2.2]" />
-                    </div>
+                    <BastionLogo className="w-6 h-6 text-white shrink-0 group-hover:scale-105 transition-transform duration-200" />
                     <span className="font-heading font-bold text-lg text-white tracking-tight">
                         Bastion
                     </span>
@@ -203,10 +201,8 @@ export const LoginPage: React.FC = () => {
             ) : (
                 /* 2FA Mode */
                 <div className="space-y-6 max-w-md mx-auto w-full text-center">
-                    <div className="space-y-2">
-                        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center mx-auto shadow-sm">
-                            <BastionLogo className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.2]" />
-                        </div>
+                    <div className="space-y-3">
+                        <BastionLogo className="w-10 h-10 sm:w-11 sm:h-11 text-white mx-auto drop-shadow-[0_0_20px_rgba(0,229,255,0.35)]" />
                         <h2 className="text-lg sm:text-xl font-bold text-white font-heading">
                             Verifikasi Keamanan (2FA)
                         </h2>

@@ -76,9 +76,7 @@ export const RegisterPage: React.FC = () => {
             {/* Top Brand Logo */}
             <div>
                 <Link to="/" className="inline-flex items-center gap-2.5 group">
-                    <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center shadow-sm group-hover:border-blue-400 transition-colors">
-                        <BastionLogo className="w-4 h-4 stroke-[2.2]" />
-                    </div>
+                    <BastionLogo className="w-6 h-6 text-white shrink-0 group-hover:scale-105 transition-transform duration-200" />
                     <span className="font-heading font-bold text-lg text-white tracking-tight">
                         Bastion
                     </span>

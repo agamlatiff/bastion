@@ -31,9 +31,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
             >
                 <div className="flex items-center justify-between pb-6 border-b border-zinc-800">
                     <div className="flex items-center gap-2.5">
-                        <div className="flex items-center justify-center w-7 h-7 rounded-md bg-blue-600/20 border border-blue-500/40 text-blue-400 font-bold shadow-sm">
-                            <BastionLogo className="w-4 h-4 stroke-[2.2]" />
-                        </div>
+                        <BastionLogo className="w-5 h-5 text-white shrink-0" />
                         <span className="font-bold text-base text-white tracking-tight font-heading">Bastion</span>
                     </div>
                     <button
