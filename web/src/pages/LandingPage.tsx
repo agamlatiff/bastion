@@ -25,6 +25,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Navbar } from '../components/landing/Navbar';
 import { BastionLogo } from '../components/common/BastionLogo';
+import { ConcentricVault } from '../components/landing/ConcentricVault';
 
 interface DashboardTransaction {
     id: string;
@@ -960,67 +961,9 @@ export const LandingPage: React.FC = () => {
                         </p>
                     </div>
 
-                    {/* 3-Card Security Proof Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch pt-2">
-                        {/* Card 1: Buku Besar Imutabel */}
-                        <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-[#14141c]/95 to-[#0b0b0f]/95 p-7 sm:p-8 shadow-xl flex flex-col justify-between space-y-6 text-left relative overflow-hidden group hover:border-emerald-500/40 transition-all">
-                            <div className="space-y-4 relative z-10">
-                                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)] group-hover:scale-105 transition-transform">
-                                    <ShieldCheck className="w-6 h-6 stroke-[2.5]" />
-                                </div>
-                                <h3 className="text-xl font-bold text-white tracking-tight">
-                                    Buku Besar Imutabel
-                                </h3>
-                                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                                    Setiap mutasi kas tercatat permanen dalam rantai audit kriptografi. Tidak ada transaksi yang bisa diubah, dihapus, atau dimanipulasi diam-diam oleh siapa pun.
-                                </p>
-                            </div>
-
-                            <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-zinc-400 relative z-10">
-                                <span>Kriptografi SHA-256</span>
-                                <span className="text-emerald-400 font-semibold">Audit Permanen ✓</span>
-                            </div>
-                        </div>
-
-                        {/* Card 2: Proteksi Anti-Minus */}
-                        <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-[#14141c]/95 to-[#0b0b0f]/95 p-7 sm:p-8 shadow-xl flex flex-col justify-between space-y-6 text-left relative overflow-hidden group hover:border-blue-500/40 transition-all">
-                            <div className="space-y-4 relative z-10">
-                                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/25 flex items-center justify-center text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.2)] group-hover:scale-105 transition-transform">
-                                    <Lock className="w-6 h-6 stroke-[2.5]" />
-                                </div>
-                                <h3 className="text-xl font-bold text-white tracking-tight">
-                                    Jaminan Saldo Anti-Minus
-                                </h3>
-                                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                                    Mesin validasi transaksi bekerja di tingkat database atomik, otomatis menolak penarikan atau transfer jika dana kas tidak mencukupi.
-                                </p>
-                            </div>
-
-                            <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-zinc-400 relative z-10">
-                                <span>Validasi Atomik</span>
-                                <span className="text-blue-400 font-semibold">Nol Saldo Minus ✓</span>
-                            </div>
-                        </div>
-
-                        {/* Card 3: Kunci Idempoten */}
-                        <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-[#14141c]/95 to-[#0b0b0f]/95 p-7 sm:p-8 shadow-xl flex flex-col justify-between space-y-6 text-left relative overflow-hidden group hover:border-indigo-500/40 transition-all">
-                            <div className="space-y-4 relative z-10">
-                                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.2)] group-hover:scale-105 transition-transform">
-                                    <Zap className="w-6 h-6 fill-current" />
-                                </div>
-                                <h3 className="text-xl font-bold text-white tracking-tight">
-                                    Proteksi Transaksi Dobel
-                                </h3>
-                                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                                    Menjamin saldo bisnis tidak akan pernah terpotong dua kali akibat gangguan jaringan pembeli atau kasir menekan tombol bayar berulang kali.
-                                </p>
-                            </div>
-
-                            <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-zinc-400 relative z-10">
-                                <span>Kunci Idempoten</span>
-                                <span className="text-indigo-400 font-semibold">Bebas Transaksi Dobel ✓</span>
-                            </div>
-                        </div>
+                    {/* Concentric Security Vault Architecture */}
+                    <div className="pt-2">
+                        <ConcentricVault />
                     </div>
 
                     {/* Epic Radiant Final CTA Banner */}
