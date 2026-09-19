@@ -7,10 +7,10 @@ interface BastionLogoProps {
 }
 
 /**
- * Bastion Brand Logo (The Isometric B Monogram)
- * An exclusive, architectural isometric monogram forming the letter "B".
- * Constructed from interlocking modular balance blocks representing double-entry precision.
- * 100% free of shields, locks, and generic icons.
+ * Bastion Brand Logo (Option C: The Architectural Monolith & Vault Arch)
+ * Composed of 3 vertical architectural monoliths forming a fortress silhouette
+ * with a luminous cyan vault gateway at its core.
+ * Crisp, flat 2D geometry — 100% free of generic shields, locks, or 3D clutter.
  */
 export const BastionLogo: React.FC<BastionLogoProps> = ({
     className = 'w-5 h-5',
@@ -25,67 +25,38 @@ export const BastionLogo: React.FC<BastionLogoProps> = ({
             className={className}
             style={size ? { width: size, height: size } : undefined}
         >
-            {/* Left Vertical Pillar (The Spine) */}
+            {/* Left Monolith Pillar */}
             <path
-                d="M4 6.75L8.5 4.15V19.85L4 17.25V6.75Z"
+                d="M3 20V10L7.5 5.5V20H3Z"
                 fill="currentColor"
-                fillOpacity="0.18"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinejoin="round"
             />
 
-            {/* Top Loop (Upper Isometric Block) */}
+            {/* Center Monolith Pillar (Tallest Monolith with 45° Chamfer) */}
             <path
-                d="M8.5 4.15L15 7.9L19.5 5.3L13 1.55L8.5 4.15Z"
-                fill={variant === 'default' ? '#38bdf8' : 'currentColor'}
-                fillOpacity={variant === 'default' ? '0.9' : '0.4'}
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M19.5 5.3V10.5L15 13.1V7.9L19.5 5.3Z"
+                d="M9.5 1.5L14.5 6.5V15.5L12 13L9.5 15.5V1.5Z"
                 fill="currentColor"
-                fillOpacity="0.3"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M8.5 12V9.4L15 13.1V15.7L8.5 12Z"
-                fill="currentColor"
-                fillOpacity="0.1"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
             />
 
-            {/* Bottom Loop (Lower Isometric Block) */}
+            {/* Right Monolith Pillar */}
             <path
-                d="M8.5 12L15 15.7L19.5 13.1L13 9.4L8.5 12Z"
-                fill={variant === 'default' ? '#38bdf8' : 'currentColor'}
-                fillOpacity={variant === 'default' ? '0.9' : '0.4'}
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M19.5 13.1V18.3L13 22.1L8.5 19.5L15 15.7L19.5 13.1Z"
+                d="M16.5 5.5L21 10V20H16.5V5.5Z"
                 fill="currentColor"
-                fillOpacity="0.25"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
             />
 
-            {/* Central Interlocking Accent Dot */}
-            <circle
-                cx="11.75"
-                cy="11.75"
-                r="1.2"
-                fill={variant === 'default' ? '#38bdf8' : 'currentColor'}
+            {/* Glowing Cyan Vault Arch / Keystone */}
+            <path
+                d="M12 13.8L6.5 19.3H17.5L12 13.8Z"
+                fill={variant === 'default' ? '#00E5FF' : 'currentColor'}
+            />
+
+            {/* Subtle Negative Space Axis */}
+            <path
+                d="M12 13.8V19.3"
+                stroke={variant === 'default' ? '#09090B' : 'transparent'}
+                strokeWidth="1.2"
+                strokeLinecap="round"
             />
         </svg>
     );
 };
+
