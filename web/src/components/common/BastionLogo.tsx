@@ -3,14 +3,20 @@ import React from 'react';
 interface BastionLogoProps {
     className?: string;
     size?: number | string;
+    variant?: 'default' | 'monochrome';
 }
 
 /**
- * Bastion Brand Logo (The Fortress Hex-Vault)
- * An exclusive, modern architectural fortress & vault monogram.
- * Replaces the generic stock shield-check icon with a proprietary geometric brand identity.
+ * Bastion Brand Logo (The Isometric B Monogram)
+ * An exclusive, architectural isometric monogram forming the letter "B".
+ * Constructed from interlocking modular balance blocks representing double-entry precision.
+ * 100% free of shields, locks, and generic icons.
  */
-export const BastionLogo: React.FC<BastionLogoProps> = ({ className = 'w-5 h-5', size }) => {
+export const BastionLogo: React.FC<BastionLogoProps> = ({
+    className = 'w-5 h-5',
+    size,
+    variant = 'default',
+}) => {
     return (
         <svg
             viewBox="0 0 24 24"
@@ -18,39 +24,67 @@ export const BastionLogo: React.FC<BastionLogoProps> = ({ className = 'w-5 h-5',
             xmlns="http://www.w3.org/2000/svg"
             className={className}
             style={size ? { width: size, height: size } : undefined}
-            stroke="currentColor"
         >
-            {/* Outer Fortress Rampart Shield */}
+            {/* Left Vertical Pillar (The Spine) */}
             <path
-                d="M12 2.75L20 6.5V13C20 17.5 16.5 20.8 12 22C7.5 20.8 4 17.5 4 13V6.5L12 2.75Z"
-                strokeWidth="2"
-                strokeLinecap="round"
+                d="M4 6.75L8.5 4.15V19.85L4 17.25V6.75Z"
+                fill="currentColor"
+                fillOpacity="0.18"
+                stroke="currentColor"
+                strokeWidth="1.8"
                 strokeLinejoin="round"
             />
-            {/* Inner Interlocking Double-Entry Vault Core */}
+
+            {/* Top Loop (Upper Isometric Block) */}
             <path
-                d="M12 7.75L16 11.75L12 15.75L8 11.75L12 7.75Z"
+                d="M8.5 4.15L15 7.9L19.5 5.3L13 1.55L8.5 4.15Z"
+                fill={variant === 'default' ? '#38bdf8' : 'currentColor'}
+                fillOpacity={variant === 'default' ? '0.9' : '0.4'}
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M19.5 5.3V10.5L15 13.1V7.9L19.5 5.3Z"
+                fill="currentColor"
+                fillOpacity="0.3"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M8.5 12V9.4L15 13.1V15.7L8.5 12Z"
+                fill="currentColor"
+                fillOpacity="0.1"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+            />
+
+            {/* Bottom Loop (Lower Isometric Block) */}
+            <path
+                d="M8.5 12L15 15.7L19.5 13.1L13 9.4L8.5 12Z"
+                fill={variant === 'default' ? '#38bdf8' : 'currentColor'}
+                fillOpacity={variant === 'default' ? '0.9' : '0.4'}
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M19.5 13.1V18.3L13 22.1L8.5 19.5L15 15.7L19.5 13.1Z"
                 fill="currentColor"
                 fillOpacity="0.25"
-                strokeWidth="1.75"
+                stroke="currentColor"
+                strokeWidth="1.6"
                 strokeLinejoin="round"
             />
-            {/* Vertical Alignment Keyline */}
-            <line
-                x1="12"
-                y1="3.5"
-                x2="12"
-                y2="7.5"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-            />
-            <line
-                x1="12"
-                y1="16"
-                x2="12"
-                y2="20.5"
-                strokeWidth="1.75"
-                strokeLinecap="round"
+
+            {/* Central Interlocking Accent Dot */}
+            <circle
+                cx="11.75"
+                cy="11.75"
+                r="1.2"
+                fill={variant === 'default' ? '#38bdf8' : 'currentColor'}
             />
         </svg>
     );
