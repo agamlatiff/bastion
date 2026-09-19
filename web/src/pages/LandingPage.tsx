@@ -1075,88 +1075,51 @@ export const LandingPage: React.FC = () => {
             </section>
 
             {/* ========================================================================= */}
-            {/* FOOTER REVAMP (Linear & Stripe Grade with Giant Typography Watermark)     */}
+            {/* MINIMALIST & SIMPLE FOOTER                                                */}
             {/* ========================================================================= */}
-            <footer className="relative border-t border-white/5 bg-[#09090b] pt-16 pb-12 text-xs text-zinc-400 text-left overflow-hidden">
-                {/* Radiant Glowing Line on Top */}
-                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
-
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12 relative z-10">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 items-start">
-                        {/* Kolom 1: Brand & Status (Span 4) */}
-                        <div className="lg:col-span-4 space-y-4">
+            <footer className="relative border-t border-white/5 bg-[#09090b] py-10 sm:py-12 text-xs text-zinc-400 text-left">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
+                    {/* Top Row: Brand & Horizontal Nav */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-[0_0_12px_rgba(37,99,235,0.3)]">
-                                    <BastionLogo className="w-4 h-4 stroke-[2.2]" />
+                                <div className="w-7 h-7 rounded-lg bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-sm">
+                                    <BastionLogo className="w-3.5 h-3.5 stroke-[2.2]" />
                                 </div>
-                                <span className="font-bold text-lg text-white tracking-tight font-heading">Bastion</span>
+                                <span className="font-bold text-base text-white tracking-tight font-heading">Bastion</span>
                             </div>
-                            <p className="text-xs text-zinc-400 max-w-sm leading-relaxed">
-                                Infrastruktur dompet digital bisnis dan pembukuan berpasangan otomatis. Menjaga saldo kas selalu seimbang, anti-minus, dan bebas drama selisih.
+                            <span className="hidden sm:inline text-zinc-700">•</span>
+                            <p className="text-xs text-zinc-400">
+                                Dompet kas dan pembukuan usaha tanpa selisih.
                             </p>
-                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium font-mono">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                                <span>Semua Sistem Normal • 99.99% Uptime</span>
+                        </div>
+
+                        {/* Essential Nav Links */}
+                        <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-medium text-zinc-400">
+                            <a href="#demo" className="hover:text-white transition-colors">Dasbor</a>
+                            <a href="#keunggulan" className="hover:text-white transition-colors">Keunggulan</a>
+                            <a href="#keamanan" className="hover:text-white transition-colors">Keamanan</a>
+                            <Link to="/login" className="hover:text-white transition-colors">Masuk</Link>
+                            <Link to="/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">Buka Akun →</Link>
+                        </nav>
+                    </div>
+
+                    {/* Bottom Row: Copyright & Minimal Status */}
+                    <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-zinc-500">
+                        <p>&copy; {new Date().getFullYear()} Bastion. Seluruh hak cipta dilindungi.</p>
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1.5 text-zinc-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                <span>Semua Sistem Normal</span>
                             </div>
+                            <span className="text-zinc-700">•</span>
+                            <button
+                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                                className="text-zinc-400 hover:text-white transition-colors"
+                            >
+                                Ke Atas ↑
+                            </button>
                         </div>
-
-                        {/* Kolom 2: Produk & Fitur (Span 2) */}
-                        <div className="lg:col-span-2 space-y-3">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-white block font-mono">
-                                Produk
-                            </span>
-                            <ul className="space-y-2 text-xs text-zinc-400">
-                                <li><a href="#demo" className="hover:text-white transition-colors">Dasbor Interaktif</a></li>
-                                <li><a href="#keunggulan" className="hover:text-white transition-colors">Kas Multi-Valuta</a></li>
-                                <li><a href="#keamanan" className="hover:text-white transition-colors">Proteksi Anti-Minus</a></li>
-                                <li><a href="#demo" className="hover:text-white transition-colors">Buku Besar Otomatis</a></li>
-                            </ul>
-                        </div>
-
-                        {/* Kolom 3: Keamanan & Kepatuhan (Span 3) */}
-                        <div className="lg:col-span-3 space-y-3">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-white block font-mono">
-                                Keamanan
-                            </span>
-                            <ul className="space-y-2 text-xs text-zinc-400">
-                                <li><span className="text-zinc-300">Enkripsi Bank-Grade AES-256</span></li>
-                                <li><span className="text-zinc-300">Buku Besar Imutabel SHA-256</span></li>
-                                <li><span className="text-zinc-300">Protokol Idempoten 100%</span></li>
-                                <li><span className="text-zinc-300">Rekonsiliasi Otomatis</span></li>
-                            </ul>
-                        </div>
-
-                        {/* Kolom 4: Akses Cepat (Span 3) */}
-                        <div className="lg:col-span-3 space-y-3">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-white block font-mono">
-                                Akses
-                            </span>
-                            <ul className="space-y-2 text-xs text-zinc-400">
-                                <li><Link to="/register" className="text-blue-400 hover:text-blue-300 transition-colors font-medium">Buka Akun Gratis →</Link></li>
-                                <li><Link to="/login" className="hover:text-white transition-colors">Masuk ke Dasbor</Link></li>
-                                <li><a href="#demo" className="hover:text-white transition-colors">Coba Simulasi</a></li>
-                                <li><span className="text-zinc-500">Dukungan Teknis 24/7</span></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    {/* Bottom Bar: Copyright & Back to Top */}
-                    <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-zinc-500">
-                        <p>&copy; {new Date().getFullYear()} Bastion Financial Core. Seluruh hak cipta dilindungi.</p>
-                        <button
-                            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                            className="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5"
-                        >
-                            <span>Kembali ke Atas</span>
-                            <span>↑</span>
-                        </button>
-                    </div>
-
-                    {/* Giant Architectural Watermark Backdrop */}
-                    <div className="overflow-hidden select-none pointer-events-none pt-4 text-center">
-                        <span className="text-[14vw] sm:text-[16vw] font-extrabold tracking-tighter text-white/[0.025] leading-none block font-heading">
-                            BASTION
-                        </span>
                     </div>
                 </div>
             </footer>
