@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Menu, X, Zap, Lock, Coins } from 'lucide-react';
+import { Menu, X, Zap, Lock, Coins } from 'lucide-react';
+import { BastionLogo } from '../common/BastionLogo';
 import { useAuth } from '../../features/auth/useAuth';
 
 export const Navbar: React.FC = () => {
@@ -60,14 +61,14 @@ export const Navbar: React.FC = () => {
                         : 'bg-zinc-950/65 backdrop-blur-xl border border-zinc-800/80 shadow-2xl shadow-black/60 px-5 sm:px-7 h-16 sm:h-17'
                 }`}
             >
-                {/* Brand Logo - Just Bastion */}
+                {/* Brand Logo - Bastion */}
                 <Link to="/" onClick={closeMobileMenu} className="flex items-center gap-2.5 sm:gap-3 group">
                     <div
                         className={`rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-[0_0_14px_rgba(37,99,235,0.25)] group-hover:border-blue-400 group-hover:bg-blue-600/30 transition-all duration-300 shrink-0 ${
                             isScrolled ? 'w-8 h-8 sm:w-8.5 sm:h-8.5' : 'w-9 h-9 sm:w-10 sm:h-10'
                         }`}
                     >
-                        <ShieldCheck className={`stroke-[2.5] transition-all duration-300 ${isScrolled ? 'w-4 h-4 sm:w-4.5 sm:h-4.5' : 'w-5 h-5'}`} />
+                        <BastionLogo className={`transition-all duration-300 ${isScrolled ? 'w-4 h-4 sm:w-4.5 sm:h-4.5' : 'w-5 h-5'}`} />
                     </div>
                     <span className={`font-bold text-white tracking-tight transition-all duration-300 ${
                         isScrolled ? 'text-base sm:text-lg' : 'text-lg sm:text-xl'

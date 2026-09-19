@@ -24,6 +24,7 @@ import { useAuth } from '../features/auth/useAuth';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Navbar } from '../components/landing/Navbar';
+import { BastionLogo } from '../components/common/BastionLogo';
 
 interface DashboardTransaction {
     id: string;
@@ -1086,7 +1087,7 @@ export const LandingPage: React.FC = () => {
                         <div className="lg:col-span-4 space-y-4">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-[0_0_12px_rgba(37,99,235,0.3)]">
-                                    <ShieldCheck className="w-4 h-4 stroke-[2.5]" />
+                                    <BastionLogo className="w-4 h-4 stroke-[2.2]" />
                                 </div>
                                 <span className="font-bold text-lg text-white tracking-tight font-heading">Bastion</span>
                             </div>
