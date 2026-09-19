@@ -6,7 +6,18 @@ import { useAuth } from '../../features/auth/useAuth';
 export const Navbar: React.FC = () => {
     const { isAuthenticated } = useAuth();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
     const navRef = useRef<HTMLDivElement>(null);
+
+    // Scroll listener for dynamic frosted pill morphing
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20);
+        };
+        handleScroll();
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Close mobile menu when clicking outside or pressing Escape
     useEffect(() => {
@@ -33,53 +44,84 @@ export const Navbar: React.FC = () => {
     const closeMobileMenu = () => setMobileMenuOpen(false);
 
     return (
-        <div ref={navRef} className="fixed top-3 sm:top-5 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-5xl">
+        <div
+            ref={navRef}
+            className={`fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ease-out ${
+                isScrolled
+                    ? 'top-2.5 sm:top-3.5 w-[92%] max-w-4xl'
+                    : 'top-3.5 sm:top-5 w-[94%] max-w-5xl'
+            }`}
+        >
             {/* Main Floating Pill Bar */}
-            <header className="w-full bg-zinc-950/85 backdrop-blur-xl border border-zinc-800/90 rounded-full shadow-2xl shadow-black/80 px-5 sm:px-7 h-16 sm:h-17 flex items-center justify-between transition-all">
+            <header
+                className={`w-full rounded-full flex items-center justify-between transition-all duration-300 ease-out ${
+                    isScrolled
+                        ? 'bg-zinc-950/90 backdrop-blur-2xl border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.85)] ring-1 ring-white/5 px-4 sm:px-6 h-13 sm:h-14'
+                        : 'bg-zinc-950/65 backdrop-blur-xl border border-zinc-800/80 shadow-2xl shadow-black/60 px-5 sm:px-7 h-16 sm:h-17'
+                }`}
+            >
                 {/* Brand Logo - Just Bastion */}
-                <Link to="/" onClick={closeMobileMenu} className="flex items-center gap-3 group">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-[0_0_14px_rgba(37,99,235,0.25)] group-hover:border-blue-400 group-hover:bg-blue-600/30 transition-all shrink-0">
-                        <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
+                <Link to="/" onClick={closeMobileMenu} className="flex items-center gap-2.5 sm:gap-3 group">
+                    <div
+                        className={`rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-[0_0_14px_rgba(37,99,235,0.25)] group-hover:border-blue-400 group-hover:bg-blue-600/30 transition-all duration-300 shrink-0 ${
+                            isScrolled ? 'w-8 h-8 sm:w-8.5 sm:h-8.5' : 'w-9 h-9 sm:w-10 sm:h-10'
+                        }`}
+                    >
+                        <ShieldCheck className={`stroke-[2.5] transition-all duration-300 ${isScrolled ? 'w-4 h-4 sm:w-4.5 sm:h-4.5' : 'w-5 h-5'}`} />
                     </div>
-                    <span className="font-bold text-white tracking-tight text-lg sm:text-xl">
+                    <span className={`font-bold text-white tracking-tight transition-all duration-300 ${
+                        isScrolled ? 'text-base sm:text-lg' : 'text-lg sm:text-xl'
+                    }`}>
                         Bastion
                     </span>
                 </Link>
 
                 {/* Desktop Navigation Links (Necessary items only) */}
-                <nav className="hidden md:flex items-center gap-1.5 text-sm sm:text-[15px] font-medium text-zinc-300">
+                <nav className={`hidden md:flex items-center gap-1 font-medium text-zinc-300 transition-all duration-300 ${
+                    isScrolled ? 'text-xs sm:text-[13.5px]' : 'text-sm sm:text-[15px]'
+                }`}>
                     <a
                         href="#solusi"
-                        className="px-4 py-2 rounded-full hover:text-white hover:bg-zinc-800/60 transition-colors"
+                        className={`rounded-full hover:text-white hover:bg-zinc-800/60 transition-all ${
+                            isScrolled ? 'px-3 py-1.5' : 'px-4 py-2'
+                        }`}
                     >
                         Solusi
                     </a>
                     <a
                         href="#keunggulan"
-                        className="px-4 py-2 rounded-full hover:text-white hover:bg-zinc-800/60 transition-colors"
+                        className={`rounded-full hover:text-white hover:bg-zinc-800/60 transition-all ${
+                            isScrolled ? 'px-3 py-1.5' : 'px-4 py-2'
+                        }`}
                     >
                         Keunggulan
                     </a>
                     <a
                         href="#keamanan"
-                        className="px-4 py-2 rounded-full hover:text-white hover:bg-zinc-800/60 transition-colors"
+                        className={`rounded-full hover:text-white hover:bg-zinc-800/60 transition-all ${
+                            isScrolled ? 'px-3 py-1.5' : 'px-4 py-2'
+                        }`}
                     >
                         Keamanan
                     </a>
                     <a
                         href="#demo"
-                        className="px-4 py-2 rounded-full hover:text-white hover:bg-zinc-800/60 transition-colors"
+                        className={`rounded-full hover:text-white hover:bg-zinc-800/60 transition-all ${
+                            isScrolled ? 'px-3 py-1.5' : 'px-4 py-2'
+                        }`}
                     >
                         Coba Simulasi
                     </a>
                 </nav>
 
                 {/* Desktop Auth Actions */}
-                <div className="hidden md:flex items-center gap-3">
+                <div className="hidden md:flex items-center gap-2.5">
                     {isAuthenticated ? (
                         <Link
                             to="/app/dashboard"
-                            className="bg-blue-600 hover:bg-blue-500 text-white text-sm sm:text-[15px] font-semibold px-5 py-2.5 rounded-full shadow-lg shadow-blue-600/30 transition-all"
+                            className={`bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-full shadow-lg shadow-blue-600/30 transition-all ${
+                                isScrolled ? 'text-xs sm:text-sm px-4 py-2' : 'text-sm sm:text-[15px] px-5 py-2.5'
+                            }`}
                         >
                             Dasbor
                         </Link>
@@ -87,16 +129,20 @@ export const Navbar: React.FC = () => {
                         <>
                             <Link
                                 to="/login"
-                                className="text-sm sm:text-[15px] font-medium text-zinc-300 hover:text-white px-3 py-2 transition-colors"
+                                className={`font-medium text-zinc-300 hover:text-white transition-colors ${
+                                    isScrolled ? 'text-xs sm:text-sm px-2.5 py-1.5' : 'text-sm sm:text-[15px] px-3 py-2'
+                                }`}
                             >
                                 Masuk
                             </Link>
                             <Link
                                 to="/register"
-                                className="bg-blue-600 hover:bg-blue-500 text-white text-sm sm:text-[15px] font-semibold px-5 py-2.5 rounded-full shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 transition-all flex items-center gap-2"
+                                className={`bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-full shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 transition-all flex items-center gap-2 ${
+                                    isScrolled ? 'text-xs sm:text-sm px-4 py-2' : 'text-sm sm:text-[15px] px-5 py-2.5'
+                                }`}
                             >
                                 <span>Mulai Gratis</span>
-                                <Zap className="w-4 h-4 fill-current" />
+                                <Zap className={`fill-current ${isScrolled ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} />
                             </Link>
                         </>
                     )}
