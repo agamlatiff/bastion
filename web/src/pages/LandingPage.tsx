@@ -11,14 +11,12 @@ import {
     Zap,
     RefreshCw,
     TrendingUp,
-    Activity,
     ArrowUpRight,
     ArrowDownRight,
     Lock,
     Unlock,
     AlertCircle,
     CheckCircle,
-    Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../features/auth/useAuth';
 import { Button } from '../components/ui/Button';
@@ -372,10 +370,6 @@ export const LandingPage: React.FC = () => {
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
                     {/* Section Heading */}
                     <div className="text-center max-w-3xl mx-auto space-y-3.5 sm:space-y-4">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-mono font-medium text-blue-400">
-                            <Activity className="w-3.5 h-3.5" />
-                            <span>DASBOR INTERAKTIF</span>
-                        </div>
                         <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight font-heading leading-tight">
                             Dasbor Finansial Modern dalam Genggaman.
                         </h2>
@@ -813,10 +807,6 @@ export const LandingPage: React.FC = () => {
 
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-10">
                     <div className="text-left max-w-2xl space-y-3.5 sm:space-y-4">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-mono font-medium text-blue-400">
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span>KEUNGGULAN UTAMA</span>
-                        </div>
                         <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight font-heading leading-tight">
                             Semua yang Bisnis Anda Butuhkan.
                         </h2>
@@ -958,12 +948,8 @@ export const LandingPage: React.FC = () => {
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
                     {/* Section Heading */}
                     <div className="text-center max-w-3xl mx-auto space-y-3.5 sm:space-y-4">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-mono font-medium text-cyan-400">
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                            <span>ARSITEKTUR KEAMANAN</span>
-                        </div>
                         <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight font-heading leading-tight">
-                            Kas Bisnis Anda Dijaga Otomatis, Bebas Khawatir Selisih.
+                            Kas Bisnis Anda Dijaga Otomatis.
                         </h2>
                         <p className="text-sm sm:text-base md:text-lg text-zinc-300 leading-relaxed max-w-2xl mx-auto">
                             Dari kasir yang tak sengaja klik dobel sampai internet yang tiba-tiba ngadat, Bastion memastikan uang kas Anda selalu pas dan aman.
