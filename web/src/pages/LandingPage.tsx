@@ -119,8 +119,8 @@ export const LandingPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-zinc-800 selection:text-white relative overflow-x-hidden">
-            {/* Background Grid Kotak-kotak Nyata & Prominen */}
-            <div className="absolute inset-0 bg-grid-hero pointer-events-none opacity-60 [mask-image:radial-gradient(ellipse_at_center,white_50%,transparent_90%)]" />
+            {/* Background Grid Kotak-kotak Nyata & Memudar Lembut ke Bawah */}
+            <div className="absolute top-0 inset-x-0 h-[1300px] bg-grid-hero pointer-events-none opacity-60 [mask-image:linear-gradient(to_bottom,white_35%,rgba(255,255,255,0.4)_70%,transparent_100%)]" />
 
             {/* Ambient Lighting Lembut di Balik Grid */}
             <div className="absolute top-28 left-1/3 -translate-x-1/2 w-[550px] h-[350px] bg-blue-600/10 blur-[140px] rounded-full pointer-events-none" />
@@ -131,7 +131,7 @@ export const LandingPage: React.FC = () => {
             {/* ========================================================================= */}
             {/* SECTION 1: HERO (Clean, Premium, Zero Alay, Layout Fanned Cards)          */}
             {/* ========================================================================= */}
-            <section className="relative pt-32 pb-24 md:pt-40 md:pb-28 px-4 sm:px-6 max-w-6xl mx-auto text-center">
+            <section className="relative pt-32 pb-36 sm:pb-44 md:pt-40 md:pb-48 px-4 sm:px-6 max-w-6xl mx-auto text-center">
                 {/* Hero Content (Lugas & To The Point) */}
                 <div className="space-y-5 max-w-3xl mx-auto relative z-10">
                     <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.12] text-balance font-sans">
@@ -260,7 +260,12 @@ export const LandingPage: React.FC = () => {
             {/* ========================================================================= */}
             {/* SECTION 2: THE PROOF — DUAL-PANE INTERACTIVE SIMULATOR (#demo)            */}
             {/* ========================================================================= */}
-            <section id="demo" className="py-24 border-t border-zinc-800/80 bg-[#0c0c0e]/80 relative overflow-hidden">
+            <section id="demo" className="py-24 relative overflow-hidden">
+                {/* Radiant Glowing Divider (Memudar ke Kiri & Kanan) */}
+                <div className="w-full max-w-5xl mx-auto mb-16 px-4">
+                    <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
+                </div>
+
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-10">
                     <div className="text-center max-w-2xl mx-auto space-y-2">
                         <span className="text-xs font-semibold uppercase tracking-wider text-blue-400 font-mono">
@@ -491,7 +496,12 @@ export const LandingPage: React.FC = () => {
             {/* ========================================================================= */}
             {/* SECTION 3: KEUNGGULAN — BENTO GRID RAMAH & STRAIGHTFORWARD (#keunggulan)  */}
             {/* ========================================================================= */}
-            <section id="keunggulan" className="py-24 border-t border-zinc-800/80 relative">
+            <section id="keunggulan" className="py-24 relative">
+                {/* Radiant Glowing Divider */}
+                <div className="w-full max-w-5xl mx-auto mb-16 px-4">
+                    <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
+                </div>
+
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-10">
                     <div className="text-left max-w-xl space-y-2">
                         <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400 font-mono">
@@ -629,7 +639,12 @@ export const LandingPage: React.FC = () => {
             {/* ========================================================================= */}
             {/* SECTION 4: KEAMANAN & PENDAFTARAN (#keamanan)                             */}
             {/* ========================================================================= */}
-            <section id="keamanan" className="py-24 border-t border-zinc-800/80 bg-[#09090b] relative">
+            <section id="keamanan" className="py-24 relative">
+                {/* Radiant Glowing Divider */}
+                <div className="w-full max-w-5xl mx-auto mb-16 px-4">
+                    <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
+                </div>
+
                 <div className="max-w-6xl mx-auto px-4 sm:px-6">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                         {/* Kiri */}
