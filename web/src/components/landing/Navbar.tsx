@@ -76,17 +76,17 @@ export const Navbar: React.FC = () => {
                     </span>
                 </Link>
 
-                {/* Desktop Navigation Links (Necessary items only) */}
+                {/* Desktop Navigation Links (Synced to landing page sections) */}
                 <nav className={`hidden md:flex items-center gap-1 font-medium text-zinc-300 transition-all duration-300 ${
                     isScrolled ? 'text-xs sm:text-[13.5px]' : 'text-sm sm:text-[15px]'
                 }`}>
                     <a
-                        href="#solusi"
+                        href="#demo"
                         className={`rounded-full hover:text-white hover:bg-zinc-800/60 transition-all ${
                             isScrolled ? 'px-3 py-1.5' : 'px-4 py-2'
                         }`}
                     >
-                        Solusi
+                        Dasbor
                     </a>
                     <a
                         href="#keunggulan"
@@ -103,14 +103,6 @@ export const Navbar: React.FC = () => {
                         }`}
                     >
                         Keamanan
-                    </a>
-                    <a
-                        href="#demo"
-                        className={`rounded-full hover:text-white hover:bg-zinc-800/60 transition-all ${
-                            isScrolled ? 'px-3 py-1.5' : 'px-4 py-2'
-                        }`}
-                    >
-                        Coba Simulasi
                     </a>
                 </nav>
 
@@ -173,12 +165,12 @@ export const Navbar: React.FC = () => {
                 <div className="md:hidden mt-2.5 w-full bg-zinc-950/95 backdrop-blur-2xl rounded-3xl border border-zinc-800/90 shadow-2xl shadow-black/90 p-5 overflow-hidden transition-all animate-in fade-in slide-in-from-top-2 duration-150 text-zinc-100 space-y-4">
                     <div className="space-y-1">
                         <a
-                            href="#solusi"
+                            href="#demo"
                             onClick={closeMobileMenu}
                             className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl text-sm font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 transition-colors"
                         >
                             <Zap className="w-4 h-4 text-zinc-400" />
-                            <span>Solusi</span>
+                            <span>Dasbor Interaktif</span>
                         </a>
 
                         <a
@@ -197,15 +189,6 @@ export const Navbar: React.FC = () => {
                         >
                             <Lock className="w-4 h-4 text-zinc-400" />
                             <span>Keamanan</span>
-                        </a>
-
-                        <a
-                            href="#demo"
-                            onClick={closeMobileMenu}
-                            className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl text-sm font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 transition-colors"
-                        >
-                            <Coins className="w-4 h-4 text-zinc-400" />
-                            <span>Coba Simulasi</span>
                         </a>
                     </div>
 

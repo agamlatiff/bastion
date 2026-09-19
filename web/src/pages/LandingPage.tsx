@@ -1011,84 +1011,133 @@ export const LandingPage: React.FC = () => {
             </section>
 
             {/* ========================================================================= */}
-            {/* SECTION 4: KEAMANAN & PENDAFTARAN (#keamanan)                             */}
+            {/* SECTION 4: BUKTI KEAMANAN & FINAL RADIANT CTA (#keamanan)                  */}
             {/* ========================================================================= */}
-            <section id="keamanan" className="py-24 relative">
+            <section id="keamanan" className="py-24 relative overflow-hidden">
                 {/* Radiant Glowing Divider */}
                 <div className="w-full max-w-5xl mx-auto mb-16 px-4">
                     <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
                 </div>
 
-                <div className="max-w-6xl mx-auto px-4 sm:px-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                        {/* Kiri */}
-                        <div className="lg:col-span-7 space-y-5 text-left">
-                            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-[1.1]">
-                                Uang Bisnis Aman. <br />
-                                <span className="text-zinc-500">Saldo Pasti Tepat.</span>
-                            </h2>
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
+                    {/* Section Heading */}
+                    <div className="text-center max-w-2xl mx-auto space-y-3">
+                        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight font-heading">
+                            Keamanan Finansial Tanpa Kompromi.
+                        </h2>
+                        <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xl mx-auto">
+                            Infrastruktur berstandar perbankan yang dirancang untuk melindungi setiap transaksi dan mencegah kebocoran kas bisnis.
+                        </p>
+                    </div>
 
-                            <p className="text-sm sm:text-base text-zinc-400 max-w-lg leading-relaxed">
-                                Dilindungi enkripsi mutakhir berstandar perbankan agar Anda bisa fokus membesarkan bisnis tanpa rasa was-was.
-                            </p>
+                    {/* 3-Card Security Proof Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch pt-2">
+                        {/* Card 1: Buku Besar Imutabel */}
+                        <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-[#14141c]/95 to-[#0b0b0f]/95 p-7 sm:p-8 shadow-xl flex flex-col justify-between space-y-6 text-left relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+                            <div className="space-y-4 relative z-10">
+                                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)] group-hover:scale-105 transition-transform">
+                                    <ShieldCheck className="w-6 h-6 stroke-[2.5]" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white tracking-tight">
+                                    Buku Besar Imutabel
+                                </h3>
+                                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                                    Setiap mutasi kas tercatat permanen dalam rantai audit kriptografi. Tidak ada transaksi yang bisa diubah, dihapus, atau dimanipulasi diam-diam oleh siapa pun.
+                                </p>
+                            </div>
 
-                            <div className="pt-6 border-t border-zinc-800/80 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left">
-                                <div>
-                                    <span className="text-white text-sm font-bold block">Enkripsi Kuat</span>
-                                    <span className="text-[11px] text-zinc-400">Data Terlindungi</span>
-                                </div>
-                                <div>
-                                    <span className="text-white text-sm font-bold block">Pasti Seimbang</span>
-                                    <span className="text-[11px] text-zinc-400">Bebas Selisih</span>
-                                </div>
-                                <div>
-                                    <span className="text-white text-sm font-bold block">Anti-Minus</span>
-                                    <span className="text-[11px] text-zinc-400">Proteksi Saldo</span>
-                                </div>
-                                <div>
-                                    <span className="text-white text-sm font-bold block">Multi-Mata Uang</span>
-                                    <span className="text-[11px] text-zinc-400">IDR, USD & Lainnya</span>
-                                </div>
+                            <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-zinc-400 relative z-10">
+                                <span>Kriptografi SHA-256</span>
+                                <span className="text-emerald-400 font-semibold">Audit Permanen ✓</span>
                             </div>
                         </div>
 
-                        {/* Kanan */}
-                        <div className="lg:col-span-5 text-left">
-                            <div className="rounded-3xl border border-zinc-800 bg-[#111114] p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
-                                <div className="space-y-1.5">
-                                    <h3 className="text-2xl font-bold text-white tracking-tight">
-                                        Rapikan Keuangan Bisnis Anda
-                                    </h3>
-                                    <p className="text-xs text-zinc-400 leading-relaxed">
-                                        Mulai simpan dan pantau perputaran uang dalam satu dasbor rapi. Pendaftaran selesai hanya dalam 2 menit.
-                                    </p>
+                        {/* Card 2: Proteksi Anti-Minus */}
+                        <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-[#14141c]/95 to-[#0b0b0f]/95 p-7 sm:p-8 shadow-xl flex flex-col justify-between space-y-6 text-left relative overflow-hidden group hover:border-blue-500/40 transition-all">
+                            <div className="space-y-4 relative z-10">
+                                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/25 flex items-center justify-center text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.2)] group-hover:scale-105 transition-transform">
+                                    <Lock className="w-6 h-6 stroke-[2.5]" />
                                 </div>
+                                <h3 className="text-xl font-bold text-white tracking-tight">
+                                    Jaminan Saldo Anti-Minus
+                                </h3>
+                                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                                    Mesin validasi transaksi bekerja di tingkat database atomik, otomatis menolak penarikan atau transfer jika dana kas tidak mencukupi.
+                                </p>
+                            </div>
 
-                                <div className="space-y-3 pt-2">
-                                    <Link to={isAuthenticated ? '/app/dashboard' : '/register'} className="block">
-                                        <Button
-                                            size="lg"
-                                            className="w-full py-4 text-sm font-bold shadow-lg shadow-blue-600/25 bg-blue-600 hover:bg-blue-500 text-white border-0 rounded-full"
-                                            rightIcon={<ArrowRight className="w-4 h-4" />}
-                                        >
-                                            {isAuthenticated ? 'Buka Dasbor Saya' : 'Buka Akun Gratis Sekarang'}
-                                        </Button>
-                                    </Link>
-                                    <a href="#demo" className="block">
-                                        <button className="w-full py-3.5 text-xs font-semibold rounded-full border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 transition-colors">
-                                            Coba Simulasi di Atas ↑
-                                        </button>
-                                    </a>
-                                </div>
+                            <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-zinc-400 relative z-10">
+                                <span>Validasi Atomik</span>
+                                <span className="text-blue-400 font-semibold">Nol Saldo Minus ✓</span>
+                            </div>
+                        </div>
 
-                                <div className="pt-4 border-t border-zinc-800/80 flex items-center justify-between text-xs text-zinc-400">
-                                    <span className="flex items-center gap-1.5">
-                                        <Check className="w-4 h-4 text-emerald-400" /> Bebas biaya bulanan
-                                    </span>
-                                    <span className="flex items-center gap-1.5">
-                                        <Check className="w-4 h-4 text-emerald-400" /> Buka akun 2 menit
-                                    </span>
+                        {/* Card 3: Kunci Idempoten */}
+                        <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-[#14141c]/95 to-[#0b0b0f]/95 p-7 sm:p-8 shadow-xl flex flex-col justify-between space-y-6 text-left relative overflow-hidden group hover:border-indigo-500/40 transition-all">
+                            <div className="space-y-4 relative z-10">
+                                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.2)] group-hover:scale-105 transition-transform">
+                                    <Zap className="w-6 h-6 fill-current" />
                                 </div>
+                                <h3 className="text-xl font-bold text-white tracking-tight">
+                                    Proteksi Transaksi Dobel
+                                </h3>
+                                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                                    Menjamin saldo bisnis tidak akan pernah terpotong dua kali akibat gangguan jaringan pembeli atau kasir menekan tombol bayar berulang kali.
+                                </p>
+                            </div>
+
+                            <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-zinc-400 relative z-10">
+                                <span>Kunci Idempoten</span>
+                                <span className="text-indigo-400 font-semibold">Bebas Transaksi Dobel ✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Epic Radiant Final CTA Banner */}
+                    <div className="mt-16 rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-[#181824]/95 via-[#101017]/95 to-[#09090c]/95 p-10 sm:p-14 text-center relative overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.9)] ring-1 ring-white/10">
+                        {/* Ambient Central Glow */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-r from-blue-600/20 via-sky-500/15 to-indigo-600/20 blur-[100px] pointer-events-none" />
+
+                        <div className="relative z-10 max-w-2xl mx-auto space-y-5">
+                            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-[1.1] font-heading">
+                                Bebaskan Bisnis Anda <br className="hidden sm:inline" />
+                                <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(56,189,248,0.25)]">
+                                    dari Drama Selisih Uang.
+                                </span>
+                            </h2>
+
+                            <p className="text-sm sm:text-base text-zinc-300 max-w-lg mx-auto leading-relaxed">
+                                Mulai kelola dompet kas dan pembukuan otomatis dalam hitungan menit. Tanpa kontrak rumit, tanpa biaya siluman.
+                            </p>
+
+                            {/* Tombol Aksi */}
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
+                                <Link to={isAuthenticated ? '/app/dashboard' : '/register'} className="w-full sm:w-auto">
+                                    <button className="w-full sm:w-auto px-9 py-4 rounded-full text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-200 shadow-[0_0_30px_rgba(255,255,255,0.25)] transition-all flex items-center justify-center gap-2">
+                                        <span>{isAuthenticated ? 'Buka Dasbor Saya' : 'Buka Akun Gratis Sekarang'}</span>
+                                        <ArrowRight className="w-4 h-4" />
+                                    </button>
+                                </Link>
+                                <a href="#demo" className="w-full sm:w-auto">
+                                    <button className="w-full sm:w-auto px-8 py-4 rounded-full text-sm font-semibold border border-zinc-700/80 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 backdrop-blur-md transition-all">
+                                        Coba Simulasi Dasbor ↑
+                                    </button>
+                                </a>
+                            </div>
+
+                            {/* Trust Micro-Copy */}
+                            <div className="pt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-400">
+                                <span className="flex items-center gap-1.5">
+                                    <Check className="w-4 h-4 text-emerald-400" /> Buka akun 2 menit
+                                </span>
+                                <span>•</span>
+                                <span className="flex items-center gap-1.5">
+                                    <Check className="w-4 h-4 text-emerald-400" /> Tanpa kartu kredit
+                                </span>
+                                <span>•</span>
+                                <span className="flex items-center gap-1.5">
+                                    <Check className="w-4 h-4 text-emerald-400" /> Standar perbankan
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -1096,60 +1145,88 @@ export const LandingPage: React.FC = () => {
             </section>
 
             {/* ========================================================================= */}
-            {/* FOOTER                                                                    */}
+            {/* FOOTER REVAMP (Linear & Stripe Grade with Giant Typography Watermark)     */}
             {/* ========================================================================= */}
-            <footer className="border-t border-zinc-800/80 bg-[#09090b] py-12 text-xs text-zinc-400 text-left">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-10">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8">
-                        {/* Kolom Brand */}
-                        <div className="lg:col-span-5 space-y-4">
+            <footer className="relative border-t border-white/5 bg-[#09090b] pt-16 pb-12 text-xs text-zinc-400 text-left overflow-hidden">
+                {/* Radiant Glowing Line on Top */}
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
+
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12 relative z-10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 items-start">
+                        {/* Kolom 1: Brand & Status (Span 4) */}
+                        <div className="lg:col-span-4 space-y-4">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-sm">
+                                <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-[0_0_12px_rgba(37,99,235,0.3)]">
                                     <ShieldCheck className="w-4 h-4 stroke-[2.5]" />
                                 </div>
-                                <span className="font-bold text-base text-white tracking-tight">Bastion</span>
+                                <span className="font-bold text-lg text-white tracking-tight font-heading">Bastion</span>
                             </div>
                             <p className="text-xs text-zinc-400 max-w-sm leading-relaxed">
-                                Dompet digital bisnis dan pembukuan otomatis. Menjaga saldo keuangan Anda selalu seimbang, aman, dan mudah dipantau setiap hari.
+                                Infrastruktur dompet digital bisnis dan pembukuan berpasangan otomatis. Menjaga saldo kas selalu seimbang, anti-minus, dan bebas drama selisih.
                             </p>
-                            <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-mono">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                <span>Sistem Siap Operasional • Standar Multi-Mata Uang</span>
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium font-mono">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                <span>Semua Sistem Normal • 99.99% Uptime</span>
                             </div>
                         </div>
 
-                        {/* Kolom Navigasi */}
-                        <div className="lg:col-span-3 space-y-3">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-white block">
-                                Navigasi Halaman
+                        {/* Kolom 2: Produk & Fitur (Span 2) */}
+                        <div className="lg:col-span-2 space-y-3">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-white block font-mono">
+                                Produk
                             </span>
                             <ul className="space-y-2 text-xs text-zinc-400">
-                                <li><a href="#demo" className="hover:text-white transition-colors">Coba Simulasi Dompet</a></li>
-                                <li><a href="#keunggulan" className="hover:text-white transition-colors">Keunggulan Bastion</a></li>
-                                <li><a href="#keamanan" className="hover:text-white transition-colors">Jaminan Keamanan</a></li>
-                                <li><Link to="/login" className="hover:text-white transition-colors">Masuk Akun</Link></li>
+                                <li><a href="#demo" className="hover:text-white transition-colors">Dasbor Interaktif</a></li>
+                                <li><a href="#keunggulan" className="hover:text-white transition-colors">Kas Multi-Valuta</a></li>
+                                <li><a href="#keamanan" className="hover:text-white transition-colors">Proteksi Anti-Minus</a></li>
+                                <li><a href="#demo" className="hover:text-white transition-colors">Buku Besar Otomatis</a></li>
                             </ul>
                         </div>
 
-                        {/* Kolom Keamanan */}
-                        <div className="lg:col-span-4 space-y-3">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-white block">
-                                Jaminan & Keamanan
+                        {/* Kolom 3: Keamanan & Kepatuhan (Span 3) */}
+                        <div className="lg:col-span-3 space-y-3">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-white block font-mono">
+                                Keamanan
                             </span>
                             <ul className="space-y-2 text-xs text-zinc-400">
-                                <li><span className="text-zinc-300">Pencatatan Otomatis Seimbang</span></li>
-                                <li><span className="text-zinc-300">Proteksi Anti Saldo Minus</span></li>
-                                <li><span className="text-zinc-300">Perlindungan Transaksi Dobel</span></li>
-                                <li><span className="text-zinc-300">Enkripsi Sandi & Akun Tingkat Tinggi</span></li>
+                                <li><span className="text-zinc-300">Enkripsi Bank-Grade AES-256</span></li>
+                                <li><span className="text-zinc-300">Buku Besar Imutabel SHA-256</span></li>
+                                <li><span className="text-zinc-300">Protokol Idempoten 100%</span></li>
+                                <li><span className="text-zinc-300">Rekonsiliasi Otomatis</span></li>
+                            </ul>
+                        </div>
+
+                        {/* Kolom 4: Akses Cepat (Span 3) */}
+                        <div className="lg:col-span-3 space-y-3">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-white block font-mono">
+                                Akses
+                            </span>
+                            <ul className="space-y-2 text-xs text-zinc-400">
+                                <li><Link to="/register" className="text-blue-400 hover:text-blue-300 transition-colors font-medium">Buka Akun Gratis →</Link></li>
+                                <li><Link to="/login" className="hover:text-white transition-colors">Masuk ke Dasbor</Link></li>
+                                <li><a href="#demo" className="hover:text-white transition-colors">Coba Simulasi</a></li>
+                                <li><span className="text-zinc-500">Dukungan Teknis 24/7</span></li>
                             </ul>
                         </div>
                     </div>
 
-                    <div className="pt-8 border-t border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-zinc-500">
-                        <p>&copy; {new Date().getFullYear()} Bastion Financial. Hak cipta dilindungi undang-undang.</p>
-                        <p className="text-zinc-500">
-                            Membantu bisnis mengelola dana dengan tenang dan teratur.
-                        </p>
+                    {/* Bottom Bar: Copyright & Back to Top */}
+                    <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-zinc-500">
+                        <p>&copy; {new Date().getFullYear()} Bastion Financial Core. Seluruh hak cipta dilindungi.</p>
+                        <button
+                            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                            className="text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5"
+                        >
+                            <span>Kembali ke Atas</span>
+                            <span>↑</span>
+                        </button>
+                    </div>
+
+                    {/* Giant Architectural Watermark Backdrop */}
+                    <div className="overflow-hidden select-none pointer-events-none pt-4 text-center">
+                        <span className="text-[14vw] sm:text-[16vw] font-extrabold tracking-tighter text-white/[0.025] leading-none block font-heading">
+                            BASTION
+                        </span>
                     </div>
                 </div>
             </footer>
