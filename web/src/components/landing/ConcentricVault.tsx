@@ -106,10 +106,10 @@ export const ConcentricVault: React.FC = () => {
                     {/* Left Column: Interactive Layer Switcher */}
                     <div className="lg:col-span-5 space-y-3.5 sm:space-y-4">
                         <div className="space-y-1.5 sm:space-y-2 pb-1 sm:pb-2 text-left">
-                            <h3 className="text-lg sm:text-2xl font-bold text-white tracking-tight font-heading">
+                            <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight font-heading">
                                 Tiga Lapisan Penjaga Kas Usaha
                             </h3>
-                            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                            <p className="text-sm sm:text-base text-zinc-300 leading-relaxed">
                                 Klik tiap cincin atau tombol di bawah untuk melihat bagaimana Bastion menjaga uang bisnis Anda dari berbagai risiko di lapangan.
                             </p>
                         </div>

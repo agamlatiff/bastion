@@ -119,30 +119,30 @@ export const LandingPage: React.FC = () => {
         {
             id: 'TRX-948',
             time: 'Baru saja',
-            title: 'Pelunasan Invoice B2B #1042',
-            category: 'Penjualan Digital',
-            debitAccount: 'Kas Utama Bank Central',
-            creditAccount: 'Piutang Usaha',
+            title: 'Pembayaran dari Klien #1042',
+            category: 'Penjualan',
+            debitAccount: 'Rekening Utama',
+            creditAccount: 'Uang Masuk',
             amountFormatted: '+Rp 12.500.000',
             isIncome: true,
         },
         {
             id: 'TRX-947',
             time: '8 menit lalu',
-            title: 'Pembayaran Cloud Server AWS',
-            category: 'Infrastruktur',
-            debitAccount: 'Beban Operasional',
-            creditAccount: 'Kas Bank USD ($150)',
+            title: 'Bayar Tagihan Operasional',
+            category: 'Pengeluaran',
+            debitAccount: 'Rekening Utama',
+            creditAccount: 'Uang Keluar',
             amountFormatted: '-Rp 2.450.000',
             isIncome: false,
         },
         {
             id: 'TRX-946',
             time: '24 menit lalu',
-            title: 'Penerimaan QRIS Merchant',
-            category: 'Kasir Retail',
-            debitAccount: 'Kas Kliring QRIS',
-            creditAccount: 'Pendapatan Harian',
+            title: 'Bayar via QRIS',
+            category: 'Kasir',
+            debitAccount: 'Dompet Digital',
+            creditAccount: 'Uang Masuk',
             amountFormatted: '+Rp 3.850.000',
             isIncome: true,
         },
@@ -167,10 +167,10 @@ export const LandingPage: React.FC = () => {
             const newTrx: DashboardTransaction = {
                 id: `TRX-${Math.floor(950 + Math.random() * 49)}`,
                 time: 'Baru saja',
-                title: 'Pesanan Masuk Flash Sale #882',
-                category: 'E-Commerce Live',
-                debitAccount: 'Kas Operasional Bastion',
-                creditAccount: 'Pendapatan Bersih Usaha',
+                title: 'Pesanan Flash Sale #882',
+                category: 'Toko Online',
+                debitAccount: 'Rekening Utama',
+                creditAccount: 'Uang Masuk',
                 amountFormatted: '+Rp 4.500.000',
                 isIncome: true,
             };
@@ -267,94 +267,94 @@ export const LandingPage: React.FC = () => {
                 {/* ===================================================================== */}
                 {/* 3 KARTU TESTIMONI PORTRAIT NUMPUK SEBAGIAN (Ala Mindly)               */}
                 {/* ===================================================================== */}
-                <div className="relative mt-16 sm:mt-24 max-w-5xl mx-auto flex flex-col md:flex-row items-center md:items-end justify-center md:-space-x-8 lg:-space-x-10 px-2 sm:px-3">
+                <div className="relative mt-16 sm:mt-24 max-w-5xl mx-auto flex flex-row items-end justify-center -space-x-6 sm:-space-x-8 lg:-space-x-10 px-2 sm:px-3 overflow-visible">
                     {/* KARTU KIRI: Dimas (Portrait & Terselip Sebagian) */}
-                    <div className="w-[270px] sm:w-[290px] lg:w-[320px] rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-[#16161c]/95 via-[#111115]/95 to-[#0c0c0e]/95 backdrop-blur-xl p-6 sm:p-8 text-center shadow-2xl relative z-10 -rotate-2 md:-rotate-6 md:translate-y-6 md:origin-bottom-right hover:z-30 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col justify-between min-h-[350px] sm:min-h-[400px] md:min-h-[480px] group">
+                    <div className="w-[155px] xs:w-[180px] sm:w-[240px] md:w-[270px] lg:w-[300px] rounded-[1.5rem] sm:rounded-[2rem] md:rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-[#16161c]/95 via-[#111115]/95 to-[#0c0c0e]/95 backdrop-blur-xl p-3 sm:p-5 md:p-8 text-center shadow-2xl relative z-10 -rotate-6 translate-y-5 sm:translate-y-6 origin-bottom-right hover:z-30 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col justify-between min-h-[200px] sm:min-h-[290px] md:min-h-[400px] lg:min-h-[460px] group">
                         {/* Avatar Muka Orang */}
                         <div className="flex justify-center pt-1">
                             <div className="relative">
                                 <img
                                     src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80"
                                     alt="Dimas K."
-                                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-emerald-400/40 shadow-xl shadow-emerald-500/10 ring-4 ring-emerald-500/10"
+                                    className="w-8 h-8 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full object-cover border-2 border-emerald-400/40 shadow-xl shadow-emerald-500/10 ring-4 ring-emerald-500/10"
                                 />
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-500 border-2 border-zinc-950 flex items-center justify-center text-[9px] sm:text-[10px] text-zinc-950 font-bold">
+                                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full bg-emerald-500 border-2 border-zinc-950 flex items-center justify-center text-[8px] md:text-[10px] text-zinc-950 font-bold">
                                     ✓
                                 </div>
                             </div>
                         </div>
 
                         {/* Kata-kata Testimoni Santai */}
-                        <div className="my-auto py-4 sm:py-6 px-1 space-y-2 sm:space-y-3">
-                            <p className="font-display text-xl sm:text-2xl lg:text-[26px] text-zinc-100 font-normal leading-snug italic">
-                                “Asli, gak ada lagi drama pusing nyari selisih duit pas akhir bulan.”
+                        <div className="my-auto py-2 sm:py-4 md:py-6 px-1 space-y-1 sm:space-y-3">
+                            <p className="font-display text-[11px] sm:text-base md:text-xl lg:text-[22px] text-zinc-100 font-normal leading-snug italic">
+                                "Asli, gak ada lagi drama pusing nyari selisih duit pas akhir bulan."
                             </p>
                         </div>
 
                         {/* Nama & Usaha */}
-                        <div className="pt-3 sm:pt-4 border-t border-white/5 space-y-0.5">
-                            <span className="font-semibold text-xs sm:text-sm text-white block">Dimas K.</span>
-                            <span className="text-[11px] sm:text-xs text-zinc-400 block font-sans">Owner Toko Retail</span>
+                        <div className="pt-2 sm:pt-3 md:pt-4 border-t border-white/5 space-y-0.5">
+                            <span className="font-semibold text-[10px] sm:text-xs md:text-sm text-white block">Dimas K.</span>
+                            <span className="text-[9px] sm:text-[11px] md:text-xs text-zinc-400 block font-sans">Owner Toko Retail</span>
                         </div>
                     </div>
 
                     {/* KARTU TENGAH: Sarah (Portrait Paling Depan & Menonjol) */}
-                    <div className="w-[285px] sm:w-[310px] lg:w-[340px] rounded-[2.2rem] sm:rounded-[2.8rem] border border-blue-500/30 bg-gradient-to-b from-[#1a1a24]/98 via-[#13131a]/98 to-[#0d0d12]/98 backdrop-blur-xl p-6 sm:p-9 text-center shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] shadow-blue-500/15 relative z-20 -mt-10 sm:-mt-12 md:mt-0 md:-translate-y-2 scale-102 md:scale-105 hover:scale-108 transition-all duration-300 flex flex-col justify-between min-h-[380px] sm:min-h-[430px] md:min-h-[510px] group my-0">
+                    <div className="w-[175px] xs:w-[200px] sm:w-[265px] md:w-[300px] lg:w-[330px] rounded-[1.8rem] sm:rounded-[2.2rem] md:rounded-[2.8rem] border border-blue-500/30 bg-gradient-to-b from-[#1a1a24]/98 via-[#13131a]/98 to-[#0d0d12]/98 backdrop-blur-xl p-4 sm:p-7 md:p-9 text-center shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] shadow-blue-500/15 relative z-20 scale-105 hover:scale-108 transition-all duration-300 flex flex-col justify-between min-h-[220px] sm:min-h-[320px] md:min-h-[450px] lg:min-h-[490px] group my-0">
                         {/* Avatar Muka Orang */}
                         <div className="flex justify-center pt-1">
                             <div className="relative">
                                 <img
                                     src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80"
                                     alt="Sarah T."
-                                    className="w-14 h-14 sm:w-18 sm:h-18 rounded-full object-cover border-2 border-blue-400/50 shadow-2xl shadow-blue-500/20 ring-4 ring-blue-500/15"
+                                    className="w-10 h-10 sm:w-14 sm:h-14 md:w-18 md:h-18 rounded-full object-cover border-2 border-blue-400/50 shadow-2xl shadow-blue-500/20 ring-4 ring-blue-500/15"
                                 />
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-500 border-2 border-zinc-950 flex items-center justify-center text-[9px] sm:text-[10px] text-white font-bold">
+                                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full bg-blue-500 border-2 border-zinc-950 flex items-center justify-center text-[8px] md:text-[10px] text-white font-bold">
                                     ★
                                 </div>
                             </div>
                         </div>
 
                         {/* Kata-kata Testimoni Santai */}
-                        <div className="my-auto py-4 sm:py-6 px-1 space-y-2 sm:space-y-3">
-                            <p className="font-display text-xl sm:text-2xl lg:text-[28px] text-white font-normal leading-snug italic">
-                                “Pas promo rame parah sistemnya tetep aman. Gak ada yang ngomel saldo kepotong dobel.”
+                        <div className="my-auto py-2 sm:py-4 md:py-6 px-1 space-y-1 sm:space-y-3">
+                            <p className="font-display text-[12px] sm:text-lg md:text-2xl lg:text-[26px] text-white font-normal leading-snug italic">
+                                "Pas promo rame parah sistemnya tetep aman. Gak ada yang ngomel saldo kepotong dobel."
                             </p>
                         </div>
 
                         {/* Nama & Usaha */}
-                        <div className="pt-3 sm:pt-4 border-t border-white/10 space-y-0.5">
-                            <span className="font-bold text-xs sm:text-sm text-white block">Sarah T.</span>
-                            <span className="text-[11px] sm:text-xs text-blue-300 block font-sans">Brand Owner & E-Commerce</span>
+                        <div className="pt-2 sm:pt-3 md:pt-4 border-t border-white/10 space-y-0.5">
+                            <span className="font-bold text-[10px] sm:text-xs md:text-sm text-white block">Sarah T.</span>
+                            <span className="text-[9px] sm:text-[11px] md:text-xs text-blue-300 block font-sans">Brand Owner & E-Commerce</span>
                         </div>
                     </div>
 
                     {/* KARTU KANAN: Kevin (Portrait & Terselip Sebagian) */}
-                    <div className="w-[270px] sm:w-[290px] lg:w-[320px] rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-[#16161c]/95 via-[#111115]/95 to-[#0c0c0e]/95 backdrop-blur-xl p-6 sm:p-8 text-center shadow-2xl relative z-10 rotate-2 md:rotate-6 -mt-10 sm:-mt-12 md:mt-0 md:translate-y-6 md:origin-bottom-left hover:z-30 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col justify-between min-h-[350px] sm:min-h-[400px] md:min-h-[480px] group">
+                    <div className="w-[155px] xs:w-[180px] sm:w-[240px] md:w-[270px] lg:w-[300px] rounded-[1.5rem] sm:rounded-[2rem] md:rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-[#16161c]/95 via-[#111115]/95 to-[#0c0c0e]/95 backdrop-blur-xl p-3 sm:p-5 md:p-8 text-center shadow-2xl relative z-10 rotate-6 translate-y-5 sm:translate-y-6 origin-bottom-left hover:z-30 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col justify-between min-h-[200px] sm:min-h-[290px] md:min-h-[400px] lg:min-h-[460px] group">
                         {/* Avatar Muka Orang */}
                         <div className="flex justify-center pt-1">
                             <div className="relative">
                                 <img
                                     src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=160&auto=format&fit=crop&q=80"
                                     alt="Kevin M."
-                                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-purple-400/40 shadow-xl shadow-purple-500/10 ring-4 ring-purple-500/10"
+                                    className="w-8 h-8 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full object-cover border-2 border-purple-400/40 shadow-xl shadow-purple-500/10 ring-4 ring-purple-500/10"
                                 />
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-500 border-2 border-zinc-950 flex items-center justify-center text-[9px] sm:text-[10px] text-white font-bold">
+                                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full bg-purple-500 border-2 border-zinc-950 flex items-center justify-center text-[8px] md:text-[10px] text-white font-bold">
                                     ✓
                                 </div>
                             </div>
                         </div>
 
                         {/* Kata-kata Testimoni Santai */}
-                        <div className="my-auto py-4 sm:py-6 px-1 space-y-2 sm:space-y-3">
-                            <p className="font-display text-xl sm:text-2xl lg:text-[26px] text-zinc-100 font-normal leading-snug italic">
-                                “Klien luar bayar Dolar langsung masuk utuh, gak pake ribet bikin rekening baru.”
+                        <div className="my-auto py-2 sm:py-4 md:py-6 px-1 space-y-1 sm:space-y-3">
+                            <p className="font-display text-[11px] sm:text-base md:text-xl lg:text-[22px] text-zinc-100 font-normal leading-snug italic">
+                                "Klien luar bayar Dolar langsung masuk utuh, gak pake ribet bikin rekening baru."
                             </p>
                         </div>
 
                         {/* Nama & Usaha */}
-                        <div className="pt-3 sm:pt-4 border-t border-white/5 space-y-0.5">
-                            <span className="font-semibold text-xs sm:text-sm text-white block">Kevin M.</span>
-                            <span className="text-[11px] sm:text-xs text-zinc-400 block font-sans">Agency Lead</span>
+                        <div className="pt-2 sm:pt-3 md:pt-4 border-t border-white/5 space-y-0.5">
+                            <span className="font-semibold text-[10px] sm:text-xs md:text-sm text-white block">Kevin M.</span>
+                            <span className="text-[9px] sm:text-[11px] md:text-xs text-zinc-400 block font-sans">Agency Lead</span>
                         </div>
                     </div>
                 </div>
@@ -380,7 +380,7 @@ export const LandingPage: React.FC = () => {
                             Dasbor Finansial Modern dalam Genggaman.
                         </h2>
                         <p className="text-sm sm:text-base md:text-lg text-zinc-300 leading-relaxed max-w-2xl mx-auto">
-                            Pantau arus kas, verifikasi pembukuan berpasangan, dan uji proteksi anti-minus langsung pada miniatur dasbor Bastion di bawah ini.
+                            Lihat langsung gimana Bastion mencatat uang masuk dan keluar, menjaga saldo agar selalu aman, dan memberi Anda kendali penuh.
                         </p>
                     </div>
 
@@ -484,7 +484,7 @@ export const LandingPage: React.FC = () => {
                                     </div>
                                     <div className="text-[10px] sm:text-[11px] text-zinc-500 flex items-center gap-1 truncate">
                                         <CheckCircle2 className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-emerald-400 shrink-0" />
-                                        <span>100% Cocok Fisik</span>
+                                        <span>Selalu Akurat</span>
                                     </div>
                                 </div>
 
@@ -533,7 +533,7 @@ export const LandingPage: React.FC = () => {
                                         <span>Nol Selisih</span>
                                     </div>
                                     <div className="text-[10px] sm:text-[11px] text-zinc-500 truncate">
-                                        Double-entry otomatis
+                                        Tercatat otomatis
                                     </div>
                                 </div>
                             </div>
@@ -543,7 +543,7 @@ export const LandingPage: React.FC = () => {
                                 {/* Chart Card Header & Legend */}
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-white/5 relative z-10">
                                     <div>
-                                        <div className="text-[11px] sm:text-xs text-zinc-400 font-medium">Tren Arus Kas Terkonsolidasi</div>
+                                        <div className="text-[11px] sm:text-xs text-zinc-400 font-medium">Tren Uang Masuk</div>
                                         <div className="text-lg sm:text-2xl font-bold font-mono text-white tracking-tight flex items-center gap-2.5 sm:gap-3 pt-0.5">
                                             <span>Rp {displayBalance.toLocaleString('id-ID')},00</span>
                                             <span className="text-[10px] sm:text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
@@ -655,11 +655,11 @@ export const LandingPage: React.FC = () => {
                                         <div className="flex items-center gap-2 sm:gap-2.5">
                                             <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-emerald-400 animate-ping" />
                                             <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight">
-                                                Mutasi Berpasangan Real-Time
+                                                Riwayat Transaksi Terbaru
                                             </h4>
                                         </div>
                                         <span className="text-[9px] sm:text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono font-medium">
-                                            DEBIT = KREDIT ✓
+                                            SALDO OK ✓
                                         </span>
                                     </div>
 
@@ -684,11 +684,11 @@ export const LandingPage: React.FC = () => {
                                                 </div>
 
                                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs pt-0.5 sm:pt-1">
-                                                    {/* Double Entry Pairing Indicator */}
+                                                    {/* From → To indicator */}
                                                     <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-zinc-400 min-w-0">
-                                                        <span className="text-zinc-300 font-medium truncate">Debit: {trx.debitAccount}</span>
-                                                        <span className="text-zinc-600 shrink-0">⇄</span>
-                                                        <span className="text-zinc-300 font-medium truncate">Kredit: {trx.creditAccount}</span>
+                                                        <span className="text-zinc-400 truncate">{trx.debitAccount}</span>
+                                                        <span className="text-zinc-600 shrink-0">→</span>
+                                                        <span className="text-zinc-400 truncate">{trx.creditAccount}</span>
                                                     </div>
                                                     <span
                                                         className={`font-bold font-mono text-xs sm:text-sm shrink-0 self-end sm:self-auto ${
@@ -703,8 +703,8 @@ export const LandingPage: React.FC = () => {
                                     </div>
 
                                     <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] sm:text-[11px] text-zinc-500">
-                                        <span>Protokol Double-Entry Ledger</span>
-                                        <span className="text-emerald-400 font-medium">Rekonsiliasi Otomatis Aktif</span>
+                                        <span>Pembukuan Otomatis</span>
+                                        <span className="text-emerald-400 font-medium">Selalu Seimbang ✓</span>
                                     </div>
                                 </div>
 
@@ -817,7 +817,7 @@ export const LandingPage: React.FC = () => {
                             <Sparkles className="w-3.5 h-3.5" />
                             <span>KEUNGGULAN UTAMA</span>
                         </div>
-                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight font-heading leading-tight">
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight font-heading leading-tight">
                             Semua yang Bisnis Anda Butuhkan.
                         </h2>
                         <p className="text-sm sm:text-base md:text-lg text-zinc-300 leading-relaxed max-w-xl">
@@ -901,17 +901,17 @@ export const LandingPage: React.FC = () => {
                                     Laporan Keuangan Rapi Tanpa Lembur
                                 </h3>
                                 <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                                    Semua mutasi sudah terhubung rapi sejak awal. Rekonsiliasi dan laporan bulanan selesai dalam hitungan detik.
+                                    Semua transaksi sudah tercatat rapi sejak awal. Laporan bulanan selesai dalam hitungan detik, tanpa perlu rekap manual.
                                 </p>
                             </div>
 
                             <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-zinc-900/80 border border-zinc-800 text-xs text-zinc-300 flex items-center justify-between">
                                 <div className="space-y-0.5">
-                                    <span className="font-bold text-white block text-xs">Pencatatan Berpasangan</span>
+                                    <span className="font-bold text-white block text-xs">Catatan Lengkap & Rapi</span>
                                     <span className="text-[10px] sm:text-[11px] text-zinc-400">Laporan siap kapan saja</span>
                                 </div>
                                 <span className="text-[10px] sm:text-xs font-mono font-bold text-emerald-400 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 shrink-0">
-                                    100% SEIMBANG
+                                    SELALU AKURAT
                                 </span>
                             </div>
                         </div>
