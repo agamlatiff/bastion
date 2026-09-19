@@ -5,6 +5,7 @@
         migrate-all-up \
         db-identity db-wallet db-ledger redis-cli kafka-topics kafka-list \
         run-identity run-wallet run-ledger run-gateway run-customer \
+        run-web run-all \
         tidy fmt lint test
 
 # ==============================================================================
@@ -55,6 +56,8 @@ help:
 	@echo "  make run-ledger           - Start Ledger Service (Go :8084)"
 	@echo "  make run-gateway          - Start API Gateway (Go :8080)"
 	@echo "  make run-customer         - Start Customer Service (Spring Boot :8083)"
+	@echo "  make run-web              - Start Web Frontend (React Vite :5173)"
+	@echo "  make run-all              - Start Gateway, Identity, Wallet & Web concurrently"
 	@echo ""
 	@echo "Code Quality & Maintenance:"
 	@echo "  make tidy                 - Run go mod tidy across all Go services"
@@ -165,6 +168,14 @@ run-customer:
 	@echo "Starting Customer Service (Spring Boot)..."
 	cd services/customer && ./mvnw spring-boot:run
 
+run-web:
+	@echo "Starting Web Frontend (Vite)..."
+	cd web && npm run dev
+
+run-all:
+	@echo "Starting Gateway, Identity, Wallet, and Web Frontend simultaneously..."
+	cd web && npm run dev:all
+
 # ==============================================================================
 # 5. Code Quality, Tidy & Tests
 # ==============================================================================
@@ -189,8 +200,11 @@ lint:
 	golangci-lint run ./...
 
 test:
-	@echo "Executing unit and integration tests..."
+	@echo "Executing unit and integration tests across all Go services..."
 	go test -v ./...
 	cd services/identity && go test -v ./...
 	cd services/wallet && go test -v ./...
 	cd services/ledger && go test -v ./...
+	cd services/gateway && go test -v ./...
+	@echo "Executing tests for Java Customer Service..."
+	cd services/customer && ./mvnw test
