@@ -101,7 +101,7 @@ export const LoginPage: React.FC = () => {
                 <div className="space-y-6 w-full">
                     {/* Header */}
                     <div className="space-y-1 text-left">
-                        <h1 className="text-2xl font-bold text-white font-heading tracking-tight">
+                        <h1 className="text-xl sm:text-2xl font-bold text-white font-heading tracking-tight">
                             Masuk ke Akun
                         </h1>
                         <p className="text-xs sm:text-sm text-zinc-400">
@@ -123,7 +123,7 @@ export const LoginPage: React.FC = () => {
                                 Alamat Email
                             </label>
                             <div className="relative">
-                                <Mail className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                <Mail className="w-4 h-4 text-zinc-500 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 <input
                                     type="email"
                                     placeholder="nama@bisnisanda.com"
@@ -133,7 +133,7 @@ export const LoginPage: React.FC = () => {
                                         if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
                                     }}
                                     disabled={isSubmitting}
-                                    className="w-full py-3 pl-11 pr-4 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
+                                    className="w-full py-2.5 sm:py-3 pl-10 sm:pl-11 pr-4 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
                                     autoFocus
                                 />
                             </div>
@@ -153,7 +153,7 @@ export const LoginPage: React.FC = () => {
                                 </span>
                             </div>
                             <div className="relative">
-                                <Lock className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     placeholder="Masukkan kata sandi Anda"
@@ -163,12 +163,12 @@ export const LoginPage: React.FC = () => {
                                         if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
                                     }}
                                     disabled={isSubmitting}
-                                    className="w-full py-3 pl-11 pr-11 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
+                                    className="w-full py-2.5 sm:py-3 pl-10 sm:pl-11 pr-10 sm:pr-11 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                                    className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
                                 >
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
@@ -182,7 +182,7 @@ export const LoginPage: React.FC = () => {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full mt-2 py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm tracking-wide shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                            className="w-full mt-2 py-3 sm:py-3.5 px-5 sm:px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm tracking-wide shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                         >
                             {isSubmitting ? (
                                 <span>Memverifikasi...</span>
@@ -204,10 +204,10 @@ export const LoginPage: React.FC = () => {
                 /* 2FA Mode */
                 <div className="space-y-6 max-w-md mx-auto w-full text-center">
                     <div className="space-y-2">
-                        <div className="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center mx-auto shadow-sm">
-                            <BastionLogo className="w-6 h-6 stroke-[2.2]" />
+                        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center mx-auto shadow-sm">
+                            <BastionLogo className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.2]" />
                         </div>
-                        <h2 className="text-xl font-bold text-white font-heading">
+                        <h2 className="text-lg sm:text-xl font-bold text-white font-heading">
                             Verifikasi Keamanan (2FA)
                         </h2>
                         <p className="text-xs text-zinc-400 max-w-xs mx-auto">
@@ -237,7 +237,7 @@ export const LoginPage: React.FC = () => {
                                 }}
                                 disabled={isSubmitting}
                                 autoFocus
-                                className="w-full text-center tracking-[0.4em] font-mono text-2xl font-bold py-3 px-4 rounded-xl border border-zinc-800 bg-[#09090b] text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
+                                className="w-full text-center tracking-[0.25em] sm:tracking-[0.4em] font-mono text-xl sm:text-2xl font-bold py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl border border-zinc-800 bg-[#09090b] text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
                             />
                             {fieldErrors.totpCode && (
                                 <p className="mt-1.5 text-xs text-rose-400">{fieldErrors.totpCode}</p>
@@ -247,7 +247,7 @@ export const LoginPage: React.FC = () => {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2"
+                            className="w-full py-3 sm:py-3.5 px-5 sm:px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm tracking-wide shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2"
                         >
                             <span>Konfirmasi & Masuk</span>
                             <ArrowRight className="w-4 h-4" />

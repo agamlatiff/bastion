@@ -88,7 +88,7 @@ export const RegisterPage: React.FC = () => {
             <div className="space-y-6 w-full">
                 {/* Header */}
                 <div className="space-y-1 text-left">
-                    <h1 className="text-2xl font-bold text-white font-heading tracking-tight">
+                    <h1 className="text-xl sm:text-2xl font-bold text-white font-heading tracking-tight">
                         Buka Akun Bastion
                     </h1>
                     <p className="text-xs sm:text-sm text-zinc-400">
@@ -110,7 +110,7 @@ export const RegisterPage: React.FC = () => {
                             Alamat Email
                         </label>
                         <div className="relative">
-                            <Mail className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            <Mail className="w-4 h-4 text-zinc-500 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                             <input
                                 type="email"
                                 placeholder="nama@bisnisanda.com"
@@ -120,7 +120,7 @@ export const RegisterPage: React.FC = () => {
                                     if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
                                 }}
                                 disabled={isSubmitting}
-                                className="w-full py-3 pl-11 pr-4 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
+                                className="w-full py-2.5 sm:py-3 pl-10 sm:pl-11 pr-4 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
                                 autoFocus
                             />
                         </div>
@@ -135,7 +135,7 @@ export const RegisterPage: React.FC = () => {
                             Kata Sandi (Minimal 8 karakter)
                         </label>
                         <div className="relative">
-                            <Lock className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 placeholder="Buat kata sandi akun Anda"
@@ -145,12 +145,12 @@ export const RegisterPage: React.FC = () => {
                                     if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
                                 }}
                                 disabled={isSubmitting}
-                                className="w-full py-3 pl-11 pr-11 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
+                                className="w-full py-2.5 sm:py-3 pl-10 sm:pl-11 pr-10 sm:pr-11 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                                className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
                             >
                                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
@@ -166,7 +166,7 @@ export const RegisterPage: React.FC = () => {
                             Ulangi Kata Sandi
                         </label>
                         <div className="relative">
-                            <Lock className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                             <input
                                 type={showConfirmPassword ? 'text' : 'password'}
                                 placeholder="Ketik ulang kata sandi Anda"
@@ -176,12 +176,12 @@ export const RegisterPage: React.FC = () => {
                                     if (fieldErrors.confirmPassword) setFieldErrors((prev) => ({ ...prev, confirmPassword: undefined }));
                                 }}
                                 disabled={isSubmitting}
-                                className="w-full py-3 pl-11 pr-11 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
+                                className="w-full py-2.5 sm:py-3 pl-10 sm:pl-11 pr-10 sm:pr-11 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                                className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
                             >
                                 {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
@@ -195,7 +195,7 @@ export const RegisterPage: React.FC = () => {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full mt-2 py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm tracking-wide shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                        className="w-full mt-2 py-3 sm:py-3.5 px-5 sm:px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm tracking-wide shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                     >
                         {isSubmitting ? (
                             <span>Mendaftarkan akun...</span>

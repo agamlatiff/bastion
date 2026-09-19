@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Zap, Lock, Coins } from 'lucide-react';
+import { Menu, X, Zap, Lock, Sparkles } from 'lucide-react';
 import { BastionLogo } from '../common/BastionLogo';
 import { useAuth } from '../../features/auth/useAuth';
 
@@ -179,7 +179,7 @@ export const Navbar: React.FC = () => {
                             onClick={closeMobileMenu}
                             className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl text-sm font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 transition-colors"
                         >
-                            <ShieldCheck className="w-4 h-4 text-zinc-400" />
+                            <Sparkles className="w-4 h-4 text-zinc-400" />
                             <span>Keunggulan</span>
                         </a>
 

@@ -95,18 +95,18 @@ export const ConcentricVault: React.FC = () => {
     return (
         <div className="w-full max-w-6xl mx-auto">
             {/* Main Workbench Container */}
-            <div className="relative rounded-[2.5rem] border border-white/10 bg-[#0d0d12] p-6 sm:p-10 lg:p-12 overflow-hidden shadow-[0_20px_70px_rgba(0,0,0,0.8)]">
+            <div className="relative rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 bg-[#0d0d12] p-4 sm:p-8 lg:p-12 overflow-hidden shadow-[0_20px_70px_rgba(0,0,0,0.8)]">
                 {/* Dynamic Ambient Background Glow */}
                 <div
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none transition-all duration-700 opacity-20"
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] rounded-full blur-[100px] sm:blur-[120px] pointer-events-none transition-all duration-700 opacity-20"
                     style={{ backgroundColor: activeData.accentColor.ringStroke }}
                 />
 
-                <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+                <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center">
                     {/* Left Column: Interactive Layer Switcher */}
-                    <div className="lg:col-span-5 space-y-4">
-                        <div className="space-y-2 pb-2">
-                            <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight font-heading">
+                    <div className="lg:col-span-5 space-y-3.5 sm:space-y-4">
+                        <div className="space-y-1.5 sm:space-y-2 pb-1 sm:pb-2 text-left">
+                            <h3 className="text-lg sm:text-2xl font-bold text-white tracking-tight font-heading">
                                 Tiga Lapisan Penjaga Kas Usaha
                             </h3>
                             <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
@@ -115,7 +115,7 @@ export const ConcentricVault: React.FC = () => {
                         </div>
 
                         {/* 3 Interactive Layer Selector Cards */}
-                        <div className="space-y-3 pt-1">
+                        <div className="space-y-2.5 sm:space-y-3 pt-1">
                             {([1, 2, 3] as LayerId[]).map((id) => {
                                 const item = LAYERS[id];
                                 const isSelected = activeLayer === id;
@@ -124,7 +124,7 @@ export const ConcentricVault: React.FC = () => {
                                         key={id}
                                         type="button"
                                         onClick={() => setActiveLayer(id)}
-                                        className={`w-full text-left p-4 rounded-2xl border transition-all duration-300 flex items-start gap-3.5 group relative overflow-hidden ${
+                                        className={`w-full text-left p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all duration-300 flex items-start gap-3 sm:gap-3.5 group relative overflow-hidden cursor-pointer ${
                                             isSelected
                                                 ? `bg-zinc-900/95 ${item.accentColor.border} shadow-lg shadow-black/40`
                                                 : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/60'
@@ -139,7 +139,7 @@ export const ConcentricVault: React.FC = () => {
                                         )}
 
                                         <div
-                                            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                                            className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                                                 isSelected
                                                     ? `${item.accentColor.bg} ${item.accentColor.text}`
                                                     : 'bg-zinc-900 text-zinc-400 group-hover:text-zinc-200'
@@ -152,16 +152,16 @@ export const ConcentricVault: React.FC = () => {
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between gap-2">
-                                                <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+                                                <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-zinc-500">
                                                     {item.level}
                                                 </span>
                                                 {isSelected && (
-                                                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${item.accentColor.bg} ${item.accentColor.text}`}>
+                                                    <span className={`text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-full ${item.accentColor.bg} ${item.accentColor.text}`}>
                                                         Aktif
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className={`text-sm font-semibold mt-0.5 transition-colors ${isSelected ? 'text-white' : 'text-zinc-300 group-hover:text-white'}`}>
+                                            <p className={`text-xs sm:text-sm font-semibold mt-0.5 transition-colors ${isSelected ? 'text-white' : 'text-zinc-300 group-hover:text-white'}`}>
                                                 {item.title}
                                             </p>
                                         </div>
@@ -171,10 +171,10 @@ export const ConcentricVault: React.FC = () => {
                         </div>
 
                         {/* Quick Real-Time Guarantee Note */}
-                        <div className="pt-2">
-                            <div className="p-3.5 rounded-xl bg-zinc-950/80 border border-zinc-800/70 flex items-center gap-3">
+                        <div className="pt-1 sm:pt-2">
+                            <div className="p-3 sm:p-3.5 rounded-xl bg-zinc-950/80 border border-zinc-800/70 flex items-center gap-2.5 sm:gap-3">
                                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                                <span className="text-xs text-zinc-400">
+                                <span className="text-[11px] sm:text-xs text-zinc-400 text-left">
                                     Semua perlindungan ini bekerja otomatis di latar belakang setiap kali ada uang masuk atau keluar.
                                 </span>
                             </div>
@@ -182,9 +182,9 @@ export const ConcentricVault: React.FC = () => {
                     </div>
 
                     {/* Right Column: Concentric SVG Vault Visualizer + Live Inspection Card */}
-                    <div className="lg:col-span-7 flex flex-col items-center justify-center space-y-6">
+                    <div className="lg:col-span-7 flex flex-col items-center justify-center space-y-5 sm:space-y-6">
                         {/* Concentric Architectural SVG */}
-                        <div className="relative w-full max-w-[440px] aspect-square flex items-center justify-center select-none">
+                        <div className="relative w-full max-w-[300px] sm:max-w-[380px] lg:max-w-[440px] aspect-square mx-auto flex items-center justify-center select-none">
                             <svg
                                 viewBox="0 0 520 520"
                                 className="w-full h-full overflow-visible"
@@ -364,23 +364,23 @@ export const ConcentricVault: React.FC = () => {
                             </svg>
 
                             {/* Centered HTML Bastion Logo */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600/30 to-zinc-900 border border-blue-500/50 flex items-center justify-center text-blue-400 shadow-[0_0_25px_rgba(37,99,235,0.4)] pointer-events-none">
-                                <BastionLogo className="w-7 h-7 stroke-[2.2]" />
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-600/30 to-zinc-900 border border-blue-500/50 flex items-center justify-center text-blue-400 shadow-[0_0_25px_rgba(37,99,235,0.4)] pointer-events-none">
+                                <BastionLogo className="w-5 h-5 sm:w-7 sm:h-7" />
                             </div>
                         </div>
 
                         {/* Live Layer Inspection Panel (Grounded Business Explanation) */}
-                        <div className="w-full p-5 sm:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800/80 shadow-xl space-y-4 text-left transition-all duration-300">
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-3">
+                        <div className="w-full p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-zinc-950/90 border border-zinc-800/80 shadow-xl space-y-3.5 sm:space-y-4 text-left transition-all duration-300">
+                            <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 border-b border-white/5 pb-3">
                                 <div>
-                                    <span className="text-[11px] font-mono text-zinc-400 block uppercase">
+                                    <span className="text-[10px] sm:text-[11px] font-mono text-zinc-400 block uppercase">
                                         Inspeksi Terpilih:
                                     </span>
-                                    <h4 className="text-base font-bold text-white tracking-tight">
+                                    <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
                                         {activeData.title}
                                     </h4>
                                 </div>
-                                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold font-mono ${activeData.accentColor.bg} ${activeData.accentColor.text}`}>
+                                <div className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-semibold font-mono ${activeData.accentColor.bg} ${activeData.accentColor.text}`}>
                                     <CheckCircle2 className="w-3.5 h-3.5" />
                                     <span>{activeData.status}</span>
                                 </div>
@@ -391,16 +391,16 @@ export const ConcentricVault: React.FC = () => {
                             </p>
 
                             {/* Real-World Scenario Box */}
-                            <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-start gap-3">
+                            <div className="p-3 sm:p-3.5 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-start gap-2.5 sm:gap-3">
                                 <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: activeData.accentColor.ringStroke }} />
-                                <div className="space-y-1 text-xs">
+                                <div className="space-y-0.5 sm:space-y-1 text-xs">
                                     <span className="text-white font-medium block">Contoh Kasus Nyata:</span>
-                                    <span className="text-zinc-400 block">{activeData.scenario}</span>
+                                    <span className="text-zinc-400 block text-[11px] sm:text-xs">{activeData.scenario}</span>
                                 </div>
                             </div>
 
                             {/* Guarantee Metric Footer */}
-                            <div className="pt-1 flex items-center justify-between text-xs text-zinc-400">
+                            <div className="pt-0.5 sm:pt-1 flex items-center justify-between text-xs text-zinc-400">
                                 <span className="font-medium text-zinc-400">{activeData.metricLabel}:</span>
                                 <span className={`font-mono font-bold ${activeData.accentColor.text}`}>
                                     {activeData.metricValue}
