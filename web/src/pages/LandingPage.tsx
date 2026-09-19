@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../features/auth/useAuth';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { Navbar } from '../components/landing/Navbar';
 
 export const LandingPage: React.FC = () => {
     const { isAuthenticated } = useAuth();
@@ -42,58 +43,11 @@ export const LandingPage: React.FC = () => {
             {/* Subtle architectural background */}
             <div className="absolute inset-0 bg-grid-subtle pointer-events-none opacity-50" />
 
-            {/* Navigation Bar */}
-            <header className="sticky top-0 z-40 w-full border-b border-zinc-800/80 bg-[#09090b]/90 backdrop-blur-md">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-                    {/* Brand */}
-                    <div className="flex items-center gap-2.5">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white text-zinc-950 font-bold shadow-sm">
-                            <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-base font-bold tracking-tight text-white">Bastion</span>
-                            <span className="text-[11px] text-zinc-400 font-medium hidden sm:inline-block">
-                                Dompet Digital & Pembukuan Bisnis
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Navigation */}
-                    <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-zinc-400">
-                        <a href="#solusi" className="hover:text-white transition-colors">Mengapa Bastion?</a>
-                        <a href="#demo" className="hover:text-white transition-colors">Coba Simulasi</a>
-                        <a href="#keunggulan" className="hover:text-white transition-colors">Kemudahan</a>
-                        <a href="#keamanan" className="hover:text-white transition-colors">Keamanan</a>
-                    </nav>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-3">
-                        {isAuthenticated ? (
-                            <Link to="/app/dashboard">
-                                <Button size="sm" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
-                                    Buka Dasbor Saya
-                                </Button>
-                            </Link>
-                        ) : (
-                            <>
-                                <Link to="/login">
-                                    <Button variant="ghost" size="sm">
-                                        Masuk
-                                    </Button>
-                                </Link>
-                                <Link to="/register">
-                                    <Button size="sm" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
-                                        Daftar Gratis
-                                    </Button>
-                                </Link>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </header>
+            {/* Floating Mega-Menu Navigation Bar */}
+            <Navbar />
 
             {/* Hero Section: Centered Minimalist FinTech Hero (Single-Column) */}
-            <section className="relative pt-16 pb-20 md:pt-24 md:pb-28 px-4 sm:px-6 max-w-5xl mx-auto text-center">
+            <section className="relative pt-28 pb-20 md:pt-36 md:pb-28 px-4 sm:px-6 max-w-5xl mx-auto text-center">
                 {/* Centered Value Proposition */}
                 <div className="space-y-6 max-w-4xl mx-auto">
                     <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.1] text-balance">
