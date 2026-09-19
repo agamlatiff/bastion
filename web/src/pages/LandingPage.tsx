@@ -240,7 +240,7 @@ export const LandingPage: React.FC = () => {
             <section className="relative pt-32 pb-36 sm:pb-44 md:pt-40 md:pb-48 px-4 sm:px-6 max-w-6xl mx-auto text-center">
                 {/* Hero Content (Lugas & To The Point) */}
                 <div className="space-y-5 max-w-3xl mx-auto relative z-10">
-                    <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.12] text-balance font-heading">
+                    <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.15] text-balance font-heading">
                         Kelola Uang Bisnis <br className="hidden sm:inline" />
                         <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(56,189,248,0.2)]">
                             Tanpa Selisih.
