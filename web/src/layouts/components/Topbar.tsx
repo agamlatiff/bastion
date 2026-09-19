@@ -1,5 +1,6 @@
 import React from 'react';
-import { LogOut, ShieldCheck, User as UserIcon, Search } from 'lucide-react';
+import { LogOut, User as UserIcon, Search } from 'lucide-react';
+import { BastionLogo } from '../../components/common/BastionLogo';
 import { useAuth } from '../../features/auth/useAuth';
 import { useCustomerProfile } from '../../features/customer/hooks';
 import { Button } from '../../components/ui/Button';
@@ -30,8 +31,8 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileNav, onOpenCommandPa
                     </svg>
                 </button>
                 <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-white" />
-                    <span className="font-bold tracking-tight text-white text-sm">Bastion</span>
+                    <BastionLogo className="w-6 h-6 text-white shrink-0" />
+                    <span className="font-bold tracking-tight text-white text-sm font-heading">Bastion</span>
                 </div>
             </div>
 

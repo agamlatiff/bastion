@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { BastionLogo } from '../components/common/BastionLogo';
 import { registerApi } from '../features/auth/api';
 import { useAuth } from '../features/auth/useAuth';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
-import { Alert } from '../components/ui/Alert';
 import { normalizeError } from '../lib/error';
 
 export const RegisterPage: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
     const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
     const [apiError, setApiError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,85 +72,150 @@ export const RegisterPage: React.FC = () => {
     };
 
     return (
-        <Card className="border-zinc-800 bg-[#111114] shadow-xl">
-            <CardHeader className="pb-3 text-left">
-                <CardTitle className="text-lg font-bold text-white">Daftar Akun Baru</CardTitle>
-                <CardDescription>
-                    Buat akun gratis untuk mulai mengelola dompet digital dan simpanan Anda
-                </CardDescription>
-            </CardHeader>
+        <div className="space-y-6 text-left">
+            {/* Top Brand Logo */}
+            <div>
+                <Link to="/" className="inline-flex items-center gap-2.5 group">
+                    <BastionLogo className="w-7 h-7 sm:w-8 sm:h-8 text-white shrink-0 group-hover:scale-105 transition-transform duration-200" />
+                    <span className="font-heading font-bold text-lg sm:text-xl text-white tracking-tight">
+                        Bastion
+                    </span>
+                </Link>
+            </div>
 
-            <CardContent>
+            <div className="space-y-6 w-full">
+                {/* Header */}
+                <div className="space-y-1 text-left">
+                    <h1 className="text-xl sm:text-2xl font-bold text-white font-heading tracking-tight">
+                        Buka Akun Bastion
+                    </h1>
+                    <p className="text-xs sm:text-sm text-zinc-400">
+                        Mulai dalam 2 menit. Pantau uang usaha tanpa pusing selisih.
+                    </p>
+                </div>
+
+                {/* Form Inputs */}
                 <form onSubmit={handleSubmit} className="space-y-4 text-left">
                     {apiError && (
-                        <Alert variant="error" title="Pendaftaran Gagal">
+                        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium">
                             {apiError}
-                        </Alert>
+                        </div>
                     )}
 
-                    <Input
-                        label="Alamat Email"
-                        type="email"
-                        placeholder="nama@email.com"
-                        value={email}
-                        onChange={(e) => {
-                            setEmail(e.target.value);
-                            if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
-                        }}
-                        error={fieldErrors.email}
-                        disabled={isSubmitting}
-                        autoComplete="email"
-                        autoFocus
-                    />
+                    {/* Email Input */}
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                            Alamat Email
+                        </label>
+                        <div className="relative">
+                            <Mail className="w-4 h-4 text-zinc-500 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            <input
+                                type="email"
+                                placeholder="nama@bisnisanda.com"
+                                value={email}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
+                                }}
+                                disabled={isSubmitting}
+                                className="w-full py-2.5 sm:py-3 pl-10 sm:pl-11 pr-4 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
+                                autoFocus
+                            />
+                        </div>
+                        {fieldErrors.email && (
+                            <p className="text-[11px] text-rose-400 pl-1">{fieldErrors.email}</p>
+                        )}
+                    </div>
 
-                    <Input
-                        label="Kata Sandi"
-                        type="password"
-                        placeholder="Minimal 8 karakter"
-                        value={password}
-                        onChange={(e) => {
-                            setPassword(e.target.value);
-                            if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
-                        }}
-                        error={fieldErrors.password}
-                        disabled={isSubmitting}
-                        autoComplete="new-password"
-                    />
+                    {/* Password Input */}
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                            Kata Sandi (Minimal 8 karakter)
+                        </label>
+                        <div className="relative">
+                            <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder="Buat kata sandi akun Anda"
+                                value={password}
+                                onChange={(e) => {
+                                    setPassword(e.target.value);
+                                    if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
+                                }}
+                                disabled={isSubmitting}
+                                className="w-full py-2.5 sm:py-3 pl-10 sm:pl-11 pr-10 sm:pr-11 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                            >
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                        </div>
+                        {fieldErrors.password && (
+                            <p className="text-[11px] text-rose-400 pl-1">{fieldErrors.password}</p>
+                        )}
+                    </div>
 
-                    <Input
-                        label="Ulangi Kata Sandi"
-                        type="password"
-                        placeholder="Ketik ulang kata sandi Anda"
-                        value={confirmPassword}
-                        onChange={(e) => {
-                            setConfirmPassword(e.target.value);
-                            if (fieldErrors.confirmPassword) setFieldErrors((prev) => ({ ...prev, confirmPassword: undefined }));
-                        }}
-                        error={fieldErrors.confirmPassword}
-                        disabled={isSubmitting}
-                        autoComplete="new-password"
-                    />
+                    {/* Confirm Password Input */}
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                            Ulangi Kata Sandi
+                        </label>
+                        <div className="relative">
+                            <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            <input
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                placeholder="Ketik ulang kata sandi Anda"
+                                value={confirmPassword}
+                                onChange={(e) => {
+                                    setConfirmPassword(e.target.value);
+                                    if (fieldErrors.confirmPassword) setFieldErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                                }}
+                                disabled={isSubmitting}
+                                className="w-full py-2.5 sm:py-3 pl-10 sm:pl-11 pr-10 sm:pr-11 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                            >
+                                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                        </div>
+                        {fieldErrors.confirmPassword && (
+                            <p className="text-[11px] text-rose-400 pl-1">{fieldErrors.confirmPassword}</p>
+                        )}
+                    </div>
 
-                    <Button
+                    {/* Submit Button */}
+                    <button
                         type="submit"
-                        className="w-full mt-2"
-                        isLoading={isSubmitting}
-                        rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+                        disabled={isSubmitting}
+                        className="w-full mt-2 py-3 sm:py-3.5 px-5 sm:px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm tracking-wide shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                     >
-                        Daftar Akun
-                    </Button>
+                        {isSubmitting ? (
+                            <span>Mendaftarkan akun...</span>
+                        ) : (
+                            <span>Daftar Sekarang</span>
+                        )}
+                    </button>
                 </form>
 
-                <div className="mt-5 pt-3 border-t border-zinc-800/80 text-center text-xs text-zinc-400">
-                    Sudah punya akun?{' '}
-                    <Link
-                        to="/login"
-                        className="text-white font-semibold hover:underline transition-colors"
-                    >
+                {/* Switch Link */}
+                <div className="text-center text-xs text-zinc-400 pt-1">
+                    Sudah memiliki akun?{' '}
+                    <Link to="/login" className="text-blue-400 font-semibold hover:text-blue-300 transition-colors">
                         Masuk di sini
                     </Link>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+
+            {/* Bottom Note */}
+            <div className="pt-2 text-center text-[11px] text-zinc-500">
+                &copy; {new Date().getFullYear()} Bastion. Seluruh hak cipta dilindungi.
+            </div>
+        </div>
     );
 };

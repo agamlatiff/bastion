@@ -1,32 +1,24 @@
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
-import { ShieldCheck } from 'lucide-react';
 
 export const AuthLayout: React.FC = () => {
     return (
-        <div className="min-h-screen flex flex-col justify-center items-center p-4 sm:p-6 bg-[#09090b] text-zinc-100 relative bg-grid-subtle">
-            {/* Header Brand */}
-            <div className="flex flex-col items-center mb-6 text-center">
-                <Link to="/" className="flex items-center gap-2 mb-2">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white text-zinc-950 font-bold shadow-sm">
-                        <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
-                    </div>
-                    <span className="text-xl font-bold tracking-tight text-white">Bastion</span>
-                </Link>
-                <p className="text-xs text-zinc-400 font-medium">
-                    Dompet Digital & Pembukuan Bisnis
-                </p>
-            </div>
+        <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col justify-center items-center py-8 px-3.5 sm:px-6 relative overflow-hidden bg-grid-subtle select-none">
+            {/* Ambient Background Subtle Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[600px] h-[350px] sm:h-[500px] bg-blue-600/[0.08] rounded-full blur-[120px] sm:blur-[160px] pointer-events-none" />
 
-            {/* Auth Form Card Container */}
-            <div className="w-full max-w-sm">
+            {/* Centered Floating Card (Maintains laptop card aesthetic on mobile & tablet) */}
+            <div className="w-full max-w-[420px] sm:max-w-md rounded-2xl sm:rounded-3xl bg-[#111114] border border-zinc-800/90 shadow-[0_25px_70px_rgba(0,0,0,0.85)] p-5 sm:p-8 md:p-9 relative z-10">
                 <Outlet />
             </div>
 
-            {/* Footer */}
-            <footer className="mt-8 text-center text-xs text-zinc-500">
-                Aman &middot; Terenkripsi &middot; &copy; {new Date().getFullYear()} Bastion
-            </footer>
+            {/* Back to Home Link */}
+            <div className="mt-5 sm:mt-6 text-center text-xs text-zinc-500 relative z-10">
+                <Link to="/" className="text-zinc-400 hover:text-white transition-colors">
+                    &larr; Kembali ke Beranda
+                </Link>
+            </div>
         </div>
     );
 };
+

@@ -2392,7 +2392,7 @@ Developer seharusnya tidak perlu memikirkan:
 "Transaction ini sebenarnya sudah berhasil belum?"
 ```
 
-Bastion harus menjawab semua itu melalui financial core-nya.
+Bastion harus menjawab semua itu melalui -nya.
 
 ---
 
@@ -2433,4 +2433,4 @@ Bastion
 
 **V0.1 objective:**
 
-> Build a correct financial core before building a large financial platform.
+> Build a correct  before building a large financial platform.

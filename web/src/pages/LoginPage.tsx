@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowRight, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, ArrowRight } from 'lucide-react';
+import { BastionLogo } from '../components/common/BastionLogo';
 import { useAuth } from '../features/auth/useAuth';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
-import { Alert } from '../components/ui/Alert';
 import { normalizeError } from '../lib/error';
 
 export const LoginPage: React.FC = () => {
     const [step, setStep] = useState<'credentials' | '2fa'>('credentials');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [tempToken, setTempToken] = useState('');
     const [totpCode, setTotpCode] = useState('');
 
@@ -69,7 +67,7 @@ export const LoginPage: React.FC = () => {
         setApiError(null);
 
         if (totpCode.trim().length !== 6) {
-            setFieldErrors({ totpCode: 'Kode autentikasi harus terdiri dari 6 digit angka' });
+            setFieldErrors({ totpCode: 'Kode autentikasi harus 6 digit angka' });
             return;
         }
 
@@ -86,144 +84,191 @@ export const LoginPage: React.FC = () => {
     };
 
     return (
-        <Card className="border-zinc-800 bg-[#111114] shadow-xl">
+        <div className="space-y-6 text-left">
+            {/* Top Brand Logo */}
+            <div>
+                <Link to="/" className="inline-flex items-center gap-2.5 group">
+                    <BastionLogo className="w-7 h-7 sm:w-8 sm:h-8 text-white shrink-0 group-hover:scale-105 transition-transform duration-200" />
+                    <span className="font-heading font-bold text-lg sm:text-xl text-white tracking-tight">
+                        Bastion
+                    </span>
+                </Link>
+            </div>
+
             {step === 'credentials' ? (
-                <>
-                    <CardHeader className="pb-3 text-left">
-                        <CardTitle className="text-lg font-bold text-white">Masuk ke Akun</CardTitle>
-                        <CardDescription>
-                            Masukkan email dan kata sandi untuk mengakses dasbor keuangan Anda
-                        </CardDescription>
-                    </CardHeader>
+                <div className="space-y-6 w-full">
+                    {/* Header */}
+                    <div className="space-y-1 text-left">
+                        <h1 className="text-xl sm:text-2xl font-bold text-white font-heading tracking-tight">
+                            Masuk ke Akun
+                        </h1>
+                        <p className="text-xs sm:text-sm text-zinc-400">
+                            Lanjutkan kelola kas usaha Anda dengan tenang.
+                        </p>
+                    </div>
 
-                    <CardContent>
-                        <form onSubmit={handleCredentialsSubmit} className="space-y-4 text-left">
-                            {apiError && (
-                                <Alert variant="error" title="Gagal Masuk">
-                                    {apiError}
-                                </Alert>
-                            )}
+                    {/* Form Inputs */}
+                    <form onSubmit={handleCredentialsSubmit} className="space-y-4 text-left">
+                        {apiError && (
+                            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium">
+                                {apiError}
+                            </div>
+                        )}
 
-                            <Input
-                                label="Alamat Email"
-                                type="email"
-                                placeholder="nama@email.com"
-                                value={email}
-                                onChange={(e) => {
-                                    setEmail(e.target.value);
-                                    if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
-                                }}
-                                error={fieldErrors.email}
-                                disabled={isSubmitting}
-                                autoComplete="email"
-                                autoFocus
-                            />
-
-                            <Input
-                                label="Kata Sandi"
-                                type="password"
-                                placeholder="••••••••••••"
-                                value={password}
-                                onChange={(e) => {
-                                    setPassword(e.target.value);
-                                    if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
-                                }}
-                                error={fieldErrors.password}
-                                disabled={isSubmitting}
-                                autoComplete="current-password"
-                            />
-
-                            <Button
-                                type="submit"
-                                className="w-full mt-2"
-                                isLoading={isSubmitting}
-                                rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
-                            >
-                                Masuk Sekarang
-                            </Button>
-                        </form>
-
-                        <div className="mt-5 pt-3 border-t border-zinc-800/80 text-center text-xs text-zinc-400">
-                            Belum memiliki akun?{' '}
-                            <Link
-                                to="/register"
-                                className="text-white font-semibold hover:underline transition-colors"
-                            >
-                                Daftar akun gratis
-                            </Link>
-                        </div>
-                    </CardContent>
-                </>
-            ) : (
-                <>
-                    <CardHeader className="pb-3 text-left">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-950/60 border border-emerald-800/60 flex items-center justify-center text-emerald-400 mb-2">
-                            <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
-                        </div>
-                        <CardTitle className="text-lg font-bold text-white">Verifikasi Keamanan (2FA)</CardTitle>
-                        <CardDescription>
-                            Akun Anda dilindungi autentikasi dua faktor. Masukkan 6 digit kode dari aplikasi Google Authenticator Anda.
-                        </CardDescription>
-                    </CardHeader>
-
-                    <CardContent>
-                        <form onSubmit={handle2FASubmit} className="space-y-4 text-left">
-                            {apiError && (
-                                <Alert variant="error" title="Kode Tidak Valid">
-                                    {apiError}
-                                </Alert>
-                            )}
-
-                            <div>
-                                <label className="block text-xs font-medium text-zinc-300 mb-1.5">
-                                    Kode Autentikasi 6-Digit
-                                </label>
+                        {/* Email Input */}
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-semibold text-zinc-300">
+                                Alamat Email
+                            </label>
+                            <div className="relative">
+                                <Mail className="w-4 h-4 text-zinc-500 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    maxLength={6}
-                                    placeholder="000000"
-                                    value={totpCode}
+                                    type="email"
+                                    placeholder="nama@bisnisanda.com"
+                                    value={email}
                                     onChange={(e) => {
-                                        const val = e.target.value.replace(/\D/g, '');
-                                        setTotpCode(val);
-                                        if (fieldErrors.totpCode) setFieldErrors((prev) => ({ ...prev, totpCode: undefined }));
+                                        setEmail(e.target.value);
+                                        if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
                                     }}
                                     disabled={isSubmitting}
+                                    className="w-full py-2.5 sm:py-3 pl-10 sm:pl-11 pr-4 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
                                     autoFocus
-                                    className="w-full text-center tracking-[0.4em] font-mono text-2xl font-bold py-3 px-4 rounded-xl border border-zinc-800 bg-[#09090b] text-white focus:outline-none focus:border-emerald-500 transition-colors"
                                 />
-                                {fieldErrors.totpCode && (
-                                    <p className="mt-1 text-xs text-rose-400">{fieldErrors.totpCode}</p>
-                                )}
                             </div>
+                            {fieldErrors.email && (
+                                <p className="text-[11px] text-rose-400 pl-1">{fieldErrors.email}</p>
+                            )}
+                        </div>
 
-                            <Button
-                                type="submit"
-                                className="w-full mt-2"
-                                isLoading={isSubmitting}
-                                rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
-                            >
-                                Konfirmasi & Masuk
-                            </Button>
+                        {/* Password Input */}
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <label className="block text-xs font-semibold text-zinc-300">
+                                    Kata Sandi
+                                </label>
+                                <span className="text-xs text-blue-400 hover:text-blue-300 transition-colors cursor-pointer">
+                                    Lupa kata sandi?
+                                </span>
+                            </div>
+                            <div className="relative">
+                                <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="Masukkan kata sandi Anda"
+                                    value={password}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
+                                    }}
+                                    disabled={isSubmitting}
+                                    className="w-full py-2.5 sm:py-3 pl-10 sm:pl-11 pr-10 sm:pr-11 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                                >
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
+                            {fieldErrors.password && (
+                                <p className="text-[11px] text-rose-400 pl-1">{fieldErrors.password}</p>
+                            )}
+                        </div>
 
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setStep('credentials');
-                                    setTotpCode('');
-                                    setApiError(null);
+                        {/* Submit Button */}
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full mt-2 py-3 sm:py-3.5 px-5 sm:px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm tracking-wide shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                        >
+                            {isSubmitting ? (
+                                <span>Memverifikasi...</span>
+                            ) : (
+                                <span>Masuk ke Akun</span>
+                            )}
+                        </button>
+                    </form>
+
+                    {/* Switch Link */}
+                    <div className="text-center text-xs text-zinc-400 pt-1">
+                        Belum memiliki akun?{' '}
+                        <Link to="/register" className="text-blue-400 font-semibold hover:text-blue-300 transition-colors">
+                            Buka akun gratis
+                        </Link>
+                    </div>
+                </div>
+            ) : (
+                /* 2FA Mode */
+                <div className="space-y-6 max-w-md mx-auto w-full text-center">
+                    <div className="space-y-3">
+                        <BastionLogo className="w-12 h-12 sm:w-14 sm:h-14 text-white mx-auto drop-shadow-[0_0_20px_rgba(0,229,255,0.35)]" />
+                        <h2 className="text-lg sm:text-xl font-bold text-white font-heading">
+                            Verifikasi Keamanan (2FA)
+                        </h2>
+                        <p className="text-xs text-zinc-400 max-w-xs mx-auto">
+                            Masukkan 6 digit kode dari aplikasi Google Authenticator Anda.
+                        </p>
+                    </div>
+
+                    <form onSubmit={handle2FASubmit} className="space-y-5">
+                        {apiError && (
+                            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium">
+                                {apiError}
+                            </div>
+                        )}
+
+                        <div>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={6}
+                                placeholder="000000"
+                                value={totpCode}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, '');
+                                    setTotpCode(val);
+                                    if (fieldErrors.totpCode) setFieldErrors((prev) => ({ ...prev, totpCode: undefined }));
                                 }}
-                                className="w-full py-2 text-xs text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 transition-colors"
-                            >
-                                <ArrowLeft className="w-3.5 h-3.5" />
-                                <span>Kembali ke login email & kata sandi</span>
-                            </button>
-                        </form>
-                    </CardContent>
-                </>
+                                disabled={isSubmitting}
+                                autoFocus
+                                className="w-full text-center tracking-[0.25em] sm:tracking-[0.4em] font-mono text-xl sm:text-2xl font-bold py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl border border-zinc-800 bg-[#09090b] text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
+                            />
+                            {fieldErrors.totpCode && (
+                                <p className="mt-1.5 text-xs text-rose-400">{fieldErrors.totpCode}</p>
+                            )}
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full py-3 sm:py-3.5 px-5 sm:px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm tracking-wide shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2"
+                        >
+                            <span>Konfirmasi & Masuk</span>
+                            <ArrowRight className="w-4 h-4" />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setStep('credentials');
+                                setTotpCode('');
+                                setApiError(null);
+                            }}
+                            className="w-full py-2 text-xs text-zinc-500 hover:text-zinc-300 flex items-center justify-center gap-1.5 transition-colors"
+                        >
+                            <ArrowLeft className="w-3.5 h-3.5" />
+                            <span>Kembali ke login email & sandi</span>
+                        </button>
+                    </form>
+                </div>
             )}
-        </Card>
+
+            {/* Bottom Note */}
+            <div className="pt-2 text-center text-[11px] text-zinc-500">
+                &copy; {new Date().getFullYear()} Bastion. Seluruh hak cipta dilindungi.
+            </div>
+        </div>
     );
 };
