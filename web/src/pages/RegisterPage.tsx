@@ -72,23 +72,23 @@ export const RegisterPage: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col justify-between h-full space-y-8">
+        <div className="space-y-6 text-left">
             {/* Top Brand Logo */}
             <div>
                 <Link to="/" className="inline-flex items-center gap-2.5 group">
                     <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center shadow-sm group-hover:border-blue-400 transition-colors">
                         <BastionLogo className="w-4 h-4 stroke-[2.2]" />
                     </div>
-                    <span className="font-heading font-extrabold text-lg text-white tracking-tight">
+                    <span className="font-heading font-bold text-lg text-white tracking-tight">
                         Bastion
                     </span>
                 </Link>
             </div>
 
-            <div className="space-y-6 max-w-md mx-auto w-full">
+            <div className="space-y-6 w-full">
                 {/* Header */}
-                <div className="space-y-1.5 text-left">
-                    <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-heading tracking-tight">
+                <div className="space-y-1 text-left">
+                    <h1 className="text-2xl font-bold text-white font-heading tracking-tight">
                         Buka Akun Bastion
                     </h1>
                     <p className="text-xs sm:text-sm text-zinc-400">
