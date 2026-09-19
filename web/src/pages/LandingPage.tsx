@@ -132,24 +132,24 @@ export const LandingPage: React.FC = () => {
             {/* SECTION 1: HERO (Clean, Premium, Zero Alay, Layout Fanned Cards)          */}
             {/* ========================================================================= */}
             <section className="relative pt-32 pb-24 md:pt-40 md:pb-28 px-4 sm:px-6 max-w-6xl mx-auto text-center">
-                {/* Hero Content (Lugas, To The Point, & Mengajak) */}
-                <div className="space-y-6 max-w-4xl mx-auto relative z-10">
+                {/* Hero Content (Lugas & To The Point) */}
+                <div className="space-y-5 max-w-3xl mx-auto relative z-10">
                     <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.12] text-balance font-sans">
-                        Yuk, Kelola Uang Bisnis <br className="hidden sm:inline" />
-                        <span className="bg-gradient-to-r from-blue-400 via-indigo-200 to-zinc-400 bg-clip-text text-transparent">
-                            Tanpa Pusing Selisih.
+                        Kelola Uang Bisnis <br className="hidden sm:inline" />
+                        <span className="bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">
+                            Tanpa Selisih.
                         </span>
                     </h1>
 
                     <p className="text-base sm:text-lg text-zinc-400 max-w-xl mx-auto leading-relaxed">
-                        Biar kamu fokus kembangin usaha, biar Bastion yang jaga mutasi dan saldo kas selalu klop otomatis.
+                        Pencatatan otomatis dan saldo anti-minus dalam satu dasbor modern.
                     </p>
 
                     {/* Tombol CTA Pill */}
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
                         <Link to={isAuthenticated ? '/app/dashboard' : '/register'}>
                             <button className="w-full sm:w-auto px-8 py-3.5 rounded-full text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-200 shadow-xl shadow-white/10 transition-all flex items-center justify-center gap-2">
-                                <span>{isAuthenticated ? 'Buka Dasbor Saya' : 'Mulai Buka Akun Gratis'}</span>
+                                <span>{isAuthenticated ? 'Buka Dasbor Saya' : 'Buka Akun Gratis'}</span>
                                 <ArrowRight className="w-4 h-4" />
                             </button>
                         </Link>
