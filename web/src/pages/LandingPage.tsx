@@ -965,62 +965,16 @@ export const LandingPage: React.FC = () => {
                     <div className="pt-2">
                         <ConcentricVault />
                     </div>
-
-                    {/* Epic Radiant Final CTA Banner */}
-                    <div className="mt-16 rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-[#181824]/95 via-[#101017]/95 to-[#09090c]/95 p-10 sm:p-14 text-center relative overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.9)] ring-1 ring-white/10">
-                        {/* Ambient Central Glow */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-r from-blue-600/20 via-sky-500/15 to-indigo-600/20 blur-[100px] pointer-events-none" />
-
-                        <div className="relative z-10 max-w-2xl mx-auto space-y-5">
-                            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-[1.1] font-heading">
-                                Bebaskan Bisnis Anda <br className="hidden sm:inline" />
-                                <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(56,189,248,0.25)]">
-                                    dari Drama Selisih Uang.
-                                </span>
-                            </h2>
-
-                            <p className="text-sm sm:text-base text-zinc-300 max-w-lg mx-auto leading-relaxed">
-                                Mulai kelola dompet kas dan pembukuan otomatis dalam hitungan menit. Tanpa kontrak rumit, tanpa biaya siluman.
-                            </p>
-
-                            {/* Tombol Aksi */}
-                            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
-                                <Link to={isAuthenticated ? '/app/dashboard' : '/register'} className="w-full sm:w-auto">
-                                    <button className="w-full sm:w-auto px-9 py-4 rounded-full text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-200 shadow-[0_0_30px_rgba(255,255,255,0.25)] transition-all flex items-center justify-center gap-2">
-                                        <span>{isAuthenticated ? 'Buka Dasbor Saya' : 'Buka Akun Gratis Sekarang'}</span>
-                                        <ArrowRight className="w-4 h-4" />
-                                    </button>
-                                </Link>
-                                <a href="#demo" className="w-full sm:w-auto">
-                                    <button className="w-full sm:w-auto px-8 py-4 rounded-full text-sm font-semibold border border-zinc-700/80 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 backdrop-blur-md transition-all">
-                                        Coba Simulasi Dasbor ↑
-                                    </button>
-                                </a>
-                            </div>
-
-                            {/* Trust Micro-Copy */}
-                            <div className="pt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-400">
-                                <span className="flex items-center gap-1.5">
-                                    <Check className="w-4 h-4 text-emerald-400" /> Buka akun 2 menit
-                                </span>
-                                <span>•</span>
-                                <span className="flex items-center gap-1.5">
-                                    <Check className="w-4 h-4 text-emerald-400" /> Tanpa kartu kredit
-                                </span>
-                                <span>•</span>
-                                <span className="flex items-center gap-1.5">
-                                    <Check className="w-4 h-4 text-emerald-400" /> Standar perbankan
-                                </span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </section>
 
             {/* ========================================================================= */}
             {/* MINIMALIST & SIMPLE FOOTER                                                */}
             {/* ========================================================================= */}
-            <footer className="relative border-t border-white/5 bg-[#09090b] py-10 sm:py-12 text-xs text-zinc-400 text-left">
+            <footer className="relative border-t border-white/5 bg-[#09090b] py-12 sm:py-14 text-xs text-zinc-400 text-left overflow-hidden">
+                {/* Subtle Horizon Glow Line */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent pointer-events-none" />
+
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
                     {/* Top Row: Brand & Horizontal Nav */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
