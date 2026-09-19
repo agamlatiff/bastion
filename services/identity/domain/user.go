@@ -1,8 +1,8 @@
 package domain
 
 import (
-	"time"
 	"github.com/google/uuid"
+	"time"
 )
 
 // UserStatus defines the lifecycle state of an account.
@@ -15,18 +15,17 @@ const (
 	StatusClosed    UserStatus = "CLOSED"
 )
 
-
 // User represents an identity credentials record.
 type User struct {
-	ID                        uuid.UUID  `json:"id"`
-	Email                     string     `json:"email"`
-	PasswordHash              string     `json:"-"`
-	Status                    UserStatus `json:"status"`
-	TwoFactorEnabled          bool       `json:"two_factor_enabled"`
-	TwoFactorSecretEncrypted  *string    `json:"-"`
-	CreatedAt                 time.Time  `json:"created_at"`
-	UpdatedAt                 time.Time  `json:"updated_at"`
-	Roles                     []string   `json:"roles,omitempty"`
+	ID                       uuid.UUID  `json:"id"`
+	Email                    string     `json:"email"`
+	PasswordHash             string     `json:"-"`
+	Status                   UserStatus `json:"status"`
+	TwoFactorEnabled         bool       `json:"two_factor_enabled"`
+	TwoFactorSecretEncrypted *string    `json:"-"`
+	CreatedAt                time.Time  `json:"created_at"`
+	UpdatedAt                time.Time  `json:"updated_at"`
+	Roles                    []string   `json:"roles,omitempty"`
 }
 
 // Session tracks an active refresh token session for a device.
@@ -72,13 +71,13 @@ type LogoutRequest struct {
 }
 
 type AuthResponse struct {
-	AccessToken        string       `json:"access_token,omitempty"`
-	RefreshToken       string       `json:"refresh_token,omitempty"`
-	TokenType          string       `json:"token_type,omitempty"`
-	ExpiresIn          int64        `json:"expires_in,omitempty"`
-	User               UserResponse `json:"user,omitempty"`
-	TwoFactorRequired  bool         `json:"two_factor_required,omitempty"`
-	TempToken          string       `json:"temp_token,omitempty"`
+	AccessToken       string       `json:"access_token,omitempty"`
+	RefreshToken      string       `json:"refresh_token,omitempty"`
+	TokenType         string       `json:"token_type,omitempty"`
+	ExpiresIn         int64        `json:"expires_in,omitempty"`
+	User              UserResponse `json:"user,omitempty"`
+	TwoFactorRequired bool         `json:"two_factor_required,omitempty"`
+	TempToken         string       `json:"temp_token,omitempty"`
 }
 
 type TwoFactorSetupResponse struct {
@@ -98,4 +97,3 @@ type TwoFactorVerifyRequest struct {
 	TempToken string `json:"temp_token" binding:"required"`
 	Code      string `json:"code" binding:"required,len=6"`
 }
-

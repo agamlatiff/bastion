@@ -16,11 +16,11 @@ import (
 )
 
 var (
-	ErrInvalidCredentials     = errors.New("invalid email or password")
-	ErrAccountInactive        = errors.New("account is inactive or suspended")
-	ErrInvalidToken           = errors.New("invalid or expired token")
-	ErrTokenRevoked           = errors.New("token has been revoked")
-	ErrTokenReused            = errors.New("token reuse detected, session terminated")
+	ErrInvalidCredentials      = errors.New("invalid email or password")
+	ErrAccountInactive         = errors.New("account is inactive or suspended")
+	ErrInvalidToken            = errors.New("invalid or expired token")
+	ErrTokenRevoked            = errors.New("token has been revoked")
+	ErrTokenReused             = errors.New("token reuse detected, session terminated")
 	ErrTwoFactorAlreadyEnabled = errors.New("two-factor authentication is already enabled")
 	ErrTwoFactorNotEnabled     = errors.New("two-factor authentication is not enabled")
 	ErrInvalidTwoFactorCode    = errors.New("invalid two-factor authentication code")
@@ -42,7 +42,7 @@ type AuthService interface {
 type authService struct {
 	repo     repository.Repository
 	cfg      *config.Config
-	producer event.EventProducer 
+	producer event.EventProducer
 }
 
 // NewAuthService creates a new instance of AuthService.
@@ -508,4 +508,3 @@ func stringPtr(s string) *string {
 	}
 	return &s
 }
-
