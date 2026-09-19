@@ -5,18 +5,13 @@ import {
     ArrowRight,
     Wallet,
     CheckCircle2,
-    Snowflake,
-    Sun,
     Check,
-    Zap,
-    RefreshCw,
-    TrendingUp,
     ArrowUpRight,
     ArrowDownRight,
-    Lock,
-    Unlock,
-    AlertCircle,
-    CheckCircle,
+    ArrowDownLeft,
+    Plus,
+    Copy,
+    CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../features/auth/useAuth';
 import { Button } from '../components/ui/Button';
@@ -43,20 +38,15 @@ export const LandingPage: React.FC = () => {
     type TimeframeType = 'today' | '7d' | '30d';
     const [timeframe, setTimeframe] = useState<TimeframeType>('today');
 
-    // Dynamic metrics state (responsive to simulations)
-    const [metricModifiers, setMetricModifiers] = useState({
-        addedBalance: 0,
-        addedInflow: 0,
-    });
+    const [copiedId, setCopiedId] = useState<string | null>(null);
 
-    // Vault Freeze & Interactive States
-    const [isVaultFrozen, setIsVaultFrozen] = useState(false);
-    const [isSimulating, setIsSimulating] = useState(false);
-    const [activeAlert, setActiveAlert] = useState<{
-        type: 'success' | 'danger' | 'warning';
-        title: string;
-        message: string;
-    } | null>(null);
+    const handleCopyId = (id: string, e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigator.clipboard.writeText(id);
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+    };
 
     // Dynamic datasets per timeframe (with smooth cubic bezier curves & apex coordinates)
     const timeframeData = {
@@ -107,119 +97,72 @@ export const LandingPage: React.FC = () => {
         },
     };
 
-
     const currentDataset = timeframeData[timeframe];
-    const displayBalance = currentDataset.baseBalance + metricModifiers.addedBalance;
-    const displayInflow = currentDataset.baseInflow + metricModifiers.addedInflow;
+
+    // Data representasi akun dompet nyata di dasbor (mirip DashboardPage)
+    const previewWallets = [
+        {
+            id: 'w-idr-8492019',
+            currency: 'IDR',
+            name: 'Dompet Operasional Utama',
+            balance: 'Rp 148.520.000,00',
+            shortCode: 'IDR',
+            status: 'Aktif',
+            badgeVariant: 'success' as const,
+        },
+        {
+            id: 'w-usd-5920311',
+            currency: 'USD',
+            name: 'Dompet Klien Internasional',
+            balance: '$3,250.00',
+            shortCode: 'USD',
+            status: 'Aktif',
+            badgeVariant: 'success' as const,
+        },
+        {
+            id: 'w-sgd-1049283',
+            currency: 'SGD',
+            name: 'Dompet Ekspansi Regional',
+            balance: 'S$ 4,800.00',
+            shortCode: 'SGD',
+            status: 'Aktif',
+            badgeVariant: 'success' as const,
+        },
+    ];
 
     // Real-Time Transactions Feed
-    const [transactions, setTransactions] = useState<DashboardTransaction[]>([
+    const transactions: DashboardTransaction[] = [
         {
             id: 'TRX-948',
             time: 'Baru saja',
-            title: 'Pembayaran dari Klien #1042',
+            title: 'Pembayaran Invoice Klien #1042',
             category: 'Penjualan',
-            debitAccount: 'Rekening Utama',
-            creditAccount: 'Uang Masuk',
+            debitAccount: 'Kas Utama IDR',
+            creditAccount: 'Pendapatan Jasa',
             amountFormatted: '+Rp 12.500.000',
             isIncome: true,
         },
         {
             id: 'TRX-947',
             time: '8 menit lalu',
-            title: 'Bayar Tagihan Operasional',
-            category: 'Pengeluaran',
-            debitAccount: 'Rekening Utama',
-            creditAccount: 'Uang Keluar',
+            title: 'Biaya Server Cloud & Langganan',
+            category: 'Operasional',
+            debitAccount: 'Beban Operasional',
+            creditAccount: 'Kas Utama IDR',
             amountFormatted: '-Rp 2.450.000',
             isIncome: false,
         },
         {
             id: 'TRX-946',
             time: '24 menit lalu',
-            title: 'Bayar via QRIS',
-            category: 'Kasir',
-            debitAccount: 'Dompet Digital',
-            creditAccount: 'Uang Masuk',
+            title: 'Penerimaan Transaksi QRIS Toko',
+            category: 'Retail',
+            debitAccount: 'Kas Toko',
+            creditAccount: 'Pendapatan Penjualan',
             amountFormatted: '+Rp 3.850.000',
             isIncome: true,
         },
-    ]);
-
-    // Handle Simulation 1: Inject Live Invoice Payment
-    const handleSimulateIncome = () => {
-        if (isVaultFrozen) {
-            setActiveAlert({
-                type: 'warning',
-                title: 'Transaksi Tertahan: Dompet Dibekukan',
-                message: 'Kas bisnis saat ini dalam status Vault Freeze. Buka kunci dompet terlebih dahulu untuk memproses uang masuk.',
-            });
-            return;
-        }
-
-        setIsSimulating(true);
-        setActiveAlert(null);
-
-        setTimeout(() => {
-            const addedVal = 4500000;
-            const newTrx: DashboardTransaction = {
-                id: `TRX-${Math.floor(950 + Math.random() * 49)}`,
-                time: 'Baru saja',
-                title: 'Pesanan Flash Sale #882',
-                category: 'Toko Online',
-                debitAccount: 'Rekening Utama',
-                creditAccount: 'Uang Masuk',
-                amountFormatted: '+Rp 4.500.000',
-                isIncome: true,
-            };
-
-            setTransactions((prev) => [newTrx, ...prev.slice(0, 3)]);
-            setMetricModifiers((prev) => ({
-                addedBalance: prev.addedBalance + addedVal,
-                addedInflow: prev.addedInflow + addedVal,
-            }));
-            setIsSimulating(false);
-            setActiveAlert({
-                type: 'success',
-                title: 'Transaksi Berhasil Dicatat Otomatis',
-                message: 'Dana +Rp 4.500.000 masuk dan dicatat berpasangan (Debit = Kredit). Selisih pembukuan: Rp 0 terverifikasi.',
-            });
-        }, 320);
-    };
-
-    // Handle Simulation 2: Toggle Vault Freeze
-    const handleToggleVault = () => {
-        const nextState = !isVaultFrozen;
-        setIsVaultFrozen(nextState);
-        if (nextState) {
-            setActiveAlert({
-                type: 'warning',
-                title: 'Mode Darurat: Vault Kas Berhasil Dikunci',
-                message: 'Semua mutasi kas keluar dibekukan seketika oleh protokol keamanan Bastion. Tidak ada dana yang bisa dipindahkan.',
-            });
-        } else {
-            setActiveAlert({
-                type: 'success',
-                title: 'Kunci Vault Berhasil Dibuka',
-                message: 'Dompet operasional kembali aktif. Transaksi normal dapat dilanjutkan.',
-            });
-        }
-    };
-
-    // Handle Simulation 3: Stress-Test Anti-Minus Protection
-    const handleTestAntiMinus = () => {
-        setIsSimulating(true);
-        setActiveAlert(null);
-
-        setTimeout(() => {
-            setIsSimulating(false);
-            setActiveAlert({
-                type: 'danger',
-                title: 'Ditolak Otomatis oleh Aturan Anti-Minus Bastion',
-                message: 'Upaya penarikan Rp 999.000.000 diblokir seketika karena melebihi saldo kas. Sistem Bastion menjamin saldo bisnis Anda tidak akan pernah minus.',
-            });
-        }, 300);
-    };
+    ];
 
     return (
         <div className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-zinc-800 selection:text-white relative overflow-x-hidden">
@@ -374,98 +317,113 @@ export const LandingPage: React.FC = () => {
                             Dasbor Finansial Modern dalam Genggaman.
                         </h2>
                         <p className="text-sm sm:text-base md:text-lg text-zinc-300 leading-relaxed max-w-2xl mx-auto">
-                            Lihat langsung gimana Bastion mencatat uang masuk dan keluar, menjaga saldo agar selalu aman, dan memberi Anda kendali penuh.
+                            Gambaran nyata dasbor operasional Bastion: pantau saldo multi-mata uang, kontrol arus kas masuk-keluar, dan kelola dompet usaha Anda dalam satu tampilan terpadu.
                         </p>
                     </div>
 
-                    {/* Window Frame Container (Ala Linear / Mercury / Stripe) */}
-                    <div className="w-full rounded-2xl sm:rounded-3xl border border-white/10 bg-zinc-950/90 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,0.9)] ring-1 ring-white/5 overflow-hidden text-left">
-                        {/* 1. Header Bar Jendela */}
-                        <div className="px-4 sm:px-7 py-3.5 sm:py-4 border-b border-white/10 bg-[#121217]/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                            {/* Window Dots & App Name */}
+                    {/* Window Frame Container (Representasi Visual Dasbor Asli Bastion) */}
+                    <div className="w-full rounded-2xl sm:rounded-3xl border border-white/10 bg-[#0c0c10]/95 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,0.9)] ring-1 ring-white/5 overflow-hidden text-left">
+                        {/* 1. Header Bar Jendela Aplikasi */}
+                        <div className="px-4 sm:px-6 py-3 sm:py-3.5 border-b border-white/10 bg-[#121217] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            {/* Window Dots & Organization Info */}
                             <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                <div className="flex items-center gap-1.5">
                                     <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500/80 border border-red-400/40" />
                                     <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-500/80 border border-amber-400/40" />
                                     <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500/80 border border-emerald-400/40" />
                                 </div>
-                                <div className="hidden sm:block h-4 w-px bg-white/10" />
-                                <span className="text-xs font-semibold text-zinc-300 tracking-tight flex items-center gap-2">
-                                    <span>Bastion Financial OS</span>
-                                    <span className="hidden md:inline text-zinc-600">•</span>
-                                    <span className="hidden md:inline text-zinc-400 font-normal">Kas Operasional Terkonsolidasi</span>
-                                </span>
+                                <div className="h-4 w-px bg-white/10" />
+                                <div className="flex items-center gap-2 text-xs text-zinc-300 font-medium">
+                                    <span className="font-bold text-white">Bastion Financial OS</span>
+                                    <span className="text-zinc-600">•</span>
+                                    <span className="text-zinc-400">PT Kopi Nusantara</span>
+                                    <span className="hidden xs:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                        Terverifikasi
+                                    </span>
+                                </div>
                             </div>
 
-                            {/* Live Heartbeat & Timeframe Pills */}
-                            <div className="flex items-center justify-between w-full sm:w-auto gap-2.5">
-                                <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] sm:text-[11px] font-medium text-emerald-400">
-                                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-pulse" />
-                                    <span className="hidden sm:inline">Sinkronisasi Real-Time</span>
+                            {/* Top Right Quick Action Buttons */}
+                            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                                <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] sm:text-[11px] font-medium text-emerald-400 mr-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                    <span>Real-Time</span>
                                     <span className="font-mono text-[10px] opacity-80">(0.04s)</span>
                                 </div>
-
-                                {/* Filter Rentang Waktu Interaktif */}
-                                <div className="p-0.5 sm:p-1 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center gap-0.5 sm:gap-1">
-                                    {[
-                                        { id: 'today', label: 'Hari Ini' },
-                                        { id: '7d', label: '7 Hari' },
-                                        { id: '30d', label: '30 Hari' },
-                                    ].map((tab) => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => setTimeframe(tab.id as TimeframeType)}
-                                            className={`px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs rounded-lg font-medium transition-all cursor-pointer ${
-                                                timeframe === tab.id
-                                                    ? 'bg-zinc-800 text-white shadow-sm font-semibold'
-                                                    : 'text-zinc-400 hover:text-zinc-200'
-                                            }`}
-                                        >
-                                            {tab.label}
-                                        </button>
-                                    ))}
-                                </div>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/5 text-[11px] font-medium text-zinc-300">
+                                    <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
+                                    <span>Isi Saldo</span>
+                                </span>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/5 text-[11px] font-medium text-zinc-300">
+                                    <ArrowUpRight className="w-3.5 h-3.5 text-blue-400" />
+                                    <span>Kirim Uang</span>
+                                </span>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600/20 border border-blue-500/30 text-[11px] font-semibold text-blue-300">
+                                    <Plus className="w-3.5 h-3.5 text-blue-400" />
+                                    <span>Buka Dompet</span>
+                                </span>
                             </div>
                         </div>
 
-                        {/* Interactive Dynamic Alert Banner */}
-                        {activeAlert && (
-                            <div
-                                className={`px-4 sm:px-6 py-2.5 sm:py-3 border-b flex items-center justify-between text-xs transition-all animate-in fade-in ${
-                                    activeAlert.type === 'success'
-                                        ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-300'
-                                        : activeAlert.type === 'danger'
-                                        ? 'bg-red-950/40 border-red-800/40 text-red-300'
-                                        : 'bg-amber-950/40 border-amber-800/40 text-amber-300'
-                                }`}
-                            >
-                                <div className="flex items-center gap-2.5">
-                                    {activeAlert.type === 'success' ? (
-                                        <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                                    ) : activeAlert.type === 'danger' ? (
-                                        <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                                    ) : (
-                                        <Lock className="w-4 h-4 text-amber-400 shrink-0" />
-                                    )}
-                                    <div className="text-[11px] sm:text-xs">
-                                        <span className="font-bold">{activeAlert.title}: </span>
-                                        <span className="text-zinc-300">{activeAlert.message}</span>
+                        {/* 2. Main Dashboard Content Surface */}
+                        <div className="p-4 sm:p-7 md:p-8 space-y-6 sm:space-y-7">
+                            {/* UNIFIED FINANCIAL HERO SURFACE (Total Balance & Multi-Currency Chips) */}
+                            <div className="rounded-xl sm:rounded-2xl border border-white/5 bg-gradient-to-br from-[#15151c] via-[#101015] to-[#0a0a0d] p-4 sm:p-6 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+
+                                <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+                                    <div className="space-y-2">
+                                        <div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+                                            <Wallet className="w-4 h-4 text-emerald-400" />
+                                            <span>Total Saldo Kas Tersedia</span>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                        </div>
+
+                                        <div className="flex flex-wrap items-baseline gap-3">
+                                            <div className="text-2xl sm:text-4xl lg:text-5xl font-extrabold font-mono tracking-tight text-white">
+                                                Rp {currentDataset.baseBalance.toLocaleString('id-ID')},00
+                                            </div>
+                                            <span className="text-xs font-mono text-zinc-400 font-medium">
+                                                (Rupiah)
+                                            </span>
+                                        </div>
+
+                                        {/* Multi-Currency Chips */}
+                                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                                            <span className="text-[11px] text-zinc-400 font-medium">Saldo Valas Lainnya:</span>
+                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/90 border border-white/10 text-xs font-mono text-zinc-300">
+                                                <span className="text-[10px] text-blue-400 font-bold">USD</span>
+                                                <span className="font-semibold text-white">$3,250.00</span>
+                                                <span className="text-[10px] text-zinc-500 hidden sm:inline">• Klien Global</span>
+                                            </div>
+                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/90 border border-white/10 text-xs font-mono text-zinc-300">
+                                                <span className="text-[10px] text-purple-400 font-bold">SGD</span>
+                                                <span className="font-semibold text-white">S$ 4,800.00</span>
+                                                <span className="text-[10px] text-zinc-500 hidden sm:inline">• Regional Asia</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Trust & Status Highlights */}
+                                    <div className="flex flex-wrap items-center gap-2.5 text-xs text-zinc-400 pt-2 lg:pt-0">
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900/90 border border-white/5">
+                                            <CreditCard className="w-3.5 h-3.5 text-zinc-300" />
+                                            <span>
+                                                <strong className="text-white font-mono">3</strong> Dompet Aktif
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-800/40 text-emerald-300">
+                                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                                            <span>Proteksi Saldo 100%</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => setActiveAlert(null)}
-                                    className="text-zinc-400 hover:text-white px-2 py-0.5 text-[11px] rounded transition-colors cursor-pointer shrink-0"
-                                >
-                                    ✕ Tutup
-                                </button>
                             </div>
-                        )}
 
-                        {/* 2. Main Dashboard Content */}
-                        <div className="p-4 sm:p-8 space-y-5 sm:space-y-7">
-                            {/* Baris Metrik Utama (4 KPI Cards: Modern 2x2 di Mobile, 4-Kolom di Desktop) */}
+                            {/* 4 KPI METRICS CARDS */}
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-                                {/* Metrik 1: Total Saldo Kas */}
+                                {/* Total Kas */}
                                 <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-[#14141a]/80 border border-white/5 space-y-1 sm:space-y-2 hover:border-white/10 transition-colors">
                                     <div className="flex items-center justify-between text-[11px] sm:text-xs text-zinc-400 font-medium">
                                         <span className="truncate">Total Kas</span>
@@ -473,8 +431,8 @@ export const LandingPage: React.FC = () => {
                                             {currentDataset.growth}
                                         </span>
                                     </div>
-                                    <div className="text-base sm:text-2xl lg:text-3xl font-extrabold text-white font-mono tracking-tight truncate">
-                                        Rp {displayBalance.toLocaleString('id-ID')},00
+                                    <div className="text-sm sm:text-xl lg:text-2xl font-bold text-white font-mono tracking-tight truncate">
+                                        Rp {currentDataset.baseBalance.toLocaleString('id-ID')}
                                     </div>
                                     <div className="text-[10px] sm:text-[11px] text-zinc-500 flex items-center gap-1 truncate">
                                         <CheckCircle2 className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-emerald-400 shrink-0" />
@@ -482,7 +440,7 @@ export const LandingPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Metrik 2: Uang Masuk (Kredit) */}
+                                {/* Uang Masuk */}
                                 <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-[#14141a]/80 border border-white/5 space-y-1 sm:space-y-2 hover:border-white/10 transition-colors">
                                     <div className="flex items-center justify-between text-[11px] sm:text-xs text-zinc-400 font-medium">
                                         <span className="truncate">Uang Masuk</span>
@@ -491,14 +449,14 @@ export const LandingPage: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="text-sm sm:text-xl lg:text-2xl font-bold text-emerald-400 font-mono tracking-tight truncate">
-                                        +Rp {displayInflow.toLocaleString('id-ID')}
+                                        +Rp {currentDataset.baseInflow.toLocaleString('id-ID')}
                                     </div>
                                     <div className="text-[10px] sm:text-[11px] text-zinc-500 truncate">
                                         {currentDataset.txCount} tervalidasi
                                     </div>
                                 </div>
 
-                                {/* Metrik 3: Pengeluaran (Debit) */}
+                                {/* Beban Kas */}
                                 <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-[#14141a]/80 border border-white/5 space-y-1 sm:space-y-2 hover:border-white/10 transition-colors">
                                     <div className="flex items-center justify-between text-[11px] sm:text-xs text-zinc-400 font-medium">
                                         <span className="truncate">Beban Kas</span>
@@ -514,12 +472,12 @@ export const LandingPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Metrik 4: Integritas Pembukuan */}
+                                {/* Integritas */}
                                 <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-[#14141a]/80 border border-white/5 space-y-1 sm:space-y-2 hover:border-white/10 transition-colors">
                                     <div className="flex items-center justify-between text-[11px] sm:text-xs text-zinc-400 font-medium">
                                         <span className="truncate">Integritas</span>
-                                        <Badge variant={isVaultFrozen ? 'warning' : 'success'} className="text-[9px] sm:text-xs px-1.5 py-0.5">
-                                            {isVaultFrozen ? 'TERKUNCI' : 'SEIMBANG'}
+                                        <Badge variant="success" className="text-[9px] sm:text-xs px-1.5 py-0.5">
+                                            SEIMBANG
                                         </Badge>
                                     </div>
                                     <div className="text-sm sm:text-xl lg:text-2xl font-bold text-white font-mono tracking-tight flex items-center gap-1.5 sm:gap-2 truncate">
@@ -532,36 +490,50 @@ export const LandingPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Clean & Elegant Spline Chart (Linear / Stripe Grade) */}
-                            <div className="p-4 sm:p-7 rounded-xl sm:rounded-2xl bg-[#121217] border border-white/5 space-y-4 sm:space-y-5 relative overflow-hidden shadow-xl">
-                                {/* Chart Card Header & Legend */}
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-white/5 relative z-10">
+                            {/* FINTECH SPLINE CHART (Grafik Tren Finansial dengan Filter Waktu) */}
+                            <div className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-[#121217] border border-white/5 space-y-4 relative overflow-hidden shadow-xl">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5 relative z-10">
                                     <div>
-                                        <div className="text-[11px] sm:text-xs text-zinc-400 font-medium">Tren Uang Masuk</div>
-                                        <div className="text-lg sm:text-2xl font-bold font-mono text-white tracking-tight flex items-center gap-2.5 sm:gap-3 pt-0.5">
-                                            <span>Rp {displayBalance.toLocaleString('id-ID')},00</span>
+                                        <div className="text-[11px] sm:text-xs text-zinc-400 font-medium">Tren Arus Kas Operasional</div>
+                                        <div className="text-lg sm:text-2xl font-bold font-mono text-white tracking-tight flex items-center gap-2.5 pt-0.5">
+                                            <span>Rp {currentDataset.baseBalance.toLocaleString('id-ID')},00</span>
                                             <span className="text-[10px] sm:text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
                                                 {currentDataset.growth}
                                             </span>
                                         </div>
                                     </div>
 
-                                    {/* Clean Legend Indicators */}
-                                    <div className="flex items-center gap-2 text-xs">
+                                    {/* Legend & Interactive Timeframe Pills */}
+                                    <div className="flex items-center justify-between sm:justify-end gap-2.5 flex-wrap">
                                         <div className="flex items-center gap-1.5 text-zinc-300 font-medium px-2 sm:px-2.5 py-1 rounded-full bg-zinc-900/60 border border-white/5 text-[11px] sm:text-xs">
                                             <span className="w-2 h-2 rounded-full bg-sky-400" />
                                             <span>Arus Kas Masuk</span>
                                         </div>
-                                        <div className="hidden sm:flex items-center gap-1.5 text-emerald-400 font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                            <span>Buku Kas Seimbang</span>
+
+                                        <div className="p-0.5 sm:p-1 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center gap-0.5 sm:gap-1">
+                                            {[
+                                                { id: 'today', label: 'Hari Ini' },
+                                                { id: '7d', label: '7 Hari' },
+                                                { id: '30d', label: '30 Hari' },
+                                            ].map((tab) => (
+                                                <button
+                                                    key={tab.id}
+                                                    onClick={() => setTimeframe(tab.id as TimeframeType)}
+                                                    className={`px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs rounded-lg font-medium transition-all cursor-pointer ${
+                                                        timeframe === tab.id
+                                                            ? 'bg-zinc-800 text-white shadow-sm font-semibold'
+                                                            : 'text-zinc-400 hover:text-zinc-200'
+                                                    }`}
+                                                >
+                                                    {tab.label}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Main Chart Area */}
+                                {/* SVG Chart Canvas */}
                                 <div className="relative w-full h-40 sm:h-52 md:h-56 pt-2">
-                                    {/* Minimalist Apex Tooltip */}
                                     <div
                                         style={{ left: `${(currentDataset.peakCoord.x / 600) * 100}%` }}
                                         className="absolute top-1 -translate-x-1/2 pointer-events-none hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-white/10 text-xs font-medium text-white shadow-lg z-20"
@@ -571,20 +543,16 @@ export const LandingPage: React.FC = () => {
                                         <span className="text-zinc-400 text-[11px]">• {currentDataset.peakTime}</span>
                                     </div>
 
-                                    {/* SVG Graphic Canvas */}
                                     <svg
                                         viewBox="0 0 600 180"
                                         className="w-full h-full overflow-visible"
                                         preserveAspectRatio="none"
                                     >
                                         <defs>
-                                            {/* Soft Area Gradient (Very Subtle & Clean) */}
                                             <linearGradient id="cleanAreaGradient" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.14" />
                                                 <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.0" />
                                             </linearGradient>
-
-                                            {/* Refined Stroke Gradient */}
                                             <linearGradient id="cleanStrokeGradient" x1="0" y1="0" x2="1" y2="0">
                                                 <stop offset="0%" stopColor="#60a5fa" />
                                                 <stop offset="60%" stopColor="#38bdf8" />
@@ -592,19 +560,16 @@ export const LandingPage: React.FC = () => {
                                             </linearGradient>
                                         </defs>
 
-                                        {/* Subtle Horizontal Reference Grid Lines */}
                                         <line x1="0" y1="45" x2="600" y2="45" stroke="rgba(255,255,255,0.05)" strokeDasharray="3 4" />
                                         <line x1="0" y1="90" x2="600" y2="90" stroke="rgba(255,255,255,0.05)" strokeDasharray="3 4" />
                                         <line x1="0" y1="135" x2="600" y2="135" stroke="rgba(255,255,255,0.05)" strokeDasharray="3 4" />
 
-                                        {/* Main Filled Area */}
                                         <path
                                             d={currentDataset.splineArea}
                                             fill="url(#cleanAreaGradient)"
                                             className="transition-all duration-500 ease-out"
                                         />
 
-                                        {/* Clean, Crisp 2px Spline Stroke */}
                                         <path
                                             d={currentDataset.splinePath}
                                             fill="none"
@@ -615,7 +580,6 @@ export const LandingPage: React.FC = () => {
                                             className="transition-all duration-500 ease-out"
                                         />
 
-                                        {/* Sleek Apex Point */}
                                         <circle
                                             cx={currentDataset.peakCoord.x}
                                             cy={currentDataset.peakCoord.y}
@@ -632,7 +596,6 @@ export const LandingPage: React.FC = () => {
                                         />
                                     </svg>
 
-                                    {/* X-Axis Labels */}
                                     <div className="flex items-center justify-between text-[9px] sm:text-[11px] text-zinc-500 pt-3 font-mono">
                                         {currentDataset.xLabels.map((label, idx) => (
                                             <span key={idx}>{label}</span>
@@ -641,19 +604,91 @@ export const LandingPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* 3. Dua Kolom Bawah: Mutasi Real-Time & Simulator Kontrol */}
+                            {/* DUA KOLOM DASBOR UTAMA: REKENING DOMPET & RIWAYAT MUTASI */}
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
-                                {/* Kolom Kiri (7 Cols): Buku Kas Mutasi Berpasangan */}
-                                <div className="lg:col-span-7 rounded-xl sm:rounded-2xl bg-[#111116]/90 border border-white/5 p-4 sm:p-6 space-y-3.5 sm:space-y-4">
+                                {/* Kolom Kiri (7 Cols): Rekening Dompet Bisnis */}
+                                <div className="lg:col-span-7 rounded-xl sm:rounded-2xl bg-[#111116]/90 border border-white/5 p-4 sm:p-6 space-y-3.5 sm:space-y-4 text-left">
                                     <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                                        <div className="flex items-center gap-2 sm:gap-2.5">
-                                            <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                                            <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight">
-                                                Riwayat Transaksi Terbaru
+                                        <div>
+                                            <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                                                <Wallet className="w-4 h-4 text-emerald-400" />
+                                                <span>Rekening Dompet Bisnis</span>
                                             </h4>
+                                            <p className="text-[10px] sm:text-xs text-zinc-400 pt-0.5">
+                                                Semua rekening aktif beroperasi di bawah satu buku besar.
+                                            </p>
+                                        </div>
+                                        <span className="text-[10px] sm:text-xs text-zinc-400 font-mono font-medium">
+                                            3 Dompet
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-2.5 sm:space-y-3">
+                                        {previewWallets.map((wallet) => (
+                                            <div
+                                                key={wallet.id}
+                                                className="p-3.5 sm:p-4 rounded-xl bg-zinc-900/60 border border-white/5 hover:border-white/10 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
+                                            >
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className="w-10 h-10 rounded-xl bg-zinc-800/90 border border-zinc-700 flex items-center justify-center font-bold text-xs text-white shrink-0">
+                                                        {wallet.shortCode}
+                                                    </div>
+                                                    <div className="space-y-0.5 min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs font-bold text-white truncate">
+                                                                {wallet.name}
+                                                            </span>
+                                                            <Badge variant={wallet.badgeVariant} className="text-[9px] px-1.5 py-0.2 shrink-0">
+                                                                {wallet.status}
+                                                            </Badge>
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => handleCopyId(wallet.id, e)}
+                                                            className="inline-flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                                                            title="Salin Nomor Rekening"
+                                                        >
+                                                            <span>Rek: •••• {wallet.id.slice(-4)}</span>
+                                                            {copiedId === wallet.id ? (
+                                                                <Check className="w-3 h-3 text-emerald-400" />
+                                                            ) : (
+                                                                <Copy className="w-3 h-3 text-zinc-500 group-hover:text-zinc-400" />
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 border-white/5 pt-2 sm:pt-0 shrink-0">
+                                                    <span className="text-[10px] text-zinc-500 uppercase font-mono sm:hidden">
+                                                        Saldo
+                                                    </span>
+                                                    <span className="text-sm sm:text-base font-bold font-mono text-white">
+                                                        {wallet.balance}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] sm:text-[11px] text-zinc-500">
+                                        <span>Proteksi Saldo Berlapis</span>
+                                        <span className="text-emerald-400 font-medium">Buku Kas Terisolasi ✓</span>
+                                    </div>
+                                </div>
+
+                                {/* Kolom Kanan (5 Cols): Riwayat Mutasi Terkini */}
+                                <div className="lg:col-span-5 rounded-xl sm:rounded-2xl bg-[#111116]/90 border border-white/5 p-4 sm:p-6 space-y-3.5 sm:space-y-4 text-left">
+                                    <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                                        <div>
+                                            <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                                                <CheckCircle2 className="w-4 h-4 text-blue-400" />
+                                                <span>Mutasi Transaksi Terkini</span>
+                                            </h4>
+                                            <p className="text-[10px] sm:text-xs text-zinc-400 pt-0.5">
+                                                Tervalidasi & seimbang otomatis.
+                                            </p>
                                         </div>
                                         <span className="text-[9px] sm:text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono font-medium">
-                                            SALDO OK ✓
+                                            SEIMBANG ✓
                                         </span>
                                     </div>
 
@@ -661,14 +696,14 @@ export const LandingPage: React.FC = () => {
                                         {transactions.map((trx) => (
                                             <div
                                                 key={trx.id}
-                                                className="p-3 sm:p-3.5 rounded-xl bg-zinc-900/60 border border-white/5 hover:border-white/10 transition-all space-y-1.5 sm:space-y-2 group"
+                                                className="p-3 sm:p-3.5 rounded-xl bg-zinc-900/60 border border-white/5 hover:border-white/10 transition-all space-y-1.5 group"
                                             >
                                                 <div className="flex items-center justify-between text-xs">
-                                                    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                                                    <div className="flex items-center gap-1.5 min-w-0">
                                                         <span className="font-bold text-white group-hover:text-blue-300 transition-colors text-xs truncate">
                                                             {trx.title}
                                                         </span>
-                                                        <span className="text-[9px] sm:text-[10px] text-zinc-500 px-1.5 sm:px-2 py-0.5 rounded bg-zinc-800/80 shrink-0">
+                                                        <span className="text-[9px] sm:text-[10px] text-zinc-500 px-1.5 py-0.5 rounded bg-zinc-800/80 shrink-0">
                                                             {trx.category}
                                                         </span>
                                                     </div>
@@ -677,15 +712,14 @@ export const LandingPage: React.FC = () => {
                                                     </span>
                                                 </div>
 
-                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs pt-0.5 sm:pt-1">
-                                                    {/* From → To indicator */}
-                                                    <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-zinc-400 min-w-0">
-                                                        <span className="text-zinc-400 truncate">{trx.debitAccount}</span>
+                                                <div className="flex items-center justify-between gap-1 text-xs pt-0.5">
+                                                    <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-zinc-400 min-w-0 truncate">
+                                                        <span className="truncate">{trx.debitAccount}</span>
                                                         <span className="text-zinc-600 shrink-0">→</span>
-                                                        <span className="text-zinc-400 truncate">{trx.creditAccount}</span>
+                                                        <span className="truncate">{trx.creditAccount}</span>
                                                     </div>
                                                     <span
-                                                        className={`font-bold font-mono text-xs sm:text-sm shrink-0 self-end sm:self-auto ${
+                                                        className={`font-bold font-mono text-xs sm:text-sm shrink-0 ${
                                                             trx.isIncome ? 'text-emerald-400' : 'text-sky-300'
                                                         }`}
                                                     >
@@ -697,104 +731,8 @@ export const LandingPage: React.FC = () => {
                                     </div>
 
                                     <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] sm:text-[11px] text-zinc-500">
-                                        <span>Pembukuan Otomatis</span>
-                                        <span className="text-emerald-400 font-medium">Selalu Seimbang ✓</span>
-                                    </div>
-                                </div>
-
-                                {/* Kolom Kanan (5 Cols): Pusat Simulasi Kontrol Interaktif */}
-                                <div className="lg:col-span-5 rounded-xl sm:rounded-2xl bg-gradient-to-b from-[#161620]/95 to-[#101015]/95 border border-white/10 p-4 sm:p-6 space-y-3.5 sm:space-y-4 shadow-xl">
-                                    <div className="border-b border-white/5 pb-3">
-                                        <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                                            <Zap className="w-4 h-4 text-blue-400 fill-current" />
-                                            <span>Pusat Simulasi Interaktif</span>
-                                        </h4>
-                                        <p className="text-[11px] sm:text-xs text-zinc-400 pt-0.5">
-                                            Klik tombol di bawah untuk melihat bagaimana sistem Bastion merespons.
-                                        </p>
-                                    </div>
-
-                                    {/* Action Buttons */}
-                                    <div className="space-y-2 sm:space-y-3">
-                                        {/* Aksi 1: Simulasikan Transaksi Masuk (Full Width) */}
-                                        <button
-                                            onClick={handleSimulateIncome}
-                                            disabled={isSimulating}
-                                            className="w-full py-3 sm:py-3.5 px-3.5 sm:px-4 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm flex items-center justify-between shadow-lg shadow-blue-600/25 transition-all group cursor-pointer"
-                                        >
-                                            <div className="flex items-center gap-2 sm:gap-2.5">
-                                                {isSimulating ? (
-                                                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                                                ) : (
-                                                    <Zap className="w-4 h-4 fill-current text-blue-200 group-hover:scale-110 transition-transform" />
-                                                )}
-                                                <span>Simulasikan Uang Masuk</span>
-                                            </div>
-                                            <span className="text-[11px] sm:text-xs font-mono bg-blue-700/60 px-2 py-0.5 rounded-md text-blue-100">
-                                                +Rp 4.5 Juta
-                                            </span>
-                                        </button>
-
-                                        {/* Aksi 2 & 3: Grid 2 kolom di mobile */}
-                                        <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 sm:gap-0 sm:space-y-2 lg:space-y-2">
-                                            {/* Aksi 2: Toggle Vault Freeze */}
-                                            <button
-                                                onClick={handleToggleVault}
-                                                className={`w-full py-2.5 sm:py-3 px-2.5 sm:px-4 rounded-xl border text-xs font-semibold flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-1.5 sm:gap-2 transition-all cursor-pointer ${
-                                                    isVaultFrozen
-                                                        ? 'bg-emerald-950/60 text-emerald-300 border-emerald-700/80 hover:bg-emerald-900/60'
-                                                        : 'bg-zinc-900/80 text-zinc-200 border-zinc-700/80 hover:bg-zinc-800'
-                                                }`}
-                                            >
-                                                <div className="flex items-center gap-1.5 sm:gap-2.5">
-                                                    {isVaultFrozen ? (
-                                                        <Unlock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
-                                                    ) : (
-                                                        <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
-                                                    )}
-                                                    <span className="leading-tight">
-                                                        {isVaultFrozen ? 'Buka Kunci' : 'Kunci Dompet'}
-                                                        <span className="hidden sm:inline">{isVaultFrozen ? '' : ' (Freeze)'}</span>
-                                                    </span>
-                                                </div>
-                                                <span
-                                                    className={`text-[9px] uppercase font-mono px-1.5 py-0.5 rounded self-start sm:self-auto ${
-                                                        isVaultFrozen ? 'bg-emerald-500/20 text-emerald-300' : 'bg-zinc-800 text-zinc-400'
-                                                    }`}
-                                                >
-                                                    {isVaultFrozen ? 'AKTIF' : 'STANDBY'}
-                                                </span>
-                                            </button>
-
-                                            {/* Aksi 3: Uji Coba Anti-Minus */}
-                                            <button
-                                                onClick={handleTestAntiMinus}
-                                                disabled={isSimulating}
-                                                className="w-full py-2.5 sm:py-3 px-2.5 sm:px-4 rounded-xl border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800/90 text-zinc-300 hover:text-white text-xs font-semibold flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-1.5 sm:gap-2 transition-all group cursor-pointer"
-                                            >
-                                                <div className="flex items-center gap-1.5 sm:gap-2.5">
-                                                    <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400 group-hover:scale-110 transition-transform shrink-0" />
-                                                    <span className="leading-tight">Uji Tarik<span className="hidden sm:inline"> Melebihi Saldo</span></span>
-                                                </div>
-                                                <span className="text-[9px] font-mono bg-rose-500/10 border border-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded self-start sm:self-auto">
-                                                    Anti-Minus
-                                                </span>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Security Guarantee Note */}
-                                    <div className="p-2.5 sm:p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-[10px] sm:text-[11px] text-zinc-400 space-y-0.5 sm:space-y-1">
-                                        <div className="font-semibold text-zinc-300 flex items-center gap-1.5">
-                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                            <span>Jaminan Sistem Bastion</span>
-                                        </div>
-                                        <p className="leading-relaxed hidden sm:block">
-                                            Setiap transaksi divalidasi. Saldo bisnis tidak akan pernah bernilai negatif atau mengalami selisih siluman.
-                                        </p>
-                                        <p className="leading-relaxed sm:hidden">
-                                            Saldo tidak akan pernah minus atau ada selisih diam-diam.
-                                        </p>
+                                        <span>Pencatatan Otomatis</span>
+                                        <span className="text-emerald-400 font-medium">Nol Selisih Siluman ✓</span>
                                     </div>
                                 </div>
                             </div>
