@@ -247,15 +247,15 @@ export const LandingPage: React.FC = () => {
                     </p>
 
                     {/* Tombol CTA Pill */}
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 sm:pt-3">
-                        <Link to={isAuthenticated ? '/app/dashboard' : '/register'} className="w-full sm:w-auto">
-                            <button className="w-full sm:w-auto px-7 sm:px-8 py-3 sm:py-3.5 rounded-full text-xs sm:text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-200 shadow-xl shadow-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <div className="flex flex-row items-center justify-center gap-3 pt-2 sm:pt-3">
+                        <Link to={isAuthenticated ? '/app/dashboard' : '/register'}>
+                            <button className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-full text-xs sm:text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-200 shadow-xl shadow-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap">
                                 <span>{isAuthenticated ? 'Buka Dasbor Saya' : 'Buka Akun Gratis'}</span>
                                 <ArrowRight className="w-4 h-4" />
                             </button>
                         </Link>
-                        <a href="#demo" className="w-full sm:w-auto">
-                            <button className="w-full sm:w-auto px-6 sm:px-7 py-3 sm:py-3.5 rounded-full text-xs sm:text-sm font-semibold border border-zinc-700/80 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 backdrop-blur-md transition-all cursor-pointer">
+                        <a href="#demo">
+                            <button className="px-5 sm:px-7 py-3 sm:py-3.5 rounded-full text-xs sm:text-sm font-semibold border border-zinc-700/80 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 backdrop-blur-md transition-all cursor-pointer whitespace-nowrap">
                                 Coba Simulasi
                             </button>
                         </a>
