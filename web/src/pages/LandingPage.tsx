@@ -3,17 +3,13 @@ import { Link } from 'react-router-dom';
 import {
     ShieldCheck,
     ArrowRight,
-    Lock,
     Wallet,
     CheckCircle2,
     Snowflake,
     Sun,
     Check,
-    Cpu,
     Zap,
     RefreshCw,
-    Database,
-    Layers,
 } from 'lucide-react';
 import { useAuth } from '../features/auth/useAuth';
 import { Button } from '../components/ui/Button';
@@ -116,50 +112,27 @@ export const LandingPage: React.FC = () => {
 
         setIsProcessing(true);
         setTimeout(() => {
-            setConcurrencyFeedback('🛡️ Sistem mendeteksi 5 klik sekaligus: Tenang, uang pelanggan Anda tidak terpotong dua kali, hanya 1 transaksi sah yang diproses!');
+            setConcurrencyFeedback('Proteksi transaksi aktif: Dari 5 klik serentak, hanya 1 transaksi sah yang diproses. Saldo bisnis Anda aman.');
             handleExecuteTransfer();
         }, 380);
     };
 
     return (
         <div className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-zinc-800 selection:text-white relative overflow-x-hidden">
-            {/* Background Grid Pattern kotak-kotak nyata yang eye-catching */}
-            <div className="absolute inset-0 bg-grid-hero pointer-events-none opacity-60 [mask-image:radial-gradient(ellipse_at_center,white_45%,transparent_90%)]" />
+            {/* Background Grid Kotak-kotak Nyata & Prominen */}
+            <div className="absolute inset-0 bg-grid-hero pointer-events-none opacity-60 [mask-image:radial-gradient(ellipse_at_center,white_50%,transparent_90%)]" />
 
-            {/* Ambient Lighting Kiri (Ungu/Indigo) & Kanan (Emas/Amber) seperti di foto referensi */}
-            <div className="absolute top-36 left-1/4 -translate-x-1/2 w-[450px] h-[350px] bg-indigo-600/15 blur-[120px] rounded-full pointer-events-none" />
-            <div className="absolute top-44 right-1/4 translate-x-1/2 w-[400px] h-[300px] bg-amber-500/10 blur-[120px] rounded-full pointer-events-none" />
+            {/* Ambient Lighting Lembut di Balik Grid */}
+            <div className="absolute top-28 left-1/3 -translate-x-1/2 w-[550px] h-[350px] bg-blue-600/10 blur-[140px] rounded-full pointer-events-none" />
 
             {/* Floating Navigation Bar */}
             <Navbar />
 
             {/* ========================================================================= */}
-            {/* SECTION 1: HERO (Straightforward, Eye-Catching Grid, Layout Foto 2)       */}
+            {/* SECTION 1: HERO (Clean, Premium, Zero Alay, Layout Fanned Cards)          */}
             {/* ========================================================================= */}
             <section className="relative pt-32 pb-24 md:pt-40 md:pb-28 px-4 sm:px-6 max-w-6xl mx-auto text-center">
-                {/* Floating Custom Badge Kiri (Sparkle Emas) */}
-                <div className="absolute left-6 lg:left-16 top-48 hidden md:flex items-center justify-center">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500 p-0.5 shadow-xl shadow-amber-500/20 animate-bounce duration-1000">
-                        <div className="w-full h-full rounded-full bg-amber-400 flex items-center justify-center text-zinc-950">
-                            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                                <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Floating Custom Badge Kanan (Emblem Indigo) */}
-                <div className="absolute right-6 lg:right-16 top-40 hidden md:flex items-center justify-center">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-400 to-blue-600 p-0.5 shadow-xl shadow-indigo-500/25 animate-pulse">
-                        <div className="w-full h-full rounded-full bg-[#181826] flex items-center justify-center text-indigo-300">
-                            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Hero Content (Straightforward & Ringkas) */}
+                {/* Hero Content (Lugas & To The Point) */}
                 <div className="space-y-5 max-w-3xl mx-auto relative z-10">
                     <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.15] text-balance">
                         Kelola Uang Bisnis <br className="hidden sm:inline" />
@@ -189,77 +162,65 @@ export const LandingPage: React.FC = () => {
                 </div>
 
                 {/* ===================================================================== */}
-                {/* 3 KARTU MEKAR & MENGINTIP DI BAGIAN BAWAH HERO (Straightforward)      */}
+                {/* 3 KARTU NUMPUK SEBAGIAN (Overlapping Fanned Cards ala Mindly)         */}
                 {/* ===================================================================== */}
-                <div className="relative mt-20 sm:mt-24 max-w-4xl mx-auto">
-                    {/* Karakter Maskot Mengintip dengan Mata Lucu */}
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-0 flex flex-col items-center">
-                        <div className="w-20 h-14 rounded-t-full bg-gradient-to-t from-blue-600 via-indigo-500 to-indigo-400 flex items-center justify-center gap-3 pt-2 shadow-lg shadow-blue-500/30">
-                            <div className="w-3.5 h-3.5 rounded-full bg-zinc-950 flex items-center justify-center">
-                                <div className="w-1.5 h-1.5 rounded-full bg-white -translate-y-0.5 -translate-x-0.5" />
+                <div className="relative mt-16 sm:mt-24 max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-end justify-center md:-space-x-8 lg:-space-x-12 px-2">
+                    {/* KARTU KIRI: IDR (Terselip sebagian kecil di belakang kartu tengah) */}
+                    <div className="w-full max-w-[320px] md:w-[300px] lg:w-[320px] rounded-[2rem] border border-white/10 bg-gradient-to-b from-[#16161c]/95 via-[#111115]/95 to-[#0c0c0e]/95 backdrop-blur-xl p-6 sm:p-7 text-left shadow-2xl relative z-10 md:-rotate-6 md:translate-y-4 md:origin-bottom-right hover:z-30 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col justify-between min-h-[250px] sm:min-h-[260px] group">
+                        <div className="space-y-3">
+                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono font-semibold text-emerald-400">
+                                <span>IDR</span>
+                                <span className="text-zinc-500">•</span>
+                                <span className="text-zinc-300 font-sans">Kas Operasional</span>
                             </div>
-                            <div className="w-3.5 h-3.5 rounded-full bg-zinc-950 flex items-center justify-center">
-                                <div className="w-1.5 h-1.5 rounded-full bg-white -translate-y-0.5 -translate-x-0.5" />
-                            </div>
+                            <p className="text-sm sm:text-base text-zinc-200 font-semibold leading-relaxed">
+                                Arus kas masuk dan keluar rapi, siap dipantau kapan saja.
+                            </p>
+                        </div>
+
+                        <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs text-zinc-400">
+                            <span className="font-mono text-sm font-bold text-white">Rp 45.000.000</span>
+                            <span className="text-emerald-400 font-medium">Selalu Klop</span>
                         </div>
                     </div>
 
-                    {/* Fanned 3 Cards Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-4 items-end relative z-10">
-                        {/* KARTU KIRI: IDR */}
-                        <div className="rounded-[2rem] border border-white/10 bg-gradient-to-b from-[#181820]/95 via-[#131317]/95 to-[#0e0e12]/95 backdrop-blur-xl p-7 text-center shadow-2xl md:-rotate-3 md:translate-y-4 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col items-center justify-between min-h-[270px]">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-300 p-0.5 shadow-md mb-2">
-                                <div className="w-full h-full rounded-full bg-[#181820] flex items-center justify-center text-emerald-300 font-bold text-xs">
-                                    🇮🇩
-                                </div>
+                    {/* KARTU TENGAH: Bastion Core (Di depan & menumpuk sebagian kecil kartu kiri & kanan) */}
+                    <div className="w-full max-w-[340px] md:w-[330px] lg:w-[350px] rounded-[2.2rem] border border-blue-500/30 bg-gradient-to-b from-[#1a1a24]/98 via-[#13131a]/98 to-[#0d0d12]/98 backdrop-blur-xl p-7 text-left shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] shadow-blue-500/15 relative z-20 md:-translate-y-3 md:scale-105 hover:scale-108 transition-all duration-300 flex flex-col justify-between min-h-[275px] sm:min-h-[290px] group my-4 md:my-0">
+                        <div className="space-y-3">
+                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-blue-600/15 border border-blue-500/30 text-[11px] font-mono font-semibold text-blue-400">
+                                <span>BASTION</span>
+                                <span className="text-blue-400/50">•</span>
+                                <span className="text-blue-200 font-sans">Sistem Pembukuan</span>
                             </div>
-
-                            <p className="text-base text-zinc-100 font-semibold leading-relaxed px-1">
-                                Catatan kas otomatis seimbang tanpa lembur.
+                            <p className="text-lg text-white font-bold leading-snug">
+                                Saldo anti-minus. Uang bisnis Anda tidak akan pernah terpotong dua kali.
                             </p>
-
-                            <div className="w-full pt-4 border-t border-white/5 flex items-center justify-between text-xs text-zinc-400">
-                                <span>Kas Operasional</span>
-                                <span className="text-emerald-400 font-semibold font-mono">100% Klop</span>
-                            </div>
                         </div>
 
-                        {/* KARTU TENGAH: Bastion Core */}
-                        <div className="rounded-[2.2rem] border border-blue-500/30 bg-gradient-to-b from-[#1c1c28]/95 via-[#15151f]/95 to-[#0e0e14]/95 backdrop-blur-xl p-7 text-center shadow-2xl shadow-blue-500/15 z-20 md:scale-105 hover:scale-108 transition-all duration-300 flex flex-col items-center justify-between min-h-[290px]">
-                            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-400 p-0.5 shadow-lg shadow-blue-500/25 mb-2">
-                                <div className="w-full h-full rounded-full bg-[#1c1c28] flex items-center justify-center text-blue-300">
-                                    <ShieldCheck className="w-7 h-7 stroke-[2.2]" />
-                                </div>
-                            </div>
+                        <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs">
+                            <span className="text-zinc-400">16 Transaksi Hari Ini</span>
+                            <span className="text-blue-400 font-bold bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">
+                                0 Selisih
+                            </span>
+                        </div>
+                    </div>
 
-                            <p className="text-lg text-white font-bold leading-snug px-2">
-                                Saldo tidak akan pernah minus atau terpotong dobel.
+                    {/* KARTU KANAN: USD (Terselip sebagian kecil di belakang kartu tengah) */}
+                    <div className="w-full max-w-[320px] md:w-[300px] lg:w-[320px] rounded-[2rem] border border-white/10 bg-gradient-to-b from-[#16161c]/95 via-[#111115]/95 to-[#0c0c0e]/95 backdrop-blur-xl p-6 sm:p-7 text-left shadow-2xl relative z-10 md:rotate-6 md:translate-y-4 md:origin-bottom-left hover:z-30 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col justify-between min-h-[250px] sm:min-h-[260px] group">
+                        <div className="space-y-3">
+                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono font-semibold text-purple-400">
+                                <span>USD</span>
+                                <span className="text-zinc-500">•</span>
+                                <span className="text-zinc-300 font-sans">Rekening Dolar</span>
+                            </div>
+                            <p className="text-sm sm:text-base text-zinc-200 font-semibold leading-relaxed">
+                                Terima pembayaran klien luar negeri tanpa perlu rekening baru.
                             </p>
-
-                            <div className="w-full pt-4 border-t border-white/10 flex items-center justify-between text-xs">
-                                <span className="text-zinc-400">Jantung Pembukuan</span>
-                                <span className="text-blue-400 font-bold bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">
-                                    0 Selisih
-                                </span>
-                            </div>
                         </div>
 
-                        {/* KARTU KANAN: USD */}
-                        <div className="rounded-[2rem] border border-white/10 bg-gradient-to-b from-[#181820]/95 via-[#131317]/95 to-[#0e0e12]/95 backdrop-blur-xl p-7 text-center shadow-2xl md:rotate-3 md:translate-y-4 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col items-center justify-between min-h-[270px]">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-400 p-0.5 shadow-md mb-2">
-                                <div className="w-full h-full rounded-full bg-[#181820] flex items-center justify-center text-purple-300 font-bold text-xs">
-                                    🇺🇸
-                                </div>
-                            </div>
-
-                            <p className="text-base text-zinc-100 font-semibold leading-relaxed px-1">
-                                Terima dan simpan Dolar tanpa rekening terpisah.
-                            </p>
-
-                            <div className="w-full pt-4 border-t border-white/5 flex items-center justify-between text-xs text-zinc-400">
-                                <span>Brankas Valas</span>
-                                <span className="text-purple-400 font-semibold font-mono">Kurs Bersih</span>
-                            </div>
+                        <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs text-zinc-400">
+                            <span className="font-mono text-sm font-bold text-white">$3,250.00</span>
+                            <span className="text-purple-400 font-medium">Terverifikasi</span>
                         </div>
                     </div>
                 </div>
@@ -305,9 +266,9 @@ export const LandingPage: React.FC = () => {
                                 {/* Currency Switcher */}
                                 <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-zinc-950/80 border border-zinc-800/80">
                                     {[
-                                        { id: 'IDR', flag: '🇮🇩', name: 'Rupiah' },
-                                        { id: 'USD', flag: '🇺🇸', name: 'Dolar AS' },
-                                        { id: 'SGD', flag: '🇸🇬', name: 'Dolar SG' },
+                                        { id: 'IDR', name: 'Rupiah' },
+                                        { id: 'USD', name: 'Dolar AS' },
+                                        { id: 'SGD', name: 'Dolar SG' },
                                     ].map((curr) => (
                                         <button
                                             key={curr.id}
@@ -318,7 +279,8 @@ export const LandingPage: React.FC = () => {
                                                     : 'text-zinc-400 hover:text-zinc-200'
                                             }`}
                                         >
-                                            <span>{curr.flag}</span>
+                                            <span>{curr.id}</span>
+                                            <span className="text-zinc-500">•</span>
                                             <span>{curr.name}</span>
                                         </button>
                                     ))}
@@ -423,7 +385,7 @@ export const LandingPage: React.FC = () => {
                                         className="py-2.5 px-4 rounded-full border border-zinc-800 bg-zinc-900/70 hover:bg-zinc-800 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
                                         title="Uji coba sistem mencegah uang terpotong dobel"
                                     >
-                                        ⚡ Uji Klik Cepat 5x
+                                        Uji Klik Dobel 5x
                                     </button>
                                 </div>
                             </div>
@@ -514,34 +476,36 @@ export const LandingPage: React.FC = () => {
 
                     {/* 4-Card Bento Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
-                        {/* Bento 1: Multi-Valuta (Span 7 Col) */}
+                        {/* Bento 1: Multi-Mata Uang (Span 7 Col) */}
                         <div className="md:col-span-7 rounded-3xl border border-zinc-800 bg-gradient-to-br from-[#121216] via-[#0e0e11] to-[#09090b] p-7 sm:p-8 shadow-xl flex flex-col justify-between space-y-6 text-left relative overflow-hidden group hover:border-zinc-700 transition-all">
                             <div className="space-y-3 relative z-10">
-                                <div className="w-10 h-10 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                                    <Layers className="w-5 h-5" />
+                                <div className="inline-flex items-center gap-2 text-xs font-mono text-zinc-500 uppercase tracking-widest font-semibold">
+                                    <span className="text-zinc-400">01</span>
+                                    <span>/</span>
+                                    <span className="text-zinc-400">Multi-Mata Uang</span>
                                 </div>
                                 <h3 className="text-xl font-bold text-white tracking-tight">
                                     Satu Akun untuk Berbagai Mata Uang
                                 </h3>
                                 <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-lg">
-                                    Simpan Rupiah, Dolar AS, dan mata uang lainnya dalam brankas terpisah tanpa perlu membuka banyak rekening bank.
+                                    Simpan Rupiah, Dolar AS, dan mata uang lainnya secara berdampingan tanpa repot membuka dan mengurus banyak rekening bank.
                                 </p>
                             </div>
 
                             <div className="grid grid-cols-3 gap-3 pt-2 relative z-10">
                                 <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-left space-y-1">
                                     <span className="text-[10px] text-zinc-400 block font-medium">RUPIAH</span>
-                                    <span className="text-sm font-bold text-white block">Rp 45,0 Juta</span>
+                                    <span className="text-sm font-bold text-white block font-mono">Rp 45,0 Juta</span>
                                     <span className="text-[10px] text-emerald-400">Kas Operasional</span>
                                 </div>
                                 <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-left space-y-1">
                                     <span className="text-[10px] text-zinc-400 block font-medium">DOLAR</span>
-                                    <span className="text-sm font-bold text-white block">$3,250</span>
+                                    <span className="text-sm font-bold text-white block font-mono">$3,250</span>
                                     <span className="text-[10px] text-blue-400">Klien Global</span>
                                 </div>
                                 <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-left space-y-1">
                                     <span className="text-[10px] text-zinc-400 block font-medium">DOLAR SG</span>
-                                    <span className="text-sm font-bold text-white block">S$ 4,800</span>
+                                    <span className="text-sm font-bold text-white block font-mono">S$ 4,800</span>
                                     <span className="text-[10px] text-purple-400">Regional Asia</span>
                                 </div>
                             </div>
@@ -550,14 +514,16 @@ export const LandingPage: React.FC = () => {
                         {/* Bento 2: Anti Saldo Minus (Span 5 Col) */}
                         <div className="md:col-span-5 rounded-3xl border border-zinc-800 bg-gradient-to-br from-[#121216] via-[#0e0e11] to-[#09090b] p-7 sm:p-8 shadow-xl flex flex-col justify-between space-y-6 text-left relative overflow-hidden group hover:border-zinc-700 transition-all">
                             <div className="space-y-3">
-                                <div className="w-10 h-10 rounded-xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                                    <Cpu className="w-5 h-5" />
+                                <div className="inline-flex items-center gap-2 text-xs font-mono text-zinc-500 uppercase tracking-widest font-semibold">
+                                    <span className="text-zinc-400">02</span>
+                                    <span>/</span>
+                                    <span className="text-zinc-400">Proteksi Saldo</span>
                                 </div>
                                 <h3 className="text-xl font-bold text-white tracking-tight">
-                                    Anti Saldo Minus & Dobel Potong
+                                    Saldo Anti-Minus & Bebas Potong Dobel
                                 </h3>
                                 <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                                    Sistem secara otomatis mengunci saldo saat transaksi berjalan agar uang pelanggan tidak pernah terpotong dua kali.
+                                    Sistem secara otomatis mengunci saldo saat transaksi berjalan agar uang bisnis Anda tidak pernah terpotong dua kali.
                                 </p>
                             </div>
 
@@ -575,51 +541,52 @@ export const LandingPage: React.FC = () => {
                         {/* Bento 3: Laporan Rapi (Span 5 Col) */}
                         <div className="md:col-span-5 rounded-3xl border border-zinc-800 bg-gradient-to-br from-[#121216] via-[#0e0e11] to-[#09090b] p-7 sm:p-8 shadow-xl flex flex-col justify-between space-y-6 text-left relative overflow-hidden group hover:border-zinc-700 transition-all">
                             <div className="space-y-3">
-                                <div className="w-10 h-10 rounded-xl bg-purple-600/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-                                    <Database className="w-5 h-5" />
+                                <div className="inline-flex items-center gap-2 text-xs font-mono text-zinc-500 uppercase tracking-widest font-semibold">
+                                    <span className="text-zinc-400">03</span>
+                                    <span>/</span>
+                                    <span className="text-zinc-400">Pembukuan Otomatis</span>
                                 </div>
                                 <h3 className="text-xl font-bold text-white tracking-tight">
-                                    Laporan Rapi Tanpa Lembur
+                                    Laporan Keuangan Rapi Tanpa Lembur
                                 </h3>
                                 <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                                    Semua mutasi sudah terhubung rapi sejak awal. Laporan keuangan bulanan selesai dalam hitungan detik.
+                                    Semua mutasi sudah terhubung rapi sejak awal. Rekonsiliasi dan laporan bulanan selesai dalam hitungan detik.
                                 </p>
                             </div>
 
                             <div className="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-xs text-zinc-300 flex items-center justify-between">
                                 <div className="space-y-0.5">
-                                    <span className="font-bold text-white block">Pencatatan Otomatis</span>
+                                    <span className="font-bold text-white block">Pencatatan Berpasangan</span>
                                     <span className="text-[11px] text-zinc-400">Laporan siap kapan saja</span>
                                 </div>
-                                <Badge variant="success">100% KLOP</Badge>
+                                <span className="text-xs font-mono font-bold text-emerald-400 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                    100% SEIMBANG
+                                </span>
                             </div>
                         </div>
 
                         {/* Bento 4: Kunci Dompet (Span 7 Col) */}
                         <div className="md:col-span-7 rounded-3xl border border-zinc-800 bg-gradient-to-br from-[#121216] via-[#0e0e11] to-[#09090b] p-7 sm:p-8 shadow-xl flex flex-col justify-between space-y-6 text-left relative overflow-hidden group hover:border-zinc-700 transition-all">
                             <div className="space-y-3">
-                                <div className="w-10 h-10 rounded-xl bg-amber-600/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                                    <Lock className="w-5 h-5" />
+                                <div className="inline-flex items-center gap-2 text-xs font-mono text-zinc-500 uppercase tracking-widest font-semibold">
+                                    <span className="text-zinc-400">04</span>
+                                    <span>/</span>
+                                    <span className="text-zinc-400">Kendali Pengeluaran</span>
                                 </div>
                                 <h3 className="text-xl font-bold text-white tracking-tight">
-                                    Kunci Dompet Kapan Saja
+                                    Kunci Pengeluaran Kapan Saja
                                 </h3>
                                 <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-lg">
-                                    Bekukan pengeluaran rekening tertentu hanya dengan sekali klik tanpa mengganggu dompet operasional lainnya.
+                                    Bekukan pengeluaran akun tertentu dengan satu klik saat dibutuhkan, tanpa mengganggu operasional akun lainnya.
                                 </p>
                             </div>
 
                             <div className="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
-                                        <Snowflake className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                        <span className="text-xs font-bold text-white block">Sakelar Siaga</span>
-                                        <span className="text-[11px] text-zinc-400">Uang masuk tetap diterima, pengeluaran terkunci</span>
-                                    </div>
+                                <div>
+                                    <span className="text-xs font-bold text-white block">Kendali Akun Instan</span>
+                                    <span className="text-[11px] text-zinc-400">Uang masuk tetap aman diterima, pengeluaran terkunci sementara</span>
                                 </div>
-                                <span className="text-[11px] text-zinc-300 font-medium px-3 py-1 rounded-full bg-zinc-950 border border-zinc-800">
+                                <span className="text-[11px] text-zinc-300 font-mono font-medium px-3 py-1 rounded-full bg-zinc-950 border border-zinc-800 whitespace-nowrap">
                                     KENDALI PENUH
                                 </span>
                             </div>
@@ -664,7 +631,7 @@ export const LandingPage: React.FC = () => {
                                     <span className="text-[11px] text-zinc-400">Proteksi Saldo</span>
                                 </div>
                                 <div>
-                                    <span className="text-white text-sm font-bold block">Multi-Valas</span>
+                                    <span className="text-white text-sm font-bold block">Multi-Mata Uang</span>
                                     <span className="text-[11px] text-zinc-400">IDR, USD & Lainnya</span>
                                 </div>
                             </div>
@@ -735,7 +702,7 @@ export const LandingPage: React.FC = () => {
                             </p>
                             <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-mono">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                <span>Sistem Siap Operasional • Standar Multi-Valuta</span>
+                                <span>Sistem Siap Operasional • Standar Multi-Mata Uang</span>
                             </div>
                         </div>
 
