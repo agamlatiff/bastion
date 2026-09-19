@@ -14,8 +14,6 @@ import {
     RefreshCw,
     Database,
     Layers,
-    Plus,
-    Heart,
 } from 'lucide-react';
 import { useAuth } from '../features/auth/useAuth';
 import { Button } from '../components/ui/Button';
@@ -125,32 +123,43 @@ export const LandingPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-zinc-800 selection:text-white relative overflow-x-hidden">
-            {/* Background Grid Pattern (Kotak-kotak halus khas architectural grid) */}
-            <div className="absolute inset-0 bg-grid-subtle pointer-events-none opacity-50 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_80%)]" />
+            {/* Background Grid Pattern kotak-kotak lembut khas architectural paper */}
+            <div className="absolute inset-0 bg-grid-subtle pointer-events-none opacity-45 [mask-image:radial-gradient(ellipse_at_center,white_35%,transparent_85%)]" />
 
-            {/* Floating Navigation Bar (Untouched) */}
+            {/* Ambient light gradient glow */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-blue-600/10 blur-[130px] rounded-full pointer-events-none" />
+
+            {/* Floating Navigation Bar (Tetap Sesuai Permintaan) */}
             <Navbar />
 
             {/* ========================================================================= */}
-            {/* SECTION 1: HERO (Layout Inspirasi Foto 2 dengan Estetika FinTech Bastion) */}
+            {/* SECTION 1: HERO (Layout & Komposisi Senada dengan Foto Referensi Mindly)   */}
             {/* ========================================================================= */}
-            <section className="relative pt-32 pb-24 md:pt-40 md:pb-32 px-4 sm:px-6 max-w-6xl mx-auto text-center">
-                {/* Floating Circular Sticker Badges (Kiri & Kanan seperti di referensi) */}
-                <div className="absolute left-6 lg:left-14 top-44 hidden md:flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-amber-400/20 border border-amber-400/40 backdrop-blur-md flex items-center justify-center text-amber-300 shadow-xl shadow-amber-500/10 animate-bounce duration-1000">
-                        <Plus className="w-6 h-6 stroke-[2.5]" />
+            <section className="relative pt-32 pb-24 md:pt-40 md:pb-28 px-4 sm:px-6 max-w-6xl mx-auto text-center">
+                {/* Floating Custom Badge Kiri (Sparkle Emas Lembut) */}
+                <div className="absolute left-6 lg:left-16 top-48 hidden md:flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500 p-0.5 shadow-xl shadow-amber-500/20 animate-bounce duration-1000">
+                        <div className="w-full h-full rounded-full bg-amber-400 flex items-center justify-center text-zinc-950">
+                            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" />
+                            </svg>
+                        </div>
                     </div>
                 </div>
 
-                <div className="absolute right-6 lg:right-14 top-36 hidden md:flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-blue-500/20 border border-blue-400/40 backdrop-blur-md flex items-center justify-center text-blue-300 shadow-xl shadow-blue-500/10 animate-pulse">
-                        <Heart className="w-5 h-5 fill-current" />
+                {/* Floating Custom Badge Kanan (Love / Kepercayaan Indigo Lembut) */}
+                <div className="absolute right-6 lg:right-16 top-40 hidden md:flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-400 to-blue-600 p-0.5 shadow-xl shadow-indigo-500/25 animate-pulse">
+                        <div className="w-full h-full rounded-full bg-[#181826] flex items-center justify-center text-indigo-300">
+                            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                            </svg>
+                        </div>
                     </div>
                 </div>
 
-                {/* Main Hero Content */}
+                {/* Hero Header Content */}
                 <div className="space-y-6 max-w-4xl mx-auto relative z-10">
-                    {/* Headline Utama */}
                     <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.15] text-balance">
                         Uang Bisnis Tercatat Rapi, <br className="hidden sm:inline" />
                         <span className="bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">
@@ -158,12 +167,11 @@ export const LandingPage: React.FC = () => {
                         </span>
                     </h1>
 
-                    {/* Sub-headline tanpa em-dash */}
                     <p className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-2xl mx-auto">
                         Tinggalkan cara manual yang bikin pusing di akhir bulan. Bastion mencatat pemasukan dan pengeluaran secara otomatis dengan sistem perbankan modern, bebas salah hitung, anti-minus, dan siap dipantau kapan saja.
                     </p>
 
-                    {/* Tombol CTA dengan radius pill penuh (rounded-full) */}
+                    {/* Tombol CTA dengan radius penuh (rounded-full) */}
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
                         <Link to={isAuthenticated ? '/app/dashboard' : '/register'}>
                             <button className="w-full sm:w-auto px-8 py-3.5 rounded-full text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-200 shadow-xl shadow-white/10 transition-all flex items-center justify-center gap-2">
@@ -180,82 +188,87 @@ export const LandingPage: React.FC = () => {
                 </div>
 
                 {/* ===================================================================== */}
-                {/* 3 CARDS PEAKING & FANNING OUT DI BAGIAN BAWAH HERO (Persis Foto 2)    */}
+                {/* 3 KARTU MEKAR & MENGINTIP DI BAGIAN BAWAH HERO (Persis Foto Referensi)*/}
                 {/* ===================================================================== */}
-                <div className="relative mt-16 sm:mt-20 max-w-4xl mx-auto">
-                    {/* Karakter Maskot / Glowing Orb Peeking di belakang kartu tengah */}
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-28 h-28 rounded-full bg-blue-600/30 blur-2xl pointer-events-none" />
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-0 hidden sm:flex items-center justify-center">
-                        <div className="w-14 h-14 rounded-2xl bg-blue-600/30 border border-blue-500/40 backdrop-blur-md flex items-center justify-center text-blue-300 shadow-lg animate-bounce duration-1000">
-                            <ShieldCheck className="w-7 h-7 stroke-[2.2]" />
+                <div className="relative mt-20 sm:mt-24 max-w-4xl mx-auto">
+                    {/* Karakter Maskot Mengintip dengan Mata Lucu (Persis Karakter di Foto 2) */}
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-0 flex flex-col items-center">
+                        <div className="w-20 h-14 rounded-t-full bg-gradient-to-t from-blue-600 via-indigo-500 to-indigo-400 flex items-center justify-center gap-3 pt-2 shadow-lg shadow-blue-500/30">
+                            {/* Mata Kiri */}
+                            <div className="w-3.5 h-3.5 rounded-full bg-zinc-950 flex items-center justify-center">
+                                <div className="w-1.5 h-1.5 rounded-full bg-white -translate-y-0.5 -translate-x-0.5" />
+                            </div>
+                            {/* Mata Kanan */}
+                            <div className="w-3.5 h-3.5 rounded-full bg-zinc-950 flex items-center justify-center">
+                                <div className="w-1.5 h-1.5 rounded-full bg-white -translate-y-0.5 -translate-x-0.5" />
+                            </div>
                         </div>
                     </div>
 
-                    {/* Fanned 3 Cards Layout */}
+                    {/* Fanned 3 Cards Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-4 items-end relative z-10">
-                        {/* KARTU KIRI: Miring ke Kiri (-rotate-3) */}
-                        <div className="rounded-3xl border border-zinc-800/90 bg-gradient-to-b from-[#141418] via-[#101013] to-[#0c0c0e] p-6 text-left shadow-2xl md:-rotate-3 md:translate-y-4 hover:rotate-0 hover:translate-y-0 transition-all duration-300 group">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-400">
-                                    IDR
-                                </div>
-                                <div>
-                                    <span className="text-xs font-bold text-white block">Kas Operasional</span>
-                                    <span className="text-[10px] text-zinc-500">Rekening Dompet Utama</span>
+                        {/* KARTU KIRI: Miring ke Kiri (-rotate-3), Humanis & Bersahabat */}
+                        <div className="rounded-[2rem] border border-white/10 bg-gradient-to-b from-[#181820]/95 via-[#131317]/95 to-[#0e0e12]/95 backdrop-blur-xl p-7 text-center shadow-2xl md:-rotate-3 md:translate-y-4 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col items-center justify-between min-h-[280px]">
+                            {/* Avatar Profil Lingkaran di Atas */}
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-300 p-0.5 shadow-md mb-2">
+                                <div className="w-full h-full rounded-full bg-[#181820] flex items-center justify-center text-emerald-300 font-bold text-xs">
+                                    🇮🇩
                                 </div>
                             </div>
-                            <p className="text-xs text-zinc-300 font-medium leading-relaxed mb-4">
-                                Berapa saldo kas bersih yang siap digunakan untuk operasional bulan ini?
+
+                            {/* Pertanyaan Relatable Pemilik Bisnis */}
+                            <p className="text-sm text-zinc-100 font-medium leading-relaxed px-1">
+                                &ldquo;Kenapa catatan kas toko sering selisih tiap tutup buku bulanan?&rdquo;
                             </p>
-                            <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between">
-                                <span className="text-sm font-bold font-mono text-white">Rp 45.000.000</span>
-                                <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                                    100% Cocok
+
+                            {/* Statistik / Jawaban Sederhana di Bawah */}
+                            <div className="w-full pt-4 border-t border-white/5 flex items-center justify-between text-xs text-zinc-400">
+                                <span>Kas Operasional</span>
+                                <span className="text-emerald-400 font-semibold font-mono">100% Klop</span>
+                            </div>
+                        </div>
+
+                        {/* KARTU TENGAH: Tegak, Lebih Tinggi & Elevated (Center Hero Card) */}
+                        <div className="rounded-[2.2rem] border border-blue-500/30 bg-gradient-to-b from-[#1c1c28]/95 via-[#15151f]/95 to-[#0e0e14]/95 backdrop-blur-xl p-7 text-center shadow-2xl shadow-blue-500/15 z-20 md:scale-105 hover:scale-108 transition-all duration-300 flex flex-col items-center justify-between min-h-[300px]">
+                            {/* Avatar Badge Karakter di Atas */}
+                            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-400 p-0.5 shadow-lg shadow-blue-500/25 mb-2">
+                                <div className="w-full h-full rounded-full bg-[#1c1c28] flex items-center justify-center text-blue-300">
+                                    <ShieldCheck className="w-7 h-7 stroke-[2.2]" />
+                                </div>
+                            </div>
+
+                            {/* Pertanyaan Sentral Keamanan Finansial */}
+                            <p className="text-base text-white font-semibold leading-snug px-2">
+                                &ldquo;Bagaimana cara memastikan saldo tidak minus saat ratusan transaksi masuk serentak?&rdquo;
+                            </p>
+
+                            {/* Status Bastion di Bawah */}
+                            <div className="w-full pt-4 border-t border-white/10 flex items-center justify-between text-xs">
+                                <span className="text-zinc-400">Jantung Pembukuan</span>
+                                <span className="text-blue-400 font-bold bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">
+                                    Nol Selisih
                                 </span>
                             </div>
                         </div>
 
-                        {/* KARTU TENGAH: Berdiri Tegak & Terangkat (Elevated Center Card) */}
-                        <div className="rounded-3xl border border-blue-500/30 bg-gradient-to-b from-[#181820] via-[#121218] to-[#0d0d12] p-6 sm:p-7 text-left shadow-2xl shadow-blue-500/10 z-20 md:scale-105 hover:scale-108 transition-all duration-300 relative group">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-inner">
-                                    <Zap className="w-5 h-5 fill-current" />
-                                </div>
-                                <div>
-                                    <span className="text-sm font-bold text-white block">Jantung Pembukuan</span>
-                                    <span className="text-[11px] text-blue-400">Pencatatan Otomatis</span>
+                        {/* KARTU KANAN: Miring ke Kanan (rotate-3), Humanis & Bersahabat */}
+                        <div className="rounded-[2rem] border border-white/10 bg-gradient-to-b from-[#181820]/95 via-[#131317]/95 to-[#0e0e12]/95 backdrop-blur-xl p-7 text-center shadow-2xl md:rotate-3 md:translate-y-4 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col items-center justify-between min-h-[280px]">
+                            {/* Avatar Profil Lingkaran di Atas */}
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-400 p-0.5 shadow-md mb-2">
+                                <div className="w-full h-full rounded-full bg-[#181820] flex items-center justify-center text-purple-300 font-bold text-xs">
+                                    🇺🇸
                                 </div>
                             </div>
-                            <p className="text-sm text-zinc-200 font-semibold leading-relaxed mb-4">
-                                Setiap mutasi langsung diverifikasi berpasangan tanpa ada uang yang terselip.
-                            </p>
-                            <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs">
-                                <span className="text-zinc-400 font-medium">16 Mutasi Hari Ini</span>
-                                <span className="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full border border-blue-500/30">
-                                    Pasti Klop (0 Selisih)
-                                </span>
-                            </div>
-                        </div>
 
-                        {/* KARTU KANAN: Miring ke Kanan (rotate-3) */}
-                        <div className="rounded-3xl border border-zinc-800/90 bg-gradient-to-b from-[#141418] via-[#101013] to-[#0c0c0e] p-6 text-left shadow-2xl md:rotate-3 md:translate-y-4 hover:rotate-0 hover:translate-y-0 transition-all duration-300 group">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-9 h-9 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-xs font-bold text-purple-400">
-                                    USD
-                                </div>
-                                <div>
-                                    <span className="text-xs font-bold text-white block">Dolar Klien Global</span>
-                                    <span className="text-[10px] text-zinc-500">Brankas Valuta Asing</span>
-                                </div>
-                            </div>
-                            <p className="text-xs text-zinc-300 font-medium leading-relaxed mb-4">
-                                Apakah pembayaran dari klien luar negeri sudah masuk dan terkonversi aman?
+                            {/* Pertanyaan Relatable Pemilik Bisnis */}
+                            <p className="text-sm text-zinc-100 font-medium leading-relaxed px-1">
+                                &ldquo;Bisa gak ya simpan pembayaran Dolar tanpa potongan kurs yang mencekik?&rdquo;
                             </p>
-                            <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between">
-                                <span className="text-sm font-bold font-mono text-white">$3,250.00</span>
-                                <span className="text-[10px] font-medium text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
-                                    Terisolasi Aman
-                                </span>
+
+                            {/* Statistik / Jawaban Sederhana di Bawah */}
+                            <div className="w-full pt-4 border-t border-white/5 flex items-center justify-between text-xs text-zinc-400">
+                                <span>Brankas Valas</span>
+                                <span className="text-purple-400 font-semibold font-mono">Kurs Bersih</span>
                             </div>
                         </div>
                     </div>
