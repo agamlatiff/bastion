@@ -33,42 +33,42 @@ export const Navbar: React.FC = () => {
     const closeMobileMenu = () => setMobileMenuOpen(false);
 
     return (
-        <div ref={navRef} className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-4xl">
+        <div ref={navRef} className="fixed top-3 sm:top-5 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-5xl">
             {/* Main Floating Pill Bar */}
-            <header className="w-full bg-zinc-950/85 backdrop-blur-xl border border-zinc-800/90 rounded-full shadow-2xl shadow-black/80 px-4 sm:px-6 h-13 sm:h-14 flex items-center justify-between transition-all">
+            <header className="w-full bg-zinc-950/85 backdrop-blur-xl border border-zinc-800/90 rounded-full shadow-2xl shadow-black/80 px-5 sm:px-7 h-16 sm:h-17 flex items-center justify-between transition-all">
                 {/* Brand Logo - Just Bastion */}
-                <Link to="/" onClick={closeMobileMenu} className="flex items-center gap-2.5 group">
-                    <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-[0_0_12px_rgba(37,99,235,0.25)] group-hover:border-blue-400 group-hover:bg-blue-600/30 transition-all shrink-0">
-                        <ShieldCheck className="w-4 h-4 stroke-[2.5]" />
+                <Link to="/" onClick={closeMobileMenu} className="flex items-center gap-3 group">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-[0_0_14px_rgba(37,99,235,0.25)] group-hover:border-blue-400 group-hover:bg-blue-600/30 transition-all shrink-0">
+                        <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
                     </div>
-                    <span className="font-bold text-white tracking-tight text-base sm:text-lg">
+                    <span className="font-bold text-white tracking-tight text-lg sm:text-xl">
                         Bastion
                     </span>
                 </Link>
 
                 {/* Desktop Navigation Links (Necessary items only) */}
-                <nav className="hidden md:flex items-center gap-1 text-xs sm:text-sm font-medium text-zinc-400">
+                <nav className="hidden md:flex items-center gap-1.5 text-sm sm:text-[15px] font-medium text-zinc-300">
                     <a
                         href="#solusi"
-                        className="px-3.5 py-1.5 rounded-full hover:text-white hover:bg-zinc-800/60 transition-colors"
+                        className="px-4 py-2 rounded-full hover:text-white hover:bg-zinc-800/60 transition-colors"
                     >
                         Solusi
                     </a>
                     <a
                         href="#keunggulan"
-                        className="px-3.5 py-1.5 rounded-full hover:text-white hover:bg-zinc-800/60 transition-colors"
+                        className="px-4 py-2 rounded-full hover:text-white hover:bg-zinc-800/60 transition-colors"
                     >
                         Keunggulan
                     </a>
                     <a
                         href="#keamanan"
-                        className="px-3.5 py-1.5 rounded-full hover:text-white hover:bg-zinc-800/60 transition-colors"
+                        className="px-4 py-2 rounded-full hover:text-white hover:bg-zinc-800/60 transition-colors"
                     >
                         Keamanan
                     </a>
                     <a
                         href="#demo"
-                        className="px-3.5 py-1.5 rounded-full hover:text-white hover:bg-zinc-800/60 transition-colors"
+                        className="px-4 py-2 rounded-full hover:text-white hover:bg-zinc-800/60 transition-colors"
                     >
                         Coba Simulasi
                     </a>
@@ -79,7 +79,7 @@ export const Navbar: React.FC = () => {
                     {isAuthenticated ? (
                         <Link
                             to="/app/dashboard"
-                            className="bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-full shadow-lg shadow-blue-600/30 transition-all"
+                            className="bg-blue-600 hover:bg-blue-500 text-white text-sm sm:text-[15px] font-semibold px-5 py-2.5 rounded-full shadow-lg shadow-blue-600/30 transition-all"
                         >
                             Dasbor
                         </Link>
@@ -87,16 +87,16 @@ export const Navbar: React.FC = () => {
                         <>
                             <Link
                                 to="/login"
-                                className="text-xs sm:text-sm font-medium text-zinc-400 hover:text-white px-2.5 py-1.5 transition-colors"
+                                className="text-sm sm:text-[15px] font-medium text-zinc-300 hover:text-white px-3 py-2 transition-colors"
                             >
                                 Masuk
                             </Link>
                             <Link
                                 to="/register"
-                                className="bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-full shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 transition-all flex items-center gap-1.5"
+                                className="bg-blue-600 hover:bg-blue-500 text-white text-sm sm:text-[15px] font-semibold px-5 py-2.5 rounded-full shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 transition-all flex items-center gap-2"
                             >
                                 <span>Mulai Gratis</span>
-                                <Zap className="w-3.5 h-3.5 fill-current" />
+                                <Zap className="w-4 h-4 fill-current" />
                             </Link>
                         </>
                     )}
@@ -106,7 +106,7 @@ export const Navbar: React.FC = () => {
                 <div className="flex md:hidden items-center gap-2">
                     <Link
                         to={isAuthenticated ? '/app/dashboard' : '/register'}
-                        className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm"
+                        className="bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-full shadow-sm"
                     >
                         {isAuthenticated ? 'Dasbor' : 'Mulai'}
                     </Link>

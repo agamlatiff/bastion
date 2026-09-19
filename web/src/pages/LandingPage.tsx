@@ -132,24 +132,24 @@ export const LandingPage: React.FC = () => {
             {/* SECTION 1: HERO (Clean, Premium, Zero Alay, Layout Fanned Cards)          */}
             {/* ========================================================================= */}
             <section className="relative pt-32 pb-24 md:pt-40 md:pb-28 px-4 sm:px-6 max-w-6xl mx-auto text-center">
-                {/* Hero Content (Lugas, To The Point, & Elegan) */}
+                {/* Hero Content (Lugas, To The Point, & Mengajak) */}
                 <div className="space-y-6 max-w-4xl mx-auto relative z-10">
-                    <h1 className="text-5xl sm:text-7xl lg:text-8xl font-normal tracking-tight text-white leading-[1.05] text-balance font-display">
-                        Kelola Uang Bisnis <br className="hidden sm:inline" />
-                        <span className="italic bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-400 bg-clip-text text-transparent">
-                            Tanpa Selisih.
+                    <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.12] text-balance font-sans">
+                        Yuk, Kelola Uang Bisnis <br className="hidden sm:inline" />
+                        <span className="bg-gradient-to-r from-blue-400 via-indigo-200 to-zinc-400 bg-clip-text text-transparent">
+                            Tanpa Pusing Selisih.
                         </span>
                     </h1>
 
                     <p className="text-base sm:text-lg text-zinc-400 max-w-xl mx-auto leading-relaxed">
-                        Pencatatan otomatis dan saldo anti-minus dalam satu dasbor modern.
+                        Biar kamu fokus kembangin usaha, biar Bastion yang jaga mutasi dan saldo kas selalu klop otomatis.
                     </p>
 
                     {/* Tombol CTA Pill */}
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                         <Link to={isAuthenticated ? '/app/dashboard' : '/register'}>
                             <button className="w-full sm:w-auto px-8 py-3.5 rounded-full text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-200 shadow-xl shadow-white/10 transition-all flex items-center justify-center gap-2">
-                                <span>{isAuthenticated ? 'Buka Dasbor Saya' : 'Buka Akun Gratis'}</span>
+                                <span>{isAuthenticated ? 'Buka Dasbor Saya' : 'Mulai Buka Akun Gratis'}</span>
                                 <ArrowRight className="w-4 h-4" />
                             </button>
                         </Link>
@@ -167,14 +167,17 @@ export const LandingPage: React.FC = () => {
                 <div className="relative mt-20 sm:mt-24 max-w-5xl mx-auto flex flex-col md:flex-row items-center md:items-end justify-center md:-space-x-8 lg:-space-x-10 px-3">
                     {/* KARTU KIRI: Dimas (Portrait & Terselip Sebagian) */}
                     <div className="w-full max-w-[310px] md:w-[290px] lg:w-[320px] rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-[#16161c]/95 via-[#111115]/95 to-[#0c0c0e]/95 backdrop-blur-xl p-8 text-center shadow-2xl relative z-10 md:-rotate-6 md:translate-y-6 md:origin-bottom-right hover:z-30 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col justify-between min-h-[440px] md:min-h-[480px] group">
-                        {/* Icon Center Div */}
-                        <div className="flex justify-center pt-2">
-                            <div className="w-13 h-13 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.15)]">
-                                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                    <circle cx="12" cy="12" r="9" stroke="currentColor" />
-                                    <path d="M12 7v10M7 12h10" opacity="0.4" />
-                                    <circle cx="12" cy="12" r="3" fill="currentColor" fillOpacity="0.3" />
-                                </svg>
+                        {/* Avatar Muka Orang (Center Div) */}
+                        <div className="flex justify-center pt-1">
+                            <div className="relative">
+                                <img
+                                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80"
+                                    alt="Dimas K."
+                                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-emerald-400/40 shadow-xl shadow-emerald-500/10 ring-4 ring-emerald-500/10"
+                                />
+                                <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-zinc-950 flex items-center justify-center text-[10px] text-zinc-950 font-bold">
+                                    ✓
+                                </div>
                             </div>
                         </div>
 
@@ -194,12 +197,17 @@ export const LandingPage: React.FC = () => {
 
                     {/* KARTU TENGAH: Sarah (Portrait Paling Depan & Menonjol) */}
                     <div className="w-full max-w-[330px] md:w-[310px] lg:w-[340px] rounded-[2.8rem] border border-blue-500/30 bg-gradient-to-b from-[#1a1a24]/98 via-[#13131a]/98 to-[#0d0d12]/98 backdrop-blur-xl p-8 sm:p-9 text-center shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] shadow-blue-500/15 relative z-20 md:-translate-y-2 md:scale-105 hover:scale-108 transition-all duration-300 flex flex-col justify-between min-h-[470px] md:min-h-[510px] group my-4 md:my-0">
-                        {/* Icon Center Div */}
-                        <div className="flex justify-center pt-2">
-                            <div className="w-14 h-14 rounded-2xl bg-blue-600/15 border border-blue-500/35 flex items-center justify-center text-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.25)]">
-                                <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                    <path d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeLinejoin="round" />
-                                </svg>
+                        {/* Avatar Muka Orang (Center Div) */}
+                        <div className="flex justify-center pt-1">
+                            <div className="relative">
+                                <img
+                                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80"
+                                    alt="Sarah T."
+                                    className="w-16 h-16 sm:w-18 sm:h-18 rounded-full object-cover border-2 border-blue-400/50 shadow-2xl shadow-blue-500/20 ring-4 ring-blue-500/15"
+                                />
+                                <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-blue-500 border-2 border-zinc-950 flex items-center justify-center text-[10px] text-white font-bold">
+                                    ★
+                                </div>
                             </div>
                         </div>
 
@@ -219,14 +227,17 @@ export const LandingPage: React.FC = () => {
 
                     {/* KARTU KANAN: Kevin (Portrait & Terselip Sebagian) */}
                     <div className="w-full max-w-[310px] md:w-[290px] lg:w-[320px] rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-[#16161c]/95 via-[#111115]/95 to-[#0c0c0e]/95 backdrop-blur-xl p-8 text-center shadow-2xl relative z-10 md:rotate-6 md:translate-y-6 md:origin-bottom-left hover:z-30 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col justify-between min-h-[440px] md:min-h-[480px] group">
-                        {/* Icon Center Div */}
-                        <div className="flex justify-center pt-2">
-                            <div className="w-13 h-13 rounded-2xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-400 shadow-[0_0_25px_rgba(168,85,247,0.15)]">
-                                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                    <circle cx="12" cy="12" r="8" stroke="currentColor" strokeDasharray="3 3" />
-                                    <path d="M12 4v16M4 12h16" stroke="currentColor" opacity="0.4" />
-                                    <circle cx="12" cy="12" r="2.5" fill="currentColor" />
-                                </svg>
+                        {/* Avatar Muka Orang (Center Div) */}
+                        <div className="flex justify-center pt-1">
+                            <div className="relative">
+                                <img
+                                    src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=160&auto=format&fit=crop&q=80"
+                                    alt="Kevin M."
+                                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-purple-400/40 shadow-xl shadow-purple-500/10 ring-4 ring-purple-500/10"
+                                />
+                                <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-purple-500 border-2 border-zinc-950 flex items-center justify-center text-[10px] text-white font-bold">
+                                    ✓
+                                </div>
                             </div>
                         </div>
 
