@@ -14,6 +14,8 @@ import {
     RefreshCw,
     Database,
     Layers,
+    Plus,
+    Heart,
 } from 'lucide-react';
 import { useAuth } from '../features/auth/useAuth';
 import { Button } from '../components/ui/Button';
@@ -116,78 +118,145 @@ export const LandingPage: React.FC = () => {
 
         setIsProcessing(true);
         setTimeout(() => {
-            setConcurrencyFeedback('🛡️ Sistem mendeteksi 5 klik sekaligus: Tenang, uang pelanggan Anda tidak terpotong dua kali—hanya 1 transaksi sah yang diproses!');
+            setConcurrencyFeedback('🛡️ Sistem mendeteksi 5 klik sekaligus: Tenang, uang pelanggan Anda tidak terpotong dua kali, hanya 1 transaksi sah yang diproses!');
             handleExecuteTransfer();
         }, 380);
     };
 
     return (
-        <div className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-zinc-800 selection:text-white relative">
-            {/* Background halus */}
-            <div className="absolute inset-0 bg-grid-subtle pointer-events-none opacity-40" />
+        <div className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-zinc-800 selection:text-white relative overflow-x-hidden">
+            {/* Background Grid Pattern (Kotak-kotak halus khas architectural grid) */}
+            <div className="absolute inset-0 bg-grid-subtle pointer-events-none opacity-50 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_80%)]" />
 
-            {/* Floating Navigation Bar */}
+            {/* Floating Navigation Bar (Untouched) */}
             <Navbar />
 
             {/* ========================================================================= */}
-            {/* SECTION 1: HERO (Bahasa Ramah, Bernilai, & Tidak Kaku)                     */}
+            {/* SECTION 1: HERO (Layout Inspirasi Foto 2 dengan Estetika FinTech Bastion) */}
             {/* ========================================================================= */}
-            <section className="relative pt-28 pb-20 md:pt-36 md:pb-28 px-4 sm:px-6 max-w-5xl mx-auto text-center">
-                <div className="space-y-6 max-w-4xl mx-auto">
-                    {/* Badge Pembuka yang Humanis */}
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800 text-xs text-zinc-300 shadow-sm backdrop-blur-md">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>Dompet Digital & Pembukuan Otomatis untuk Bisnis</span>
+            <section className="relative pt-32 pb-24 md:pt-40 md:pb-32 px-4 sm:px-6 max-w-6xl mx-auto text-center">
+                {/* Floating Circular Sticker Badges (Kiri & Kanan seperti di referensi) */}
+                <div className="absolute left-6 lg:left-14 top-44 hidden md:flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-amber-400/20 border border-amber-400/40 backdrop-blur-md flex items-center justify-center text-amber-300 shadow-xl shadow-amber-500/10 animate-bounce duration-1000">
+                        <Plus className="w-6 h-6 stroke-[2.5]" />
                     </div>
+                </div>
 
-                    {/* Headline Utama: Mengalir & Percaya Diri */}
-                    <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.1] text-balance">
+                <div className="absolute right-6 lg:right-14 top-36 hidden md:flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-blue-500/20 border border-blue-400/40 backdrop-blur-md flex items-center justify-center text-blue-300 shadow-xl shadow-blue-500/10 animate-pulse">
+                        <Heart className="w-5 h-5 fill-current" />
+                    </div>
+                </div>
+
+                {/* Main Hero Content */}
+                <div className="space-y-6 max-w-4xl mx-auto relative z-10">
+                    {/* Headline Utama */}
+                    <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.15] text-balance">
                         Uang Bisnis Tercatat Rapi, <br className="hidden sm:inline" />
                         <span className="bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">
                             Saldo Selalu Pas Tanpa Selisih.
                         </span>
                     </h1>
 
-                    {/* Sub-headline: Relevan dengan Masalah Nyata */}
+                    {/* Sub-headline tanpa em-dash */}
                     <p className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-2xl mx-auto">
-                        Tinggalkan cara manual yang bikin pusing di akhir bulan. Bastion mencatat pemasukan dan pengeluaran secara otomatis dengan sistem perbankan modern — bebas salah hitung, anti-minus, dan siap dipantau kapan saja.
+                        Tinggalkan cara manual yang bikin pusing di akhir bulan. Bastion mencatat pemasukan dan pengeluaran secara otomatis dengan sistem perbankan modern, bebas salah hitung, anti-minus, dan siap dipantau kapan saja.
                     </p>
 
-                    {/* Tombol CTA */}
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-3">
+                    {/* Tombol CTA dengan radius pill penuh (rounded-full) */}
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
                         <Link to={isAuthenticated ? '/app/dashboard' : '/register'}>
-                            <Button
-                                size="lg"
-                                className="w-full sm:w-auto px-8 py-3.5 text-sm font-semibold shadow-lg shadow-blue-600/20 bg-blue-600 hover:bg-blue-500 text-white border-0"
-                                rightIcon={<ArrowRight className="w-4 h-4" />}
-                            >
-                                {isAuthenticated ? 'Buka Dasbor Saya' : 'Buka Akun Gratis Sekarang'}
-                            </Button>
+                            <button className="w-full sm:w-auto px-8 py-3.5 rounded-full text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-200 shadow-xl shadow-white/10 transition-all flex items-center justify-center gap-2">
+                                <span>{isAuthenticated ? 'Buka Dasbor Saya' : 'Buka Akun Gratis Sekarang'}</span>
+                                <ArrowRight className="w-4 h-4" />
+                            </button>
                         </Link>
                         <a href="#demo">
-                            <Button
-                                variant="secondary"
-                                size="lg"
-                                className="w-full sm:w-auto px-7 py-3.5 text-sm font-medium border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200"
-                            >
-                                Coba Simulasi Langsung ↓
-                            </Button>
+                            <button className="w-full sm:w-auto px-7 py-3.5 rounded-full text-sm font-semibold border border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 backdrop-blur-md transition-all">
+                                Coba Simulasi Langsung
+                            </button>
                         </a>
                     </div>
+                </div>
 
-                    {/* Bukti & Nilai Praktis */}
-                    <div className="pt-8 border-t border-zinc-800/60 flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-xs text-zinc-400">
-                        <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                            <span>Saldo Selalu Klop Otomatis</span>
+                {/* ===================================================================== */}
+                {/* 3 CARDS PEAKING & FANNING OUT DI BAGIAN BAWAH HERO (Persis Foto 2)    */}
+                {/* ===================================================================== */}
+                <div className="relative mt-16 sm:mt-20 max-w-4xl mx-auto">
+                    {/* Karakter Maskot / Glowing Orb Peeking di belakang kartu tengah */}
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-28 h-28 rounded-full bg-blue-600/30 blur-2xl pointer-events-none" />
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-0 hidden sm:flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-2xl bg-blue-600/30 border border-blue-500/40 backdrop-blur-md flex items-center justify-center text-blue-300 shadow-lg animate-bounce duration-1000">
+                            <ShieldCheck className="w-7 h-7 stroke-[2.2]" />
                         </div>
-                        <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                            <span>Bisa Simpan Rupiah & Dolar</span>
+                    </div>
+
+                    {/* Fanned 3 Cards Layout */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-4 items-end relative z-10">
+                        {/* KARTU KIRI: Miring ke Kiri (-rotate-3) */}
+                        <div className="rounded-3xl border border-zinc-800/90 bg-gradient-to-b from-[#141418] via-[#101013] to-[#0c0c0e] p-6 text-left shadow-2xl md:-rotate-3 md:translate-y-4 hover:rotate-0 hover:translate-y-0 transition-all duration-300 group">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-400">
+                                    IDR
+                                </div>
+                                <div>
+                                    <span className="text-xs font-bold text-white block">Kas Operasional</span>
+                                    <span className="text-[10px] text-zinc-500">Rekening Dompet Utama</span>
+                                </div>
+                            </div>
+                            <p className="text-xs text-zinc-300 font-medium leading-relaxed mb-4">
+                                Berapa saldo kas bersih yang siap digunakan untuk operasional bulan ini?
+                            </p>
+                            <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between">
+                                <span className="text-sm font-bold font-mono text-white">Rp 45.000.000</span>
+                                <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                    100% Cocok
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                            <span>Anti Saldo Minus & Dobel Potong</span>
+
+                        {/* KARTU TENGAH: Berdiri Tegak & Terangkat (Elevated Center Card) */}
+                        <div className="rounded-3xl border border-blue-500/30 bg-gradient-to-b from-[#181820] via-[#121218] to-[#0d0d12] p-6 sm:p-7 text-left shadow-2xl shadow-blue-500/10 z-20 md:scale-105 hover:scale-108 transition-all duration-300 relative group">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-inner">
+                                    <Zap className="w-5 h-5 fill-current" />
+                                </div>
+                                <div>
+                                    <span className="text-sm font-bold text-white block">Jantung Pembukuan</span>
+                                    <span className="text-[11px] text-blue-400">Pencatatan Otomatis</span>
+                                </div>
+                            </div>
+                            <p className="text-sm text-zinc-200 font-semibold leading-relaxed mb-4">
+                                Setiap mutasi langsung diverifikasi berpasangan tanpa ada uang yang terselip.
+                            </p>
+                            <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs">
+                                <span className="text-zinc-400 font-medium">16 Mutasi Hari Ini</span>
+                                <span className="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full border border-blue-500/30">
+                                    Pasti Klop (0 Selisih)
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* KARTU KANAN: Miring ke Kanan (rotate-3) */}
+                        <div className="rounded-3xl border border-zinc-800/90 bg-gradient-to-b from-[#141418] via-[#101013] to-[#0c0c0e] p-6 text-left shadow-2xl md:rotate-3 md:translate-y-4 hover:rotate-0 hover:translate-y-0 transition-all duration-300 group">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-9 h-9 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-xs font-bold text-purple-400">
+                                    USD
+                                </div>
+                                <div>
+                                    <span className="text-xs font-bold text-white block">Dolar Klien Global</span>
+                                    <span className="text-[10px] text-zinc-500">Brankas Valuta Asing</span>
+                                </div>
+                            </div>
+                            <p className="text-xs text-zinc-300 font-medium leading-relaxed mb-4">
+                                Apakah pembayaran dari klien luar negeri sudah masuk dan terkonversi aman?
+                            </p>
+                            <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between">
+                                <span className="text-sm font-bold font-mono text-white">$3,250.00</span>
+                                <span className="text-[10px] font-medium text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
+                                    Terisolasi Aman
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -200,7 +269,7 @@ export const LandingPage: React.FC = () => {
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
                     {/* Header Section */}
                     <div className="text-center max-w-2xl mx-auto space-y-3">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-blue-400">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-blue-400 font-mono">
                             UJI COBA INTERAKTIF
                         </span>
                         <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">
@@ -301,7 +370,7 @@ export const LandingPage: React.FC = () => {
                                 <button
                                     onClick={handleExecuteTransfer}
                                     disabled={isVaultFrozen || isProcessing}
-                                    className="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 transition-all"
+                                    className="w-full py-3.5 px-4 rounded-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 transition-all"
                                 >
                                     {isProcessing ? (
                                         <>
@@ -327,7 +396,7 @@ export const LandingPage: React.FC = () => {
                                 <div className="flex items-center justify-between gap-3">
                                     <button
                                         onClick={() => setIsVaultFrozen(!isVaultFrozen)}
-                                        className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-2 transition-colors ${
+                                        className={`flex-1 py-2.5 px-4 rounded-full border text-xs font-medium flex items-center justify-center gap-2 transition-colors ${
                                             isVaultFrozen
                                                 ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/60'
                                                 : 'bg-zinc-900/70 text-zinc-300 border-zinc-800 hover:border-zinc-700'
@@ -349,7 +418,7 @@ export const LandingPage: React.FC = () => {
                                     <button
                                         onClick={handleStressTest}
                                         disabled={isVaultFrozen || isProcessing}
-                                        className="py-2.5 px-3 rounded-xl border border-zinc-800 bg-zinc-900/70 hover:bg-zinc-800 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+                                        className="py-2.5 px-4 rounded-full border border-zinc-800 bg-zinc-900/70 hover:bg-zinc-800 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
                                         title="Uji coba sistem mencegah uang terpotong dobel"
                                     >
                                         ⚡ Uji Klik Cepat 5x
@@ -364,7 +433,7 @@ export const LandingPage: React.FC = () => {
                                 <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                                        <span className="text-xs font-bold text-white tracking-wider">BUKU KAS OTOMATIS</span>
+                                        <span className="text-xs font-bold text-white tracking-wider font-mono">BUKU KAS OTOMATIS</span>
                                     </div>
                                     <span className="text-[10px] text-emerald-400 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 font-medium">
                                         PASTI KLOP (100% SEIMBANG)
@@ -407,7 +476,7 @@ export const LandingPage: React.FC = () => {
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-[11px] text-zinc-400">{item.description}</span>
-                                                <span className="font-bold text-emerald-400">{item.amountFormatted}</span>
+                                                <span className="font-bold text-emerald-400 font-mono">{item.amountFormatted}</span>
                                             </div>
                                             <div className="pt-1 border-t border-zinc-800/50 flex items-center justify-between text-[10px] text-zinc-500">
                                                 <span>No. Mutasi: {item.id}</span>
@@ -434,7 +503,7 @@ export const LandingPage: React.FC = () => {
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
                     {/* Header */}
                     <div className="text-left max-w-xl space-y-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400 font-mono">
                             KENAPA MEMILIH BASTION?
                         </span>
                         <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">
@@ -496,7 +565,7 @@ export const LandingPage: React.FC = () => {
                             </div>
 
                             <div className="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-xs text-zinc-300 space-y-1.5">
-                                <div className="flex items-center justify-between text-[11px] text-emerald-400 font-semibold">
+                                <div className="flex items-center justify-between text-[11px] text-emerald-400 font-semibold font-mono">
                                     <span>PROTEKSI TRANSAKSI GANDA</span>
                                     <span>AKTIF</span>
                                 </div>
@@ -609,7 +678,7 @@ export const LandingPage: React.FC = () => {
                         <div className="lg:col-span-5 text-left">
                             <div className="rounded-3xl border border-zinc-800 bg-[#111114] p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
                                 <div className="space-y-1.5">
-                                    <span className="text-[11px] text-blue-400 uppercase tracking-wider font-semibold block">
+                                    <span className="text-[11px] text-blue-400 uppercase tracking-wider font-semibold block font-mono">
                                         MULAI HARI INI
                                     </span>
                                     <h3 className="text-2xl font-bold text-white tracking-tight">
@@ -624,20 +693,16 @@ export const LandingPage: React.FC = () => {
                                     <Link to={isAuthenticated ? '/app/dashboard' : '/register'} className="block">
                                         <Button
                                             size="lg"
-                                            className="w-full py-4 text-sm font-bold shadow-lg shadow-blue-600/25 bg-blue-600 hover:bg-blue-500 text-white border-0"
+                                            className="w-full py-4 text-sm font-bold shadow-lg shadow-blue-600/25 bg-blue-600 hover:bg-blue-500 text-white border-0 rounded-full"
                                             rightIcon={<ArrowRight className="w-4 h-4" />}
                                         >
                                             {isAuthenticated ? 'Buka Dasbor Saya' : 'Daftar Akun Gratis Sekarang'}
                                         </Button>
                                     </Link>
                                     <a href="#demo" className="block">
-                                        <Button
-                                            variant="secondary"
-                                            size="md"
-                                            className="w-full py-3 text-xs font-medium border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300"
-                                        >
+                                        <button className="w-full py-3.5 text-xs font-semibold rounded-full border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 transition-colors">
                                             Coba Simulasi di Atas ↑
-                                        </Button>
+                                        </button>
                                     </a>
                                 </div>
 
@@ -672,7 +737,7 @@ export const LandingPage: React.FC = () => {
                             <p className="text-xs text-zinc-400 max-w-sm leading-relaxed">
                                 Dompet digital bisnis dan pembukuan otomatis. Menjaga saldo keuangan Anda selalu seimbang, aman, dan mudah dipantau setiap hari.
                             </p>
-                            <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                            <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-mono">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                 <span>Sistem Siap Operasional • Standar Multi-Valuta</span>
                             </div>
