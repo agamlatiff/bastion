@@ -715,8 +715,8 @@ export const LandingPage: React.FC = () => {
                                     </div>
 
                                     {/* Action Buttons */}
-                                    <div className="space-y-2.5 sm:space-y-3">
-                                        {/* Aksi 1: Simulasikan Transaksi Masuk */}
+                                    <div className="space-y-2 sm:space-y-3">
+                                        {/* Aksi 1: Simulasikan Transaksi Masuk (Full Width) */}
                                         <button
                                             onClick={handleSimulateIncome}
                                             disabled={isSimulating}
@@ -735,58 +735,65 @@ export const LandingPage: React.FC = () => {
                                             </span>
                                         </button>
 
-                                        {/* Aksi 2: Toggle Vault Freeze */}
-                                        <button
-                                            onClick={handleToggleVault}
-                                            className={`w-full py-2.5 sm:py-3 px-3.5 sm:px-4 rounded-xl border text-xs sm:text-sm font-semibold flex items-center justify-between transition-all cursor-pointer ${
-                                                isVaultFrozen
-                                                    ? 'bg-emerald-950/60 text-emerald-300 border-emerald-700/80 hover:bg-emerald-900/60'
-                                                    : 'bg-zinc-900/80 text-zinc-200 border-zinc-700/80 hover:bg-zinc-800'
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-2 sm:gap-2.5">
-                                                {isVaultFrozen ? (
-                                                    <Unlock className="w-4 h-4 text-emerald-400" />
-                                                ) : (
-                                                    <Lock className="w-4 h-4 text-amber-400" />
-                                                )}
-                                                <span>
-                                                    {isVaultFrozen ? 'Buka Kunci Dompet' : 'Kunci Dompet (Vault Freeze)'}
-                                                </span>
-                                            </div>
-                                            <span
-                                                className={`text-[9px] sm:text-[10px] uppercase font-mono px-2 py-0.5 rounded ${
-                                                    isVaultFrozen ? 'bg-emerald-500/20 text-emerald-300' : 'bg-zinc-800 text-zinc-400'
+                                        {/* Aksi 2 & 3: Grid 2 kolom di mobile */}
+                                        <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 sm:gap-0 sm:space-y-2 lg:space-y-2">
+                                            {/* Aksi 2: Toggle Vault Freeze */}
+                                            <button
+                                                onClick={handleToggleVault}
+                                                className={`w-full py-2.5 sm:py-3 px-2.5 sm:px-4 rounded-xl border text-xs font-semibold flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-1.5 sm:gap-2 transition-all cursor-pointer ${
+                                                    isVaultFrozen
+                                                        ? 'bg-emerald-950/60 text-emerald-300 border-emerald-700/80 hover:bg-emerald-900/60'
+                                                        : 'bg-zinc-900/80 text-zinc-200 border-zinc-700/80 hover:bg-zinc-800'
                                                 }`}
                                             >
-                                                {isVaultFrozen ? 'TERKUNCI' : 'STANDBY'}
-                                            </span>
-                                        </button>
+                                                <div className="flex items-center gap-1.5 sm:gap-2.5">
+                                                    {isVaultFrozen ? (
+                                                        <Unlock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
+                                                    ) : (
+                                                        <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
+                                                    )}
+                                                    <span className="leading-tight">
+                                                        {isVaultFrozen ? 'Buka Kunci' : 'Kunci Dompet'}
+                                                        <span className="hidden sm:inline">{isVaultFrozen ? '' : ' (Freeze)'}</span>
+                                                    </span>
+                                                </div>
+                                                <span
+                                                    className={`text-[9px] uppercase font-mono px-1.5 py-0.5 rounded self-start sm:self-auto ${
+                                                        isVaultFrozen ? 'bg-emerald-500/20 text-emerald-300' : 'bg-zinc-800 text-zinc-400'
+                                                    }`}
+                                                >
+                                                    {isVaultFrozen ? 'AKTIF' : 'STANDBY'}
+                                                </span>
+                                            </button>
 
-                                        {/* Aksi 3: Uji Coba Anti-Minus */}
-                                        <button
-                                            onClick={handleTestAntiMinus}
-                                            disabled={isSimulating}
-                                            className="w-full py-2.5 sm:py-3 px-3.5 sm:px-4 rounded-xl border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800/90 text-zinc-300 hover:text-white text-xs sm:text-sm font-semibold flex items-center justify-between transition-all group cursor-pointer"
-                                        >
-                                            <div className="flex items-center gap-2 sm:gap-2.5">
-                                                <ShieldCheck className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
-                                                <span>Uji Tarik Melebihi Saldo</span>
-                                            </div>
-                                            <span className="text-[9px] sm:text-[10px] font-mono bg-rose-500/10 border border-rose-500/20 text-rose-300 px-2 py-0.5 rounded">
-                                                Anti-Minus
-                                            </span>
-                                        </button>
+                                            {/* Aksi 3: Uji Coba Anti-Minus */}
+                                            <button
+                                                onClick={handleTestAntiMinus}
+                                                disabled={isSimulating}
+                                                className="w-full py-2.5 sm:py-3 px-2.5 sm:px-4 rounded-xl border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800/90 text-zinc-300 hover:text-white text-xs font-semibold flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-1.5 sm:gap-2 transition-all group cursor-pointer"
+                                            >
+                                                <div className="flex items-center gap-1.5 sm:gap-2.5">
+                                                    <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400 group-hover:scale-110 transition-transform shrink-0" />
+                                                    <span className="leading-tight">Uji Tarik<span className="hidden sm:inline"> Melebihi Saldo</span></span>
+                                                </div>
+                                                <span className="text-[9px] font-mono bg-rose-500/10 border border-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded self-start sm:self-auto">
+                                                    Anti-Minus
+                                                </span>
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {/* Security Guarantee Note */}
-                                    <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-[10px] sm:text-[11px] text-zinc-400 space-y-1">
+                                    <div className="p-2.5 sm:p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-[10px] sm:text-[11px] text-zinc-400 space-y-0.5 sm:space-y-1">
                                         <div className="font-semibold text-zinc-300 flex items-center gap-1.5">
-                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                                             <span>Jaminan Sistem Bastion</span>
                                         </div>
-                                        <p className="leading-relaxed">
-                                            Setiap transaksi divalidasi secara atomik. Saldo kas bisnis tidak akan pernah bernilai negatif atau mengalami selisih siluman.
+                                        <p className="leading-relaxed hidden sm:block">
+                                            Setiap transaksi divalidasi. Saldo bisnis tidak akan pernah bernilai negatif atau mengalami selisih siluman.
+                                        </p>
+                                        <p className="leading-relaxed sm:hidden">
+                                            Saldo tidak akan pernah minus atau ada selisih diam-diam.
                                         </p>
                                     </div>
                                 </div>
