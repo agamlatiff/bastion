@@ -107,8 +107,6 @@ export const LandingPage: React.FC = () => {
         },
     };
 
-    // Micro Volume pill bars at the base of the chart
-    const volumeBars = [14, 22, 18, 35, 48, 26, 58, 72, 45, 88, 95, 62, 48, 80, 90, 65];
 
     const currentDataset = timeframeData[timeframe];
     const displayBalance = currentDataset.baseBalance + metricModifiers.addedBalance;
@@ -537,16 +535,13 @@ export const LandingPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Ultra-Aesthetic Luminous Spline Chart (Linear / Stripe Grade) */}
-                            <div className="p-6 sm:p-7 rounded-2xl bg-gradient-to-b from-[#14141c]/95 via-[#0f0f14]/95 to-[#0b0b0e]/95 border border-white/10 space-y-5 relative overflow-hidden shadow-2xl">
-                                {/* Ambient Background Lighting Orb */}
-                                <div className="absolute top-0 right-1/4 w-[450px] h-[220px] bg-gradient-to-br from-blue-600/15 via-sky-500/10 to-transparent blur-[80px] pointer-events-none" />
-
+                            {/* Clean & Elegant Spline Chart (Linear / Stripe Grade) */}
+                            <div className="p-6 sm:p-7 rounded-2xl bg-[#121217] border border-white/5 space-y-5 relative overflow-hidden shadow-xl">
                                 {/* Chart Card Header & Legend */}
-                                <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-white/5 relative z-10">
+                                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/5 relative z-10">
                                     <div>
-                                        <div className="text-xs text-zinc-400 font-medium">Arus Kas Masuk vs Beban Keluar</div>
-                                        <div className="text-xl sm:text-2xl font-extrabold font-mono text-white tracking-tight flex items-center gap-3 pt-0.5">
+                                        <div className="text-xs text-zinc-400 font-medium">Tren Arus Kas Terkonsolidasi</div>
+                                        <div className="text-xl sm:text-2xl font-bold font-mono text-white tracking-tight flex items-center gap-3 pt-0.5">
                                             <span>Rp {displayBalance.toLocaleString('id-ID')},00</span>
                                             <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
                                                 {currentDataset.growth}
@@ -554,33 +549,29 @@ export const LandingPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Sleek Legend Indicators */}
-                                    <div className="flex items-center gap-2.5 text-xs">
-                                        <div className="flex items-center gap-1.5 text-sky-300 font-medium bg-sky-500/10 border border-sky-500/20 px-3 py-1 rounded-full">
-                                            <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
-                                            <span>Uang Masuk</span>
+                                    {/* Clean Legend Indicators */}
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <div className="flex items-center gap-1.5 text-zinc-300 font-medium px-2.5 py-1 rounded-full bg-zinc-900/60 border border-white/5">
+                                            <span className="w-2 h-2 rounded-full bg-sky-400" />
+                                            <span>Arus Kas Masuk</span>
                                         </div>
-                                        <div className="flex items-center gap-1.5 text-indigo-300 font-medium bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full">
-                                            <span className="w-2 h-0.5 bg-indigo-400 rounded-full" />
-                                            <span>Beban Keluar</span>
-                                        </div>
-                                        <div className="hidden sm:flex items-center gap-1.5 text-emerald-400 font-medium bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                                            <span>Nol Selisih</span>
+                                        <div className="hidden sm:flex items-center gap-1.5 text-emerald-400 font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                            <span>Buku Kas Seimbang</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Main Chart Area */}
                                 <div className="relative w-full h-48 sm:h-56 pt-2">
-                                    {/* Floating Jewel Apex Badge */}
+                                    {/* Minimalist Apex Tooltip */}
                                     <div
                                         style={{ left: `${(currentDataset.peakCoord.x / 600) * 100}%` }}
-                                        className="absolute top-1 -translate-x-1/2 pointer-events-none hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-sky-400/40 backdrop-blur-xl shadow-[0_10px_25px_rgba(56,189,248,0.25)] ring-1 ring-white/15 text-xs font-semibold text-white z-20"
+                                        className="absolute top-1 -translate-x-1/2 pointer-events-none hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-white/10 text-xs font-medium text-white shadow-lg z-20"
                                     >
-                                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                        <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
                                         <span className="font-mono text-sky-300 font-bold">{currentDataset.peakValue}</span>
-                                        <span className="text-zinc-400 font-normal text-[11px]">• {currentDataset.peakTime}</span>
+                                        <span className="text-zinc-400 text-[11px]">• {currentDataset.peakTime}</span>
                                     </div>
 
                                     {/* SVG Graphic Canvas */}
@@ -590,118 +581,56 @@ export const LandingPage: React.FC = () => {
                                         preserveAspectRatio="none"
                                     >
                                         <defs>
-                                            {/* Luminous Area Gradient */}
-                                            <linearGradient id="luminousAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.45" />
-                                                <stop offset="30%" stopColor="#6366f1" stopOpacity="0.2" />
-                                                <stop offset="70%" stopColor="#2563eb" stopOpacity="0.05" />
-                                                <stop offset="100%" stopColor="#09090b" stopOpacity="0" />
+                                            {/* Soft Area Gradient (Very Subtle & Clean) */}
+                                            <linearGradient id="cleanAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.14" />
+                                                <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.0" />
                                             </linearGradient>
 
-                                            {/* Chromatic Multi-stop Glowing Stroke */}
-                                            <linearGradient id="chromaticSpline" x1="0" y1="0" x2="1" y2="0">
-                                                <stop offset="0%" stopColor="#38bdf8" />
-                                                <stop offset="40%" stopColor="#60a5fa" />
-                                                <stop offset="75%" stopColor="#818cf8" />
+                                            {/* Refined Stroke Gradient */}
+                                            <linearGradient id="cleanStrokeGradient" x1="0" y1="0" x2="1" y2="0">
+                                                <stop offset="0%" stopColor="#60a5fa" />
+                                                <stop offset="60%" stopColor="#38bdf8" />
                                                 <stop offset="100%" stopColor="#34d399" />
                                             </linearGradient>
-
-                                            {/* Soft Glow Filter */}
-                                            <filter id="splineGlow" x="-20%" y="-20%" width="140%" height="140%">
-                                                <feGaussianBlur stdDeviation="6" result="blur" />
-                                                <feMerge>
-                                                    <feMergeNode in="blur" />
-                                                    <feMergeNode in="SourceGraphic" />
-                                                </feMerge>
-                                            </filter>
-
-                                            {/* Dot Matrix Pattern */}
-                                            <pattern id="matrixDots" width="32" height="32" patternUnits="userSpaceOnUse">
-                                                <circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.05)" />
-                                            </pattern>
                                         </defs>
 
-                                        {/* Background Dot Matrix Pattern */}
-                                        <rect width="600" height="180" fill="url(#matrixDots)" />
+                                        {/* Subtle Horizontal Reference Grid Lines */}
+                                        <line x1="0" y1="45" x2="600" y2="45" stroke="rgba(255,255,255,0.05)" strokeDasharray="3 4" />
+                                        <line x1="0" y1="90" x2="600" y2="90" stroke="rgba(255,255,255,0.05)" strokeDasharray="3 4" />
+                                        <line x1="0" y1="135" x2="600" y2="135" stroke="rgba(255,255,255,0.05)" strokeDasharray="3 4" />
 
-                                        {/* Architectural Hairline Reference Lines */}
-                                        <line x1="0" y1="45" x2="600" y2="45" stroke="rgba(255,255,255,0.04)" strokeDasharray="3 4" />
-                                        <line x1="0" y1="90" x2="600" y2="90" stroke="rgba(255,255,255,0.04)" strokeDasharray="3 4" />
-                                        <line x1="0" y1="135" x2="600" y2="135" stroke="rgba(255,255,255,0.04)" strokeDasharray="3 4" />
-
-                                        {/* Micro Volume Pill Bars at Base */}
-                                        {volumeBars.map((bar, i) => (
-                                            <rect
-                                                key={i}
-                                                x={15 + i * 36}
-                                                y={172 - bar}
-                                                width="5"
-                                                height={bar}
-                                                rx="2.5"
-                                                fill="rgba(56, 189, 248, 0.18)"
-                                            />
-                                        ))}
-
-                                        {/* Ghost Outflow Wave (3D Depth Layer) */}
-                                        <path
-                                            d={currentDataset.outflowSpline}
-                                            fill="none"
-                                            stroke="#a78bfa"
-                                            strokeWidth="1.5"
-                                            strokeDasharray="4 4"
-                                            opacity="0.5"
-                                        />
-
-                                        {/* Main Filled Glowing Area */}
+                                        {/* Main Filled Area */}
                                         <path
                                             d={currentDataset.splineArea}
-                                            fill="url(#luminousAreaGradient)"
-                                            className="transition-all duration-700 ease-out"
+                                            fill="url(#cleanAreaGradient)"
+                                            className="transition-all duration-500 ease-out"
                                         />
 
-                                        {/* Bloom Glow Layer */}
+                                        {/* Clean, Crisp 2px Spline Stroke */}
                                         <path
                                             d={currentDataset.splinePath}
                                             fill="none"
-                                            stroke="url(#chromaticSpline)"
-                                            strokeWidth="6"
-                                            opacity="0.4"
-                                            filter="url(#splineGlow)"
-                                            className="transition-all duration-700 ease-out"
-                                        />
-
-                                        {/* Crisp Foreground Chromatic Stroke */}
-                                        <path
-                                            d={currentDataset.splinePath}
-                                            fill="none"
-                                            stroke="url(#chromaticSpline)"
-                                            strokeWidth="2.75"
+                                            stroke="url(#cleanStrokeGradient)"
+                                            strokeWidth="2"
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
-                                            className="transition-all duration-700 ease-out"
+                                            className="transition-all duration-500 ease-out"
                                         />
 
-                                        {/* Jeweled Apex Node & Pulse Rings */}
+                                        {/* Sleek Apex Point */}
                                         <circle
                                             cx={currentDataset.peakCoord.x}
                                             cy={currentDataset.peakCoord.y}
-                                            r="14"
-                                            fill="#38bdf8"
-                                            opacity="0.15"
-                                            className="animate-ping"
-                                        />
-                                        <circle
-                                            cx={currentDataset.peakCoord.x}
-                                            cy={currentDataset.peakCoord.y}
-                                            r="7"
+                                            r="5"
                                             fill="#09090b"
                                             stroke="#38bdf8"
-                                            strokeWidth="2.5"
+                                            strokeWidth="2"
                                         />
                                         <circle
                                             cx={currentDataset.peakCoord.x}
                                             cy={currentDataset.peakCoord.y}
-                                            r="3"
+                                            r="2"
                                             fill="#ffffff"
                                         />
                                     </svg>
