@@ -38,6 +38,10 @@ export const LandingPage: React.FC = () => {
     type TimeframeType = 'today' | '7d' | '30d';
     const [timeframe, setTimeframe] = useState<TimeframeType>('today');
 
+    // Mobile dashboard section view switcher ('wallets' | 'activity')
+    type MobileDashboardTab = 'wallets' | 'activity';
+    const [mobileTab, setMobileTab] = useState<MobileDashboardTab>('wallets');
+
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
     const handleCopyId = (id: string, e: React.MouseEvent) => {
@@ -324,55 +328,58 @@ export const LandingPage: React.FC = () => {
                     {/* Window Frame Container (Representasi Visual Dasbor Asli Bastion) */}
                     <div className="w-full rounded-2xl sm:rounded-3xl border border-white/10 bg-[#0c0c10]/95 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,0.9)] ring-1 ring-white/5 overflow-hidden text-left">
                         {/* 1. Header Bar Jendela Aplikasi */}
-                        <div className="px-4 sm:px-6 py-3 sm:py-3.5 border-b border-white/10 bg-[#121217] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="px-3.5 sm:px-6 py-2.5 sm:py-3.5 border-b border-white/10 bg-[#121217] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-3">
                             {/* Window Dots & Organization Info */}
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-1.5">
-                                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500/80 border border-red-400/40" />
-                                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-500/80 border border-amber-400/40" />
-                                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500/80 border border-emerald-400/40" />
+                            <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto justify-between sm:justify-start">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500/80 border border-red-400/40" />
+                                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-500/80 border border-amber-400/40" />
+                                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500/80 border border-emerald-400/40" />
+                                    </div>
+                                    <div className="h-4 w-px bg-white/10" />
+                                    <span className="font-bold text-xs text-white tracking-tight">Bastion Financial OS</span>
                                 </div>
-                                <div className="h-4 w-px bg-white/10" />
-                                <div className="flex items-center gap-2 text-xs text-zinc-300 font-medium">
-                                    <span className="font-bold text-white">Bastion Financial OS</span>
-                                    <span className="text-zinc-600">•</span>
-                                    <span className="text-zinc-400">PT Kopi Nusantara</span>
-                                    <span className="hidden xs:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
+
+                                <div className="flex items-center gap-1.5 text-xs text-zinc-300">
+                                    <span className="text-zinc-600 hidden sm:inline">•</span>
+                                    <span className="text-zinc-400 font-medium text-[11px] sm:text-xs">PT Kopi Nusantara</span>
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                        Terverifikasi
+                                        <span className="hidden xs:inline">Terverifikasi</span>
                                     </span>
                                 </div>
                             </div>
 
                             {/* Top Right Quick Action Buttons */}
-                            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-between sm:justify-end pt-1 sm:pt-0 border-t sm:border-t-0 border-white/5">
                                 <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] sm:text-[11px] font-medium text-emerald-400 mr-1">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                     <span>Real-Time</span>
                                     <span className="font-mono text-[10px] opacity-80">(0.04s)</span>
                                 </div>
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/5 text-[11px] font-medium text-zinc-300">
-                                    <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
+                                <span className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-white/5 text-[11px] font-medium text-zinc-300 hover:text-white transition-colors">
+                                    <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                                     <span>Isi Saldo</span>
                                 </span>
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/5 text-[11px] font-medium text-zinc-300">
-                                    <ArrowUpRight className="w-3.5 h-3.5 text-blue-400" />
+                                <span className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-white/5 text-[11px] font-medium text-zinc-300 hover:text-white transition-colors">
+                                    <ArrowUpRight className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                                     <span>Kirim Uang</span>
                                 </span>
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600/20 border border-blue-500/30 text-[11px] font-semibold text-blue-300">
-                                    <Plus className="w-3.5 h-3.5 text-blue-400" />
+                                <span className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-[11px] font-semibold text-blue-300 hover:bg-blue-600/30 transition-colors">
+                                    <Plus className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                                     <span>Buka Dompet</span>
                                 </span>
                             </div>
                         </div>
 
                         {/* 2. Main Dashboard Content Surface */}
-                        <div className="p-4 sm:p-7 md:p-8 space-y-6 sm:space-y-7">
+                        <div className="p-3.5 sm:p-7 md:p-8 space-y-5 sm:space-y-7">
                             {/* UNIFIED FINANCIAL HERO SURFACE (Total Balance & Multi-Currency Chips) */}
                             <div className="rounded-xl sm:rounded-2xl border border-white/5 bg-gradient-to-br from-[#15151c] via-[#101015] to-[#0a0a0d] p-4 sm:p-6 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
-                                <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+                                <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-5">
                                     <div className="space-y-2">
                                         <div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
                                             <Wallet className="w-4 h-4 text-emerald-400" />
@@ -380,8 +387,8 @@ export const LandingPage: React.FC = () => {
                                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                         </div>
 
-                                        <div className="flex flex-wrap items-baseline gap-3">
-                                            <div className="text-2xl sm:text-4xl lg:text-5xl font-extrabold font-mono tracking-tight text-white">
+                                        <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
+                                            <div className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-extrabold font-mono tracking-tight text-white">
                                                 Rp {currentDataset.baseBalance.toLocaleString('id-ID')},00
                                             </div>
                                             <span className="text-xs font-mono text-zinc-400 font-medium">
@@ -389,15 +396,15 @@ export const LandingPage: React.FC = () => {
                                             </span>
                                         </div>
 
-                                        {/* Multi-Currency Chips */}
-                                        <div className="flex flex-wrap items-center gap-2 pt-1">
-                                            <span className="text-[11px] text-zinc-400 font-medium">Saldo Valas Lainnya:</span>
-                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/90 border border-white/10 text-xs font-mono text-zinc-300">
+                                        {/* Multi-Currency Chips (Horizontally scrollable on mobile) */}
+                                        <div className="flex items-center gap-2 pt-1 overflow-x-auto pb-1 no-scrollbar">
+                                            <span className="text-[11px] text-zinc-400 font-medium shrink-0">Saldo Valas:</span>
+                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/90 border border-white/10 text-xs font-mono text-zinc-300 shrink-0">
                                                 <span className="text-[10px] text-blue-400 font-bold">USD</span>
                                                 <span className="font-semibold text-white">$3,250.00</span>
                                                 <span className="text-[10px] text-zinc-500 hidden sm:inline">• Klien Global</span>
                                             </div>
-                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/90 border border-white/10 text-xs font-mono text-zinc-300">
+                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/90 border border-white/10 text-xs font-mono text-zinc-300 shrink-0">
                                                 <span className="text-[10px] text-purple-400 font-bold">SGD</span>
                                                 <span className="font-semibold text-white">S$ 4,800.00</span>
                                                 <span className="text-[10px] text-zinc-500 hidden sm:inline">• Regional Asia</span>
@@ -406,7 +413,7 @@ export const LandingPage: React.FC = () => {
                                     </div>
 
                                     {/* Trust & Status Highlights */}
-                                    <div className="flex flex-wrap items-center gap-2.5 text-xs text-zinc-400 pt-2 lg:pt-0">
+                                    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 text-xs text-zinc-400 pt-1 lg:pt-0">
                                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900/90 border border-white/5">
                                             <CreditCard className="w-3.5 h-3.5 text-zinc-300" />
                                             <span>
@@ -422,80 +429,80 @@ export const LandingPage: React.FC = () => {
                             </div>
 
                             {/* 4 KPI METRICS CARDS */}
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
                                 {/* Total Kas */}
-                                <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-[#14141a]/80 border border-white/5 space-y-1 sm:space-y-2 hover:border-white/10 transition-colors">
-                                    <div className="flex items-center justify-between text-[11px] sm:text-xs text-zinc-400 font-medium">
+                                <div className="p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl bg-[#14141a]/80 border border-white/5 space-y-1 sm:space-y-2 hover:border-white/10 transition-colors">
+                                    <div className="flex items-center justify-between text-[10px] xs:text-[11px] sm:text-xs text-zinc-400 font-medium">
                                         <span className="truncate">Total Kas</span>
                                         <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 sm:px-2 py-0.5 rounded-full border border-emerald-500/20 shrink-0">
-                                            {currentDataset.growth}
+                                            {currentDataset.growth.split(' ')[0]}
                                         </span>
                                     </div>
-                                    <div className="text-sm sm:text-xl lg:text-2xl font-bold text-white font-mono tracking-tight truncate">
+                                    <div className="text-xs xs:text-sm sm:text-lg lg:text-2xl font-bold text-white font-mono tracking-tight truncate">
                                         Rp {currentDataset.baseBalance.toLocaleString('id-ID')}
                                     </div>
-                                    <div className="text-[10px] sm:text-[11px] text-zinc-500 flex items-center gap-1 truncate">
+                                    <div className="text-[9px] sm:text-[11px] text-zinc-500 flex items-center gap-1 truncate">
                                         <CheckCircle2 className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-emerald-400 shrink-0" />
                                         <span>Selalu Akurat</span>
                                     </div>
                                 </div>
 
                                 {/* Uang Masuk */}
-                                <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-[#14141a]/80 border border-white/5 space-y-1 sm:space-y-2 hover:border-white/10 transition-colors">
-                                    <div className="flex items-center justify-between text-[11px] sm:text-xs text-zinc-400 font-medium">
+                                <div className="p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl bg-[#14141a]/80 border border-white/5 space-y-1 sm:space-y-2 hover:border-white/10 transition-colors">
+                                    <div className="flex items-center justify-between text-[10px] xs:text-[11px] sm:text-xs text-zinc-400 font-medium">
                                         <span className="truncate">Uang Masuk</span>
-                                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+                                        <div className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
                                             <ArrowUpRight className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                                         </div>
                                     </div>
-                                    <div className="text-sm sm:text-xl lg:text-2xl font-bold text-emerald-400 font-mono tracking-tight truncate">
+                                    <div className="text-xs xs:text-sm sm:text-lg lg:text-2xl font-bold text-emerald-400 font-mono tracking-tight truncate">
                                         +Rp {currentDataset.baseInflow.toLocaleString('id-ID')}
                                     </div>
-                                    <div className="text-[10px] sm:text-[11px] text-zinc-500 truncate">
-                                        {currentDataset.txCount} tervalidasi
+                                    <div className="text-[9px] sm:text-[11px] text-zinc-500 truncate">
+                                        {currentDataset.txCount}
                                     </div>
                                 </div>
 
                                 {/* Beban Kas */}
-                                <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-[#14141a]/80 border border-white/5 space-y-1 sm:space-y-2 hover:border-white/10 transition-colors">
-                                    <div className="flex items-center justify-between text-[11px] sm:text-xs text-zinc-400 font-medium">
+                                <div className="p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl bg-[#14141a]/80 border border-white/5 space-y-1 sm:space-y-2 hover:border-white/10 transition-colors">
+                                    <div className="flex items-center justify-between text-[10px] xs:text-[11px] sm:text-xs text-zinc-400 font-medium">
                                         <span className="truncate">Beban Kas</span>
-                                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-sky-500/10 flex items-center justify-center text-sky-400 shrink-0">
+                                        <div className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 rounded-lg bg-sky-500/10 flex items-center justify-center text-sky-400 shrink-0">
                                             <ArrowDownRight className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                                         </div>
                                     </div>
-                                    <div className="text-sm sm:text-xl lg:text-2xl font-bold text-sky-300 font-mono tracking-tight truncate">
+                                    <div className="text-xs xs:text-sm sm:text-lg lg:text-2xl font-bold text-sky-300 font-mono tracking-tight truncate">
                                         -Rp {currentDataset.outflow.toLocaleString('id-ID')}
                                     </div>
-                                    <div className="text-[10px] sm:text-[11px] text-zinc-500 truncate">
-                                        Gaji & operasional
+                                    <div className="text-[9px] sm:text-[11px] text-zinc-500 truncate">
+                                        Gaji & beban
                                     </div>
                                 </div>
 
                                 {/* Integritas */}
-                                <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-[#14141a]/80 border border-white/5 space-y-1 sm:space-y-2 hover:border-white/10 transition-colors">
-                                    <div className="flex items-center justify-between text-[11px] sm:text-xs text-zinc-400 font-medium">
+                                <div className="p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl bg-[#14141a]/80 border border-white/5 space-y-1 sm:space-y-2 hover:border-white/10 transition-colors">
+                                    <div className="flex items-center justify-between text-[10px] xs:text-[11px] sm:text-xs text-zinc-400 font-medium">
                                         <span className="truncate">Integritas</span>
-                                        <Badge variant="success" className="text-[9px] sm:text-xs px-1.5 py-0.5">
+                                        <Badge variant="success" className="text-[8px] sm:text-xs px-1.5 py-0.2">
                                             SEIMBANG
                                         </Badge>
                                     </div>
-                                    <div className="text-sm sm:text-xl lg:text-2xl font-bold text-white font-mono tracking-tight flex items-center gap-1.5 sm:gap-2 truncate">
-                                        <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 stroke-[2.5] shrink-0" />
+                                    <div className="text-xs xs:text-sm sm:text-lg lg:text-2xl font-bold text-white font-mono tracking-tight flex items-center gap-1.5 sm:gap-2 truncate">
+                                        <ShieldCheck className="w-4 h-4 sm:w-6 sm:h-6 text-emerald-400 stroke-[2.5] shrink-0" />
                                         <span>Nol Selisih</span>
                                     </div>
-                                    <div className="text-[10px] sm:text-[11px] text-zinc-500 truncate">
+                                    <div className="text-[9px] sm:text-[11px] text-zinc-500 truncate">
                                         Tercatat otomatis
                                     </div>
                                 </div>
                             </div>
 
                             {/* FINTECH SPLINE CHART (Grafik Tren Finansial dengan Filter Waktu) */}
-                            <div className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-[#121217] border border-white/5 space-y-4 relative overflow-hidden shadow-xl">
+                            <div className="p-3.5 sm:p-6 rounded-xl sm:rounded-2xl bg-[#121217] border border-white/5 space-y-3.5 sm:space-y-4 relative overflow-hidden shadow-xl">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5 relative z-10">
                                     <div>
                                         <div className="text-[11px] sm:text-xs text-zinc-400 font-medium">Tren Arus Kas Operasional</div>
-                                        <div className="text-lg sm:text-2xl font-bold font-mono text-white tracking-tight flex items-center gap-2.5 pt-0.5">
+                                        <div className="text-base sm:text-2xl font-bold font-mono text-white tracking-tight flex items-center gap-2.5 pt-0.5">
                                             <span>Rp {currentDataset.baseBalance.toLocaleString('id-ID')},00</span>
                                             <span className="text-[10px] sm:text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
                                                 {currentDataset.growth}
@@ -503,14 +510,14 @@ export const LandingPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Legend & Interactive Timeframe Pills */}
-                                    <div className="flex items-center justify-between sm:justify-end gap-2.5 flex-wrap">
-                                        <div className="flex items-center gap-1.5 text-zinc-300 font-medium px-2 sm:px-2.5 py-1 rounded-full bg-zinc-900/60 border border-white/5 text-[11px] sm:text-xs">
+                                    {/* Legend & Interactive Timeframe Pills (Responsive Segmented Control) */}
+                                    <div className="flex flex-col xs:flex-row items-stretch xs:items-center justify-between sm:justify-end gap-2 sm:gap-2.5">
+                                        <div className="hidden xs:flex items-center gap-1.5 text-zinc-300 font-medium px-2 sm:px-2.5 py-1 rounded-full bg-zinc-900/60 border border-white/5 text-[11px] sm:text-xs self-start xs:self-auto">
                                             <span className="w-2 h-2 rounded-full bg-sky-400" />
                                             <span>Arus Kas Masuk</span>
                                         </div>
 
-                                        <div className="p-0.5 sm:p-1 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center gap-0.5 sm:gap-1">
+                                        <div className="p-0.5 sm:p-1 rounded-xl bg-zinc-900 border border-zinc-800 grid grid-cols-3 sm:flex items-center gap-0.5 sm:gap-1 w-full sm:w-auto">
                                             {[
                                                 { id: 'today', label: 'Hari Ini' },
                                                 { id: '7d', label: '7 Hari' },
@@ -519,7 +526,7 @@ export const LandingPage: React.FC = () => {
                                                 <button
                                                     key={tab.id}
                                                     onClick={() => setTimeframe(tab.id as TimeframeType)}
-                                                    className={`px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs rounded-lg font-medium transition-all cursor-pointer ${
+                                                    className={`px-2.5 sm:px-3 py-1.5 sm:py-1 text-center text-[11px] sm:text-xs rounded-lg font-medium transition-all cursor-pointer ${
                                                         timeframe === tab.id
                                                             ? 'bg-zinc-800 text-white shadow-sm font-semibold'
                                                             : 'text-zinc-400 hover:text-zinc-200'
@@ -604,10 +611,40 @@ export const LandingPage: React.FC = () => {
                                 </div>
                             </div>
 
+                            {/* Mobile View Switcher Tab (Hanya tampil di mobile/tablet < lg) */}
+                            <div className="lg:hidden p-1 rounded-xl bg-zinc-900/90 border border-white/10 grid grid-cols-2 gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setMobileTab('wallets')}
+                                    className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                                        mobileTab === 'wallets'
+                                            ? 'bg-zinc-800 text-white shadow-sm border border-white/10'
+                                            : 'text-zinc-400 hover:text-white'
+                                    }`}
+                                >
+                                    <Wallet className="w-3.5 h-3.5 text-emerald-400" />
+                                    <span>Rekening Dompet (3)</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setMobileTab('activity')}
+                                    className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                                        mobileTab === 'activity'
+                                            ? 'bg-zinc-800 text-white shadow-sm border border-white/10'
+                                            : 'text-zinc-400 hover:text-white'
+                                    }`}
+                                >
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
+                                    <span>Mutasi Terkini (3)</span>
+                                </button>
+                            </div>
+
                             {/* DUA KOLOM DASBOR UTAMA: REKENING DOMPET & RIWAYAT MUTASI */}
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
                                 {/* Kolom Kiri (7 Cols): Rekening Dompet Bisnis */}
-                                <div className="lg:col-span-7 rounded-xl sm:rounded-2xl bg-[#111116]/90 border border-white/5 p-4 sm:p-6 space-y-3.5 sm:space-y-4 text-left">
+                                <div className={`lg:col-span-7 rounded-xl sm:rounded-2xl bg-[#111116]/90 border border-white/5 p-4 sm:p-6 space-y-3.5 sm:space-y-4 text-left ${
+                                    mobileTab === 'wallets' ? 'block' : 'hidden lg:block'
+                                }`}>
                                     <div className="flex items-center justify-between border-b border-white/5 pb-3">
                                         <div>
                                             <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight flex items-center gap-2">
@@ -627,18 +664,18 @@ export const LandingPage: React.FC = () => {
                                         {previewWallets.map((wallet) => (
                                             <div
                                                 key={wallet.id}
-                                                className="p-3.5 sm:p-4 rounded-xl bg-zinc-900/60 border border-white/5 hover:border-white/10 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
+                                                className="p-3 sm:p-4 rounded-xl bg-zinc-900/60 border border-white/5 hover:border-white/10 transition-all flex items-center justify-between gap-3 group"
                                             >
-                                                <div className="flex items-center gap-3 min-w-0">
-                                                    <div className="w-10 h-10 rounded-xl bg-zinc-800/90 border border-zinc-700 flex items-center justify-center font-bold text-xs text-white shrink-0">
+                                                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                                                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-zinc-800/90 border border-zinc-700 flex items-center justify-center font-bold text-xs text-white shrink-0">
                                                         {wallet.shortCode}
                                                     </div>
                                                     <div className="space-y-0.5 min-w-0">
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="flex items-center gap-1.5 sm:gap-2">
                                                             <span className="text-xs font-bold text-white truncate">
                                                                 {wallet.name}
                                                             </span>
-                                                            <Badge variant={wallet.badgeVariant} className="text-[9px] px-1.5 py-0.2 shrink-0">
+                                                            <Badge variant={wallet.badgeVariant} className="text-[9px] px-1.5 py-0.2 shrink-0 hidden xs:inline-flex">
                                                                 {wallet.status}
                                                             </Badge>
                                                         </div>
@@ -649,7 +686,10 @@ export const LandingPage: React.FC = () => {
                                                         >
                                                             <span>Rek: •••• {wallet.id.slice(-4)}</span>
                                                             {copiedId === wallet.id ? (
-                                                                <Check className="w-3 h-3 text-emerald-400" />
+                                                                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold font-sans">
+                                                                    <Check className="w-3 h-3 text-emerald-400" />
+                                                                    <span>Tersalin!</span>
+                                                                </span>
                                                             ) : (
                                                                 <Copy className="w-3 h-3 text-zinc-500 group-hover:text-zinc-400" />
                                                             )}
@@ -657,13 +697,13 @@ export const LandingPage: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 border-white/5 pt-2 sm:pt-0 shrink-0">
-                                                    <span className="text-[10px] text-zinc-500 uppercase font-mono sm:hidden">
-                                                        Saldo
-                                                    </span>
-                                                    <span className="text-sm sm:text-base font-bold font-mono text-white">
+                                                <div className="text-right shrink-0">
+                                                    <span className="text-xs xs:text-sm sm:text-base font-bold font-mono text-white block">
                                                         {wallet.balance}
                                                     </span>
+                                                    <Badge variant={wallet.badgeVariant} className="text-[9px] px-1.5 py-0.2 shrink-0 xs:hidden inline-flex mt-0.5">
+                                                        {wallet.status}
+                                                    </Badge>
                                                 </div>
                                             </div>
                                         ))}
@@ -676,7 +716,9 @@ export const LandingPage: React.FC = () => {
                                 </div>
 
                                 {/* Kolom Kanan (5 Cols): Riwayat Mutasi Terkini */}
-                                <div className="lg:col-span-5 rounded-xl sm:rounded-2xl bg-[#111116]/90 border border-white/5 p-4 sm:p-6 space-y-3.5 sm:space-y-4 text-left">
+                                <div className={`lg:col-span-5 rounded-xl sm:rounded-2xl bg-[#111116]/90 border border-white/5 p-4 sm:p-6 space-y-3.5 sm:space-y-4 text-left ${
+                                    mobileTab === 'activity' ? 'block' : 'hidden lg:block'
+                                }`}>
                                     <div className="flex items-center justify-between border-b border-white/5 pb-3">
                                         <div>
                                             <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight flex items-center gap-2">
