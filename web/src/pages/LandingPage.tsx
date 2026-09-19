@@ -162,65 +162,131 @@ export const LandingPage: React.FC = () => {
                 </div>
 
                 {/* ===================================================================== */}
-                {/* 3 KARTU NUMPUK SEBAGIAN (Overlapping Fanned Cards ala Mindly)         */}
+                {/* 3 KARTU PORTRAIT NUMPUK SEBAGIAN (Tall Rectangular Cards ala Mindly)  */}
                 {/* ===================================================================== */}
-                <div className="relative mt-16 sm:mt-24 max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-end justify-center md:-space-x-8 lg:-space-x-12 px-2">
-                    {/* KARTU KIRI: IDR (Terselip sebagian kecil di belakang kartu tengah) */}
-                    <div className="w-full max-w-[320px] md:w-[300px] lg:w-[320px] rounded-[2rem] border border-white/10 bg-gradient-to-b from-[#16161c]/95 via-[#111115]/95 to-[#0c0c0e]/95 backdrop-blur-xl p-6 sm:p-7 text-left shadow-2xl relative z-10 md:-rotate-6 md:translate-y-4 md:origin-bottom-right hover:z-30 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col justify-between min-h-[250px] sm:min-h-[260px] group">
-                        <div className="space-y-3">
-                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono font-semibold text-emerald-400">
-                                <span>IDR</span>
-                                <span className="text-zinc-500">•</span>
-                                <span className="text-zinc-300 font-sans">Kas Operasional</span>
+                <div className="relative mt-16 sm:mt-24 max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-end justify-center md:-space-x-8 lg:-space-x-10 px-2">
+                    {/* KARTU KIRI: IDR (Portrait & Terselip Sebagian di Belakang) */}
+                    <div className="w-full max-w-[280px] md:w-[260px] lg:w-[280px] rounded-[2.2rem] border border-white/10 bg-gradient-to-b from-[#16161c]/95 via-[#111115]/95 to-[#0c0c0e]/95 backdrop-blur-xl p-6 text-left shadow-2xl relative z-10 md:-rotate-6 md:translate-y-6 md:origin-bottom-right hover:z-30 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col justify-between min-h-[360px] sm:min-h-[380px] group">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono font-semibold text-emerald-400">
+                                    <span>IDR</span>
+                                    <span className="text-zinc-600">•</span>
+                                    <span className="text-zinc-300 font-sans">Kas Operasional</span>
+                                </div>
+                                <span className="w-2 h-2 rounded-full bg-emerald-400/80" />
                             </div>
-                            <p className="text-sm sm:text-base text-zinc-200 font-semibold leading-relaxed">
-                                Arus kas masuk dan keluar rapi, siap dipantau kapan saja.
+
+                            <div className="space-y-1">
+                                <span className="text-[11px] text-zinc-400 font-medium uppercase tracking-wider block">Saldo Kas</span>
+                                <span className="font-mono text-2xl font-bold text-white tracking-tight block">Rp 45.000.000</span>
+                            </div>
+
+                            <p className="text-xs text-zinc-300 leading-relaxed">
+                                Arus kas masuk dan keluar harian tercatat seimbang otomatis.
                             </p>
+
+                            <div className="p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/60 space-y-1.5 text-[11px]">
+                                <div className="flex items-center justify-between text-zinc-400">
+                                    <span>Terima Invoice</span>
+                                    <span className="font-mono text-emerald-400 font-medium">+Rp 1.500.000</span>
+                                </div>
+                                <div className="flex items-center justify-between text-zinc-400">
+                                    <span>Operasional Toko</span>
+                                    <span className="font-mono text-zinc-300">-Rp 250.000</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs text-zinc-400">
-                            <span className="font-mono text-sm font-bold text-white">Rp 45.000.000</span>
-                            <span className="text-emerald-400 font-medium">Selalu Klop</span>
+                        <div className="pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-zinc-400">
+                            <span>Status Kas</span>
+                            <span className="text-emerald-400 font-medium">100% Klop</span>
                         </div>
                     </div>
 
-                    {/* KARTU TENGAH: Bastion Core (Di depan & menumpuk sebagian kecil kartu kiri & kanan) */}
-                    <div className="w-full max-w-[340px] md:w-[330px] lg:w-[350px] rounded-[2.2rem] border border-blue-500/30 bg-gradient-to-b from-[#1a1a24]/98 via-[#13131a]/98 to-[#0d0d12]/98 backdrop-blur-xl p-7 text-left shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] shadow-blue-500/15 relative z-20 md:-translate-y-3 md:scale-105 hover:scale-108 transition-all duration-300 flex flex-col justify-between min-h-[275px] sm:min-h-[290px] group my-4 md:my-0">
-                        <div className="space-y-3">
-                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-blue-600/15 border border-blue-500/30 text-[11px] font-mono font-semibold text-blue-400">
-                                <span>BASTION</span>
-                                <span className="text-blue-400/50">•</span>
-                                <span className="text-blue-200 font-sans">Sistem Pembukuan</span>
+                    {/* KARTU TENGAH: Bastion Core (Portrait Tinggi di Depan & Menumpuk Sebagian) */}
+                    <div className="w-full max-w-[300px] md:w-[280px] lg:w-[310px] rounded-[2.5rem] border border-blue-500/30 bg-gradient-to-b from-[#1a1a24]/98 via-[#13131a]/98 to-[#0d0d12]/98 backdrop-blur-xl p-7 text-left shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] shadow-blue-500/15 relative z-20 md:-translate-y-2 md:scale-105 hover:scale-108 transition-all duration-300 flex flex-col justify-between min-h-[400px] sm:min-h-[430px] group my-4 md:my-0">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600/15 border border-blue-500/30 text-[11px] font-mono font-semibold text-blue-400">
+                                    <span>BASTION</span>
+                                    <span className="text-blue-400/50">•</span>
+                                    <span className="text-blue-200 font-sans">Sistem Pembukuan</span>
+                                </div>
+                                <span className="text-[10px] font-mono text-blue-400/80 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">
+                                    AKTIF
+                                </span>
                             </div>
-                            <p className="text-lg text-white font-bold leading-snug">
-                                Saldo anti-minus. Uang bisnis Anda tidak akan pernah terpotong dua kali.
-                            </p>
+
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-bold text-white leading-snug tracking-tight">
+                                    Saldo Anti-Minus.
+                                </h3>
+                                <p className="text-xs text-zinc-300 leading-relaxed">
+                                    Uang bisnis Anda tidak akan pernah terpotong dobel atau hilang dari catatan.
+                                </p>
+                            </div>
+
+                            <div className="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 space-y-2 text-xs">
+                                <div className="flex items-center justify-between text-zinc-400">
+                                    <span>Mutasi Hari Ini</span>
+                                    <span className="text-white font-bold font-mono">16 Transaksi</span>
+                                </div>
+                                <div className="flex items-center justify-between text-zinc-400">
+                                    <span>Selisih Pembukuan</span>
+                                    <span className="text-emerald-400 font-bold font-mono">0 (Nol Selisih)</span>
+                                </div>
+                                <div className="flex items-center justify-between text-zinc-400">
+                                    <span>Pencatatan</span>
+                                    <span className="text-blue-300 font-medium">Berpasangan</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs">
-                            <span className="text-zinc-400">16 Transaksi Hari Ini</span>
-                            <span className="text-blue-400 font-bold bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">
-                                0 Selisih
+                        <div className="pt-3.5 border-t border-white/10 flex items-center justify-between text-xs">
+                            <span className="text-zinc-400 text-[11px]">Audit Real-Time</span>
+                            <span className="text-blue-400 font-bold font-mono text-[11px] bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">
+                                Terverifikasi
                             </span>
                         </div>
                     </div>
 
-                    {/* KARTU KANAN: USD (Terselip sebagian kecil di belakang kartu tengah) */}
-                    <div className="w-full max-w-[320px] md:w-[300px] lg:w-[320px] rounded-[2rem] border border-white/10 bg-gradient-to-b from-[#16161c]/95 via-[#111115]/95 to-[#0c0c0e]/95 backdrop-blur-xl p-6 sm:p-7 text-left shadow-2xl relative z-10 md:rotate-6 md:translate-y-4 md:origin-bottom-left hover:z-30 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col justify-between min-h-[250px] sm:min-h-[260px] group">
-                        <div className="space-y-3">
-                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono font-semibold text-purple-400">
-                                <span>USD</span>
-                                <span className="text-zinc-500">•</span>
-                                <span className="text-zinc-300 font-sans">Rekening Dolar</span>
+                    {/* KARTU KANAN: USD (Portrait & Terselip Sebagian di Belakang) */}
+                    <div className="w-full max-w-[280px] md:w-[260px] lg:w-[280px] rounded-[2.2rem] border border-white/10 bg-gradient-to-b from-[#16161c]/95 via-[#111115]/95 to-[#0c0c0e]/95 backdrop-blur-xl p-6 text-left shadow-2xl relative z-10 md:rotate-6 md:translate-y-6 md:origin-bottom-left hover:z-30 hover:rotate-0 hover:translate-y-0 transition-all duration-300 flex flex-col justify-between min-h-[360px] sm:min-h-[380px] group">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono font-semibold text-purple-400">
+                                    <span>USD</span>
+                                    <span className="text-zinc-600">•</span>
+                                    <span className="text-zinc-300 font-sans">Rekening Dolar</span>
+                                </div>
+                                <span className="w-2 h-2 rounded-full bg-purple-400/80" />
                             </div>
-                            <p className="text-sm sm:text-base text-zinc-200 font-semibold leading-relaxed">
-                                Terima pembayaran klien luar negeri tanpa perlu rekening baru.
+
+                            <div className="space-y-1">
+                                <span className="text-[11px] text-zinc-400 font-medium uppercase tracking-wider block">Saldo Dolar</span>
+                                <span className="font-mono text-2xl font-bold text-white tracking-tight block">$3,250.00</span>
+                            </div>
+
+                            <p className="text-xs text-zinc-300 leading-relaxed">
+                                Terima transfer pembayaran klien luar negeri tanpa buka rekening baru.
                             </p>
+
+                            <div className="p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/60 space-y-1.5 text-[11px]">
+                                <div className="flex items-center justify-between text-zinc-400">
+                                    <span>Wire Transfer</span>
+                                    <span className="font-mono text-purple-400 font-medium">+$1,200.00</span>
+                                </div>
+                                <div className="flex items-center justify-between text-zinc-400">
+                                    <span>Langganan Cloud</span>
+                                    <span className="font-mono text-zinc-300">-$49.00</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs text-zinc-400">
-                            <span className="font-mono text-sm font-bold text-white">$3,250.00</span>
-                            <span className="text-purple-400 font-medium">Terverifikasi</span>
+                        <div className="pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-zinc-400">
+                            <span>Konversi Otomatis</span>
+                            <span className="text-purple-400 font-medium">Kurs Bersih</span>
                         </div>
                     </div>
                 </div>
