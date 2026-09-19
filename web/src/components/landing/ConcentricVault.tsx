@@ -114,60 +114,104 @@ export const ConcentricVault: React.FC = () => {
                             </p>
                         </div>
 
-                        {/* 3 Interactive Layer Selector Cards */}
-                        <div className="space-y-2.5 sm:space-y-3 pt-1">
-                            {([1, 2, 3] as LayerId[]).map((id) => {
-                                const item = LAYERS[id];
-                                const isSelected = activeLayer === id;
-                                return (
-                                    <button
-                                        key={id}
-                                        type="button"
-                                        onClick={() => setActiveLayer(id)}
-                                        className={`w-full text-left p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all duration-300 flex items-start gap-3 sm:gap-3.5 group relative overflow-hidden cursor-pointer ${
-                                            isSelected
-                                                ? `bg-zinc-900/95 ${item.accentColor.border} shadow-lg shadow-black/40`
-                                                : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/60'
-                                        }`}
-                                    >
-                                        {/* Active Left Indicator Strip */}
-                                        {isSelected && (
-                                            <div
-                                                className="absolute left-0 top-0 bottom-0 w-1 transition-all"
-                                                style={{ backgroundColor: item.accentColor.ringStroke }}
-                                            />
-                                        )}
-
-                                        <div
-                                            className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                        {/* 3 Interactive Layer Selector — Tab Pills di Mobile, Cards di Desktop */}
+                        <div>
+                            {/* Mobile: Horizontal Tab Pills */}
+                            <div className="flex sm:hidden gap-2 mb-3">
+                                {([1, 2, 3] as LayerId[]).map((id) => {
+                                    const item = LAYERS[id];
+                                    const isSelected = activeLayer === id;
+                                    return (
+                                        <button
+                                            key={id}
+                                            type="button"
+                                            onClick={() => setActiveLayer(id)}
+                                            className={`flex-1 py-2.5 px-2 rounded-xl border text-[10px] font-semibold flex flex-col items-center gap-1.5 transition-all duration-300 cursor-pointer ${
                                                 isSelected
-                                                    ? `${item.accentColor.bg} ${item.accentColor.text}`
-                                                    : 'bg-zinc-900 text-zinc-400 group-hover:text-zinc-200'
+                                                    ? `bg-zinc-900/95 ${item.accentColor.border} shadow-lg`
+                                                    : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
                                             }`}
                                         >
-                                            {id === 1 && <Zap className="w-4 h-4" />}
-                                            {id === 2 && <Lock className="w-4 h-4" />}
-                                            {id === 3 && <Fingerprint className="w-4 h-4" />}
-                                        </div>
-
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between gap-2">
-                                                <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-zinc-500">
-                                                    {item.level}
-                                                </span>
-                                                {isSelected && (
-                                                    <span className={`text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-full ${item.accentColor.bg} ${item.accentColor.text}`}>
-                                                        Aktif
-                                                    </span>
-                                                )}
+                                            {isSelected && (
+                                                <div
+                                                    className="w-full h-0.5 rounded-full -mt-2.5 mb-0.5"
+                                                    style={{ backgroundColor: item.accentColor.ringStroke }}
+                                                />
+                                            )}
+                                            <div
+                                                className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                                                    isSelected
+                                                        ? `${item.accentColor.bg} ${item.accentColor.text}`
+                                                        : 'bg-zinc-900 text-zinc-500'
+                                                }`}
+                                            >
+                                                {id === 1 && <Zap className="w-3.5 h-3.5" />}
+                                                {id === 2 && <Lock className="w-3.5 h-3.5" />}
+                                                {id === 3 && <Fingerprint className="w-3.5 h-3.5" />}
                                             </div>
-                                            <p className={`text-xs sm:text-sm font-semibold mt-0.5 transition-colors ${isSelected ? 'text-white' : 'text-zinc-300 group-hover:text-white'}`}>
-                                                {item.title}
-                                            </p>
-                                        </div>
-                                    </button>
-                                );
-                            })}
+                                            <span className={`text-center leading-tight ${isSelected ? 'text-white' : 'text-zinc-500'}`}>
+                                                {id === 1 ? 'Anti Dobel' : id === 2 ? 'Anti Minus' : 'Buku Terkunci'}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Desktop: Full Layer Cards */}
+                            <div className="hidden sm:flex flex-col gap-2.5 sm:gap-3 pt-1">
+                                {([1, 2, 3] as LayerId[]).map((id) => {
+                                    const item = LAYERS[id];
+                                    const isSelected = activeLayer === id;
+                                    return (
+                                        <button
+                                            key={id}
+                                            type="button"
+                                            onClick={() => setActiveLayer(id)}
+                                            className={`w-full text-left p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all duration-300 flex items-start gap-3 sm:gap-3.5 group relative overflow-hidden cursor-pointer ${
+                                                isSelected
+                                                    ? `bg-zinc-900/95 ${item.accentColor.border} shadow-lg shadow-black/40`
+                                                    : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/60'
+                                            }`}
+                                        >
+                                            {/* Active Left Indicator Strip */}
+                                            {isSelected && (
+                                                <div
+                                                    className="absolute left-0 top-0 bottom-0 w-1 transition-all"
+                                                    style={{ backgroundColor: item.accentColor.ringStroke }}
+                                                />
+                                            )}
+
+                                            <div
+                                                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                                                    isSelected
+                                                        ? `${item.accentColor.bg} ${item.accentColor.text}`
+                                                        : 'bg-zinc-900 text-zinc-400 group-hover:text-zinc-200'
+                                                }`}
+                                            >
+                                                {id === 1 && <Zap className="w-4 h-4" />}
+                                                {id === 2 && <Lock className="w-4 h-4" />}
+                                                {id === 3 && <Fingerprint className="w-4 h-4" />}
+                                            </div>
+
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+                                                        {item.level}
+                                                    </span>
+                                                    {isSelected && (
+                                                        <span className={`text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-full ${item.accentColor.bg} ${item.accentColor.text}`}>
+                                                            Aktif
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className={`text-xs sm:text-sm font-semibold mt-0.5 transition-colors ${isSelected ? 'text-white' : 'text-zinc-300 group-hover:text-white'}`}>
+                                                    {item.title}
+                                                </p>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
 
                         {/* Quick Real-Time Guarantee Note */}
