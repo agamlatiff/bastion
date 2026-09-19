@@ -241,14 +241,14 @@ export const LandingPage: React.FC = () => {
                 {/* Hero Content (Lugas & To The Point) */}
                 <div className="space-y-5 max-w-3xl mx-auto relative z-10">
                     <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.15] text-balance font-heading">
-                        Kelola Uang Bisnis <br className="hidden sm:inline" />
+                        Kelola Keuangan Bisnis Lebih Tenang, <br className="hidden sm:inline" />
                         <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(56,189,248,0.2)]">
-                            Tanpa Selisih.
+                            Pasti Rapi dan Aman.
                         </span>
                     </h1>
 
-                    <p className="text-base sm:text-lg text-zinc-300/90 max-w-xl mx-auto leading-relaxed">
-                        Pencatatan otomatis dan saldo anti-minus dalam satu dasbor modern.
+                    <p className="text-base sm:text-lg text-zinc-300 max-w-xl mx-auto leading-relaxed">
+                        Semua uang masuk dan keluar tercatat otomatis secara akurat. Bebas salah hitung, tanpa repot rekap manual setiap hari.
                     </p>
 
                     {/* Tombol CTA Pill */}
