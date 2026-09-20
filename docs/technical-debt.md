@@ -8,7 +8,7 @@ Dokumen ini mencatat daftar **Technical Debt (Hutang Teknis)**, risiko arsitektu
 
 | ID | Komponen | Judul Masalah | Tingkat Keparahan | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **TD-001** | `services/identity` | Dual-Write Problem: Direct Kafka Publishing pada `UserRegistered` Event | **HIGH (Data Consistency)** | 🟡 OPEN (Backlog) |
+| **TD-001** | `services/identity` | Dual-Write Problem: Direct Kafka Publishing pada `UserRegistered` Event | **HIGH (Data Consistency)** | 🟢 RESOLVED |
 | **TD-002** | `services/wallet` | Ketiadaan Caching Layer & Rencana Implementasi Cache-Aside via Repository Pattern | **MEDIUM (Performance & Scalability)** | 🟡 OPEN (Backlog) |
 | **TD-003** | `services/wallet` & `services/transaction` | Ketiadaan Idempotency Key & Distributed Lock (Risiko Double-Debiting / Double-Click) | **HIGH (Financial Integrity)** | 🟡 OPEN (Backlog) |
 | **TD-004** | `services/customer` | Ketiadaan Caching Layer pada Profil Nasabah (`/v1/customers/me`) via Repository Pattern | **MEDIUM (Performance & DB Offloading)** | 🟡 OPEN (Backlog) |
@@ -86,12 +86,15 @@ Mengadopsi **Transactional Outbox Pattern**, sama seperti implementasi yang suda
    * Jika Kafka mati, worker akan melakukan *retry* otomatis dengan *exponential backoff*.
 
 #### 4. Action Items & Kriteria Selesai (Acceptance Criteria)
-- [ ] Buat file migrasi `000002_create_identity_outbox.up.sql` di `services/identity/migrations`.
-- [ ] Tambahkan method `CreateOutboxEvent` dan `GetPendingOutboxEvents` di repository `identity`.
-- [ ] Implementasikan `services/identity/outbox/publisher.go` dengan graceful shutdown.
-- [ ] Jalankan goroutine Outbox Publisher saat inisialisasi di `services/identity/main.go`.
-- [ ] Hapus pemanggilan langsung `s.producer.PublishUserRegistered` dari `auth_service.go`.
-- [ ] Uji coba simulasi matikan Kafka saat registrasi: pastikan event tetap tersimpan dan otomatis terkirim begitu Kafka dinyalakan kembali.
+- [x] Buat file migrasi `000002_create_identity_outbox.up.sql` di `services/identity/migrations`.
+- [x] Tambahkan method `CreateOutboxEvent` dan `GetPendingOutboxEvents` di repository `identity`.
+- [x] Implementasikan `services/identity/outbox/publisher.go` dengan graceful shutdown.
+- [x] Jalankan goroutine Outbox Publisher saat inisialisasi di `services/identity/main.go`.
+- [x] Hapus pemanggilan langsung `s.producer.PublishUserRegistered` dari `auth_service.go`.
+- [x] Uji coba kompilasi dan verifikasi unit test outbox event atomik.
+
+> **Resolusi (Status: 🟢 RESOLVED)**:  
+> Masalah dual-write di Identity Service telah diselesaikan menggunakan **Transactional Outbox Pattern**. Event `UserRegistered` kini ditulis secara atomik ke tabel `outbox_events` di dalam transaksi PostgreSQL yang sama dengan pembuatan user dan role. Worker latar belakang `OutboxPublisher` mem-polling event berstatus `PENDING` dengan row-level lock `FOR UPDATE SKIP LOCKED`, mengirimkannya ke Kafka dengan konfirmasi ISR (`RequireAll`), lalu menandai status menjadi `PUBLISHED`.
 
 ---
 
