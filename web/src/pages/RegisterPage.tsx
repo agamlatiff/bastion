@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { BastionLogo } from '../components/common/BastionLogo';
+import { PasswordStrengthMeter } from '../components/auth/PasswordStrengthMeter';
 import { registerApi } from '../features/auth/api';
 import { useAuth } from '../features/auth/useAuth';
 import { normalizeError } from '../lib/error';
@@ -130,7 +131,7 @@ export const RegisterPage: React.FC = () => {
                     {/* Password Input */}
                     <div className="space-y-1.5">
                         <label className="block text-xs font-semibold text-zinc-300">
-                            Kata Sandi (Minimal 8 karakter)
+                            Kata Sandi
                         </label>
                         <div className="relative">
                             <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -148,7 +149,7 @@ export const RegisterPage: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                                className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
                             >
                                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
@@ -156,13 +157,29 @@ export const RegisterPage: React.FC = () => {
                         {fieldErrors.password && (
                             <p className="text-[11px] text-rose-400 pl-1">{fieldErrors.password}</p>
                         )}
+
+                        {/* Real-time Password Strength Meter */}
+                        <PasswordStrengthMeter password={password} />
                     </div>
 
                     {/* Confirm Password Input */}
                     <div className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-zinc-300">
-                            Ulangi Kata Sandi
-                        </label>
+                        <div className="flex items-center justify-between">
+                            <label className="block text-xs font-semibold text-zinc-300">
+                                Ulangi Kata Sandi
+                            </label>
+                            {confirmPassword.length > 0 && (
+                                <span
+                                    className={`text-[11px] font-medium transition-colors ${
+                                        confirmPassword === password
+                                            ? 'text-emerald-400 font-semibold'
+                                            : 'text-zinc-500'
+                                    }`}
+                                >
+                                    {confirmPassword === password ? '✓ Cocok' : 'Belum cocok'}
+                                </span>
+                            )}
+                        </div>
                         <div className="relative">
                             <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                             <input
@@ -174,12 +191,16 @@ export const RegisterPage: React.FC = () => {
                                     if (fieldErrors.confirmPassword) setFieldErrors((prev) => ({ ...prev, confirmPassword: undefined }));
                                 }}
                                 disabled={isSubmitting}
-                                className="w-full py-2.5 sm:py-3 pl-10 sm:pl-11 pr-10 sm:pr-11 rounded-xl bg-[#09090b] border border-zinc-800 text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 transition-all"
+                                className={`w-full py-2.5 sm:py-3 pl-10 sm:pl-11 pr-10 sm:pr-11 rounded-xl bg-[#09090b] border text-xs sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-all ${
+                                    confirmPassword.length > 0 && confirmPassword === password
+                                        ? 'border-emerald-500/50 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/25'
+                                        : 'border-zinc-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25'
+                                }`}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                                className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
                             >
                                 {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
