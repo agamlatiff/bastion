@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -54,7 +55,7 @@ func NewAuthService(repo repository.Repository, cfg *config.Config, producer eve
 	}
 }
 
-// Register registers a new user with default CUSTOMER role and Argon2id hashed password.
+// Register registers a new user with default CUSTOMER role and Argon2id hashed password, persisting outbox event atomically.
 func (s *authService) Register(ctx context.Context, req domain.RegisterRequest, requestID, ip string) (*domain.UserResponse, error) {
 	email := strings.ToLower(strings.TrimSpace(req.Email))
 
@@ -74,19 +75,44 @@ func (s *authService) Register(ctx context.Context, req domain.RegisterRequest, 
 		UpdatedAt:    now,
 	}
 
-	if err := s.repo.CreateUser(ctx, user); err != nil {
+	// Prepare domain event envelope for reliable outbox publishing
+	envelope := event.EventEnvelope{
+		EventID:       uuid.New().String(),
+		EventType:     "UserRegistered",
+		EventVersion:  "1.0",
+		CorrelationID: requestID,
+		Timestamp:     now,
+		Data: event.UserRegisteredPayload{
+			UserID: user.ID.String(),
+			Email:  user.Email,
+			Role:   "CUSTOMER",
+			Status: string(user.Status),
+		},
+	}
+
+	payloadBytes, err := json.Marshal(envelope)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal outbox event payload: %w", err)
+	}
+
+	outboxEvt := &domain.OutboxEvent{
+		ID:            uuid.New(),
+		AggregateType: "USER",
+		AggregateID:   user.ID,
+		EventType:     "UserRegistered",
+		Payload:       payloadBytes,
+		Status:        domain.OutboxStatusPending,
+		RetryCount:    0,
+		CreatedAt:     now,
+	}
+
+	// Save user and outbox event in the same ACID transaction
+	if err := s.repo.CreateUser(ctx, user, outboxEvt); err != nil {
 		return nil, err
 	}
 
 	// Record security audit event
 	s.repo.LogSecurityAudit(ctx, &user.ID, "USER_REGISTERED", requestID, ip)
-
-	// Publish UserRegistered event to Kafka
-	if s.producer != nil {
-		if err := s.producer.PublishUserRegistered(ctx, user.ID.String(), user.Email, "CUSTOMER", string(user.Status), requestID); err != nil {
-			fmt.Printf("[EVENT WARN] failed to publish UserRegistered event: %v\n", err)
-		}
-	}
 
 	return &domain.UserResponse{
 		ID:        user.ID,

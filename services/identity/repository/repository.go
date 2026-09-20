@@ -21,7 +21,7 @@ var (
 
 // Repository defines the contract for identity persistence operations.
 type Repository interface {
-	CreateUser(ctx context.Context, user *domain.User) error
+	CreateUser(ctx context.Context, user *domain.User, event *domain.OutboxEvent) error
 	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*domain.User, error)
 	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]string, error)
@@ -31,6 +31,9 @@ type Repository interface {
 	RevokeSession(ctx context.Context, sessionID uuid.UUID) error
 	RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error
 	LogSecurityAudit(ctx context.Context, userID *uuid.UUID, action, requestID, ip string)
+	GetPendingOutboxEvents(ctx context.Context, limit int) ([]*domain.OutboxEvent, error)
+	MarkOutboxEventPublished(ctx context.Context, id uuid.UUID) error
+	MarkOutboxEventFailed(ctx context.Context, id uuid.UUID, maxRetries int) error
 }
 
 type pgxRepository struct {
@@ -42,8 +45,8 @@ func New(db *pgxpool.Pool) Repository {
 	return &pgxRepository{db: db}
 }
 
-// CreateUser inserts a new user and assigns the default CUSTOMER role in a single transaction.
-func (r *pgxRepository) CreateUser(ctx context.Context, user *domain.User) error {
+// CreateUser inserts a new user, assigns the default CUSTOMER role, and records an outbox event in a single transaction.
+func (r *pgxRepository) CreateUser(ctx context.Context, user *domain.User, event *domain.OutboxEvent) error {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -78,6 +81,26 @@ func (r *pgxRepository) CreateUser(ctx context.Context, user *domain.User) error
 	`
 	if _, err := tx.Exec(ctx, queryRole, user.ID); err != nil {
 		return fmt.Errorf("failed to assign default role: %w", err)
+	}
+
+	// 3. Atomically persist outbox event if provided
+	if event != nil {
+		queryOutbox := `
+			INSERT INTO outbox_events (id, aggregate_type, aggregate_id, event_type, payload, status, retry_count, created_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`
+		if _, err := tx.Exec(ctx, queryOutbox,
+			event.ID,
+			event.AggregateType,
+			event.AggregateID,
+			event.EventType,
+			event.Payload,
+			event.Status,
+			event.RetryCount,
+			event.CreatedAt,
+		); err != nil {
+			return fmt.Errorf("failed to insert outbox event: %w", err)
+		}
 	}
 
 	return tx.Commit(ctx)
@@ -259,3 +282,64 @@ func (r *pgxRepository) LogSecurityAudit(ctx context.Context, userID *uuid.UUID,
 	`
 	_, _ = r.db.Exec(ctx, query, uuid.New(), userID, action, requestID, ip, time.Now().UTC())
 }
+
+// GetPendingOutboxEvents retrieves pending outbox events ordered by creation time, with row-level locking.
+func (r *pgxRepository) GetPendingOutboxEvents(ctx context.Context, limit int) ([]*domain.OutboxEvent, error) {
+	query := `
+		SELECT id, aggregate_type, aggregate_id, event_type, payload, status, retry_count, created_at, published_at
+		FROM outbox_events
+		WHERE status = 'PENDING'
+		ORDER BY created_at ASC
+		LIMIT $1
+		FOR UPDATE SKIP LOCKED
+	`
+	rows, err := r.db.Query(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []*domain.OutboxEvent
+	for rows.Next() {
+		var e domain.OutboxEvent
+		if err := rows.Scan(
+			&e.ID,
+			&e.AggregateType,
+			&e.AggregateID,
+			&e.EventType,
+			&e.Payload,
+			&e.Status,
+			&e.RetryCount,
+			&e.CreatedAt,
+			&e.PublishedAt,
+		); err != nil {
+			return nil, err
+		}
+		events = append(events, &e)
+	}
+	return events, rows.Err()
+}
+
+// MarkOutboxEventPublished marks an event as successfully published.
+func (r *pgxRepository) MarkOutboxEventPublished(ctx context.Context, id uuid.UUID) error {
+	query := `
+		UPDATE outbox_events
+		SET status = 'PUBLISHED', published_at = $1
+		WHERE id = $2
+	`
+	_, err := r.db.Exec(ctx, query, time.Now().UTC(), id)
+	return err
+}
+
+// MarkOutboxEventFailed increments retry count and transitions status to FAILED if maxRetries exceeded.
+func (r *pgxRepository) MarkOutboxEventFailed(ctx context.Context, id uuid.UUID, maxRetries int) error {
+	query := `
+		UPDATE outbox_events
+		SET retry_count = retry_count + 1,
+			status = CASE WHEN retry_count + 1 >= $1 THEN 'FAILED' ELSE 'PENDING' END
+		WHERE id = $2
+	`
+	_, err := r.db.Exec(ctx, query, maxRetries, id)
+	return err
+}
+

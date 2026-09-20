@@ -8,12 +8,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/agamlatiff/bastion/services/identity/config"
 	"github.com/agamlatiff/bastion/services/identity/event"
 	"github.com/agamlatiff/bastion/services/identity/handler"
+	"github.com/agamlatiff/bastion/services/identity/outbox"
 	"github.com/agamlatiff/bastion/services/identity/repository"
 	"github.com/agamlatiff/bastion/services/identity/service"
 	"github.com/gin-gonic/gin"
@@ -67,6 +69,11 @@ func main() {
 	defer eventProducer.Close()
 	authSvc := service.NewAuthService(repo, cfg, eventProducer)
 	authHdr := handler.NewAuthHandler(authSvc, cfg.JWTSecret)
+
+	// Start Transactional Outbox background worker
+	outboxPub := outbox.NewOutboxPublisher(repo, strings.Split(cfg.KafkaBrokers, ","), "bastion.identity.events")
+	go outboxPub.Start(context.Background())
+	defer outboxPub.Stop()
 
 	// 5. Setup Gin HTTP router
 	router := gin.New()
