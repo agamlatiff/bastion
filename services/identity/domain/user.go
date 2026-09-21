@@ -97,3 +97,14 @@ type TwoFactorVerifyRequest struct {
 	TempToken string `json:"temp_token" binding:"required"`
 	Code      string `json:"code" binding:"required,len=6"`
 }
+
+// AssignRoleRequest is the DTO used by administrators to assign a role to a user.
+type AssignRoleRequest struct {
+	Role string `json:"role" binding:"required"`
+}
+
+// AdminUserListResponse is the paginated response returned when listing system users.
+type AdminUserListResponse struct {
+	Total int            `json:"total"`
+	Users []UserResponse `json:"users"`
+}

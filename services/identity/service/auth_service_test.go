@@ -61,6 +61,18 @@ func (m *mockRepository) MarkOutboxEventPublished(ctx context.Context, id uuid.U
 func (m *mockRepository) MarkOutboxEventFailed(ctx context.Context, id uuid.UUID, maxRetries int) error {
 	return nil
 }
+func (m *mockRepository) AssignUserRole(ctx context.Context, userID uuid.UUID, roleName string) error {
+	return nil
+}
+func (m *mockRepository) RevokeUserRole(ctx context.Context, userID uuid.UUID, roleName string) error {
+	return nil
+}
+func (m *mockRepository) ListUsers(ctx context.Context, limit, offset int) ([]*domain.User, int, error) {
+	return nil, 0, nil
+}
+func (m *mockRepository) ListRoles(ctx context.Context) ([]string, error) {
+	return []string{"CUSTOMER", "ADMIN"}, nil
+}
 
 func TestRegister_PersistsOutboxEvent(t *testing.T) {
 	mockRepo := &mockRepository{}

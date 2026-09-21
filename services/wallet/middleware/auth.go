@@ -12,10 +12,11 @@ import (
 )
 
 type CustomClaims struct {
-	UserID    string `json:"user_id"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
-	TokenType string `json:"token_type"`
+	UserID    string   `json:"user_id"`
+	Email     string   `json:"email"`
+	Role      string   `json:"role"`
+	Roles     []string `json:"roles"`
+	TokenType string   `json:"token_type"`
 	jwt.RegisteredClaims
 }
 
@@ -87,9 +88,16 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 			return
 		}
 
-		// Set customer_id and user_id in Gin context
+		// Set customer_id, user_id, roles, and claims in Gin context
 		c.Set("customer_id", customerID)
 		c.Set("user_id", customerID)
+
+		roles := claims.Roles
+		if len(roles) == 0 && claims.Role != "" {
+			roles = []string{claims.Role}
+		}
+		c.Set("roles", roles)
+		c.Set("claims", claims)
 		c.Next()
 	}
 }
@@ -105,4 +113,53 @@ func GetCustomerID(c *gin.Context) (uuid.UUID, error) {
 		return uuid.Nil, errors.New("invalid customer ID type in context")
 	}
 	return id, nil
+}
+
+// GetRoles extracts the roles array from the Gin context.
+func GetRoles(c *gin.Context) []string {
+	val, exists := c.Get("roles")
+	if !exists {
+		return nil
+	}
+	roles, ok := val.([]string)
+	if !ok {
+		return nil
+	}
+	return roles
+}
+
+// HasRole checks if the authenticated user has the specified role (case-insensitive).
+func HasRole(c *gin.Context, role string) bool {
+	roles := GetRoles(c)
+	for _, r := range roles {
+		if strings.EqualFold(r, role) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasAnyRole checks if the authenticated user has at least one of the specified roles.
+func HasAnyRole(c *gin.Context, roles ...string) bool {
+	for _, role := range roles {
+		if HasRole(c, role) {
+			return true
+		}
+	}
+	return false
+}
+
+// RequireRole enforces that the caller has at least one of the specified roles.
+func RequireRole(allowedRoles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if HasAnyRole(c, allowedRoles...) {
+			c.Next()
+			return
+		}
+
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error":   "Forbidden",
+			"message": "Access denied: insufficient role privileges",
+		})
+	}
 }

@@ -166,17 +166,11 @@ func (s *authService) Verify2FALogin(ctx context.Context, req domain.TwoFactorVe
 		return nil, ErrInvalidTwoFactorCode
 	}
 
-	// 5. Resolve user's primary role
-	primaryRole := "CUSTOMER"
-	if len(user.Roles) > 0 {
-		primaryRole = user.Roles[0]
-	}
-
-	// 6. Issue full access and refresh token pair
+	// 5. Issue full access and refresh token pair with multi-role claims
 	tokenPair, err := security.GenerateTokenPair(
 		user.ID.String(),
 		user.Email,
-		primaryRole,
+		user.Roles,
 		s.authCfg.JWTSecret,
 		s.authCfg.AccessTokenExpiryMins,
 		s.authCfg.RefreshTokenExpiryDays,
