@@ -8,57 +8,12 @@ Dokumen ini mencatat daftar **Technical Debt (Hutang Teknis)**, risiko arsitektu
 
 | ID | Komponen | Judul Masalah | Tingkat Keparahan | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **TD-007** | `services/identity` | Ketiadaan Structured Error Logging pada HTTP Handler (Silent 500 Internal Server Errors) | **MEDIUM (Observability & Debuggability)** | 🟡 OPEN (Backlog) |
 | **TD-008** | `services/identity` | Monolithic Service & Handler Bloat: Percampuran Tanggung Jawab Core Auth dan 2FA/MFA | **LOW (Code Organization & Maintainability)** | 🟡 OPEN (Backlog) |
 | **TD-009** | All Services | Ketiadaan Standarisasi Komentar Kode: Inkonsistensi Bahasa & Ketiadaan Step-by-Step per Section pada Fungsi Kompleks | **LOW (Readability & Maintainability)** | 🟡 OPEN (Backlog) |
 
 ---
 
 ## 📌 Detail Masalah
-
-
----
-
-### TD-007: Ketiadaan Structured Error Logging pada HTTP Handler Layer
-
-#### 1. Deskripsi Masalah (Context)
-Pada [`services/identity/handler/auth_handler.go`](file:///c:/Projects/bastion/services/identity/handler/auth_handler.go) (seperti pada fungsi `Register`, `Login`, `RefreshToken`), saat terjadi kegagalan sistem internal tak terduga (HTTP 500), error teknis rantai dari Database/Repository/Service hanya dibuang begitu saja ke dalam respons `c.JSON(http.StatusInternalServerError, ...)` tanpa dicatat ke server console log (`log.Printf`, `c.Error(err)`, atau structured logger).
-* Konsol terminal Gin hanya menampilkan baris access log standar:
-  `[GIN] 2026/09/14 - 16:15:37 | 500 | 2.15ms | 127.0.0.1 | POST "/v1/auth/register"`
-* Penyebab asli kegagalan (seperti PostgreSQL connection timeout, query constraint failure, encryption crash) menjadi **hilang tanpa jejak (Silent Failure)**.
-
-#### 2. Risiko & Dampak Teknis (Impact)
-* **Zero Observability saat Insiden Produksi:** Tim teknis tidak dapat melakukan *root cause analysis* (investigasi akar masalah) ketika nasabah mengeluh gagal login atau gagal register karena error internal tidak pernah tercetak di server log.
-* **Terputusnya Jejak Distributed Tracing:** Header `X-Request-ID` yang sudah susah payah dibuat oleh API Gateway tidak terkorelasikan dengan pesan error database di server terminal identity.
-
-#### 3. Rekomendasi Solusi: Centralized Logging at Handler Layer
-Mengadopsi aturan standar logging di Go: **"Log an error OR return it, NEVER both!"**
-* **Repository & Service Layer:** Tetap bersih tanpa pemanggilan `log.Printf`. Cukup membungkus error dengan `fmt.Errorf("...: %w", err)` dan meneruskannya ke atas.
-* **Handler Layer (Titik Tunggal Pencatatan Log):** Tangkap seluruh error `500` dan cetak ke log terminal bersama `X-Request-ID` sebelum mengembalikan respons aman ke pengguna:
-  ```go
-  if err != nil {
-      if errors.Is(err, repository.ErrDuplicateEmail) {
-          c.JSON(http.StatusConflict, gin.H{"error": "Email is already registered"})
-          return
-      }
-
-      // Catat error internal lengkap (DB + Repo + Service) beserta Request-ID ke console:
-      log.Printf("[ERROR] [RequestID: %s] Failed to register user: %v", requestID, err)
-      
-      // Atau manfaatkan Gin Error accumulator:
-      // c.Error(err)
-
-      // Kembalikan respons yang aman dan ramah ke user:
-      c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user account"})
-      return
-  }
-  ```
-
-#### 4. Action Items & Kriteria Selesai (Acceptance Criteria)
-- [ ] Tambahkan baris pencatatan error (`log.Printf` atau `c.Error`) pada seluruh blok penanganan error `500` di `services/identity/handler/auth_handler.go`.
-- [ ] Pastikan setiap baris log error selalu menyertakan `requestID` (`X-Request-ID`) untuk penelusuran terpadu.
-- [ ] Pastikan pesan error yang dikirimkan ke respons HTTP JSON pengguna tetap bersih tanpa membocorkan detail teknis internal database.
-- [ ] Simulasikan mematikan container PostgreSQL dan pastikan pesan error rantai lengkap (`failed to insert user: dial tcp...`) muncul dengan jelas di terminal saat request register/login dijalankan.
 
 ---
 
