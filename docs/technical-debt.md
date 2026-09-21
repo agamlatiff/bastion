@@ -8,7 +8,6 @@ Dokumen ini mencatat daftar **Technical Debt (Hutang Teknis)**, risiko arsitektu
 
 | ID | Komponen | Judul Masalah | Tingkat Keparahan | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **TD-003** | `services/wallet` & `services/transaction` | Ketiadaan Idempotency Key & Distributed Lock (Risiko Double-Debiting / Double-Click) | **HIGH (Financial Integrity)** | 🟡 OPEN (Backlog) |
 | **TD-004** | `services/customer` | Ketiadaan Caching Layer pada Profil Nasabah (`/v1/customers/me`) via Repository Pattern | **MEDIUM (Performance & DB Offloading)** | 🟡 OPEN (Backlog) |
 | **TD-005** | `services/identity` | Fat Config Anti-Pattern: Injeksi Objek Global Config ke dalam Service Layer | **LOW - MEDIUM (Code Quality & Maintainability)** | 🟡 OPEN (Backlog) |
 | **TD-006** | `services/identity` | Leaky Infrastructure Dependency: Injeksi `*redis.Client` ke dalam `AuthHandler.RegisterRoutes` | **LOW (Code Smells & Separation of Concerns)** | 🟡 OPEN (Backlog) |
@@ -20,38 +19,6 @@ Dokumen ini mencatat daftar **Technical Debt (Hutang Teknis)**, risiko arsitektu
 
 ## 📌 Detail Masalah
 
-
----
-
-### TD-003: Ketiadaan Idempotency Key & Distributed Lock pada Mutasi Transaksi
-
-#### 1. Deskripsi Masalah (Context)
-Pada transaksi finansial (seperti pembuatan transaksi, transfer dana, pemotongan saldo, atau top up), pengguna sering kali menekan tombol aksi lebih dari satu kali (*double click*) saat koneksi internet mengalami latensi.
-* Saat ini belum ada mekanisme validasi `Idempotency-Key` atau *Distributed Lock* di layer API/Repository `services/wallet` maupun `services/transaction`.
-* **Risiko Finansial (Critical Impact):** Dua thread atau goroutine terpisah dapat mengeksekusi proses mutasi saldo secara paralel untuk satu intensi transaksi yang sama, mengakibatkan **saldo terpotong ganda (*double-debiting*)** atau terciptanya mutasi duplikat di buku besar.
-
-#### 2. Rekomendasi Solusi (Redis Distributed Lock & Idempotency)
-Memanfaatkan operasi atomik Redis `SET ... NX EX` sebagai pintu gerbang idempotensi:
-1. Client wajib mengirimkan header HTTP: `Idempotency-Key: <UUID>`.
-2. Sebelum mengeksekusi mutasi di database, periksa dan klaim lock di Redis:
-   ```go
-   // Set key hanya jika belum ada (NX) dengan masa berlaku (EX) misal 120 detik
-   acquired, err := rdb.SetArgs(ctx, "idempotency:"+idempotencyKey, "PROCESSING", redis.SetArgs{
-       Mode: "NX",
-       TTL:  120 * time.Second,
-   }).Result()
-   ```
-3. Jika key sudah ada (`acquired == false`):
-   * Jika nilainya `"PROCESSING"`, tolak request dengan HTTP `409 Conflict` (*"Transaction currently being processed"*).
-   * Jika nilainya berisi hasil respons yang sudah selesai di-cache, langsung kembalikan respons tersebut tanpa mengeksekusi ulang ke database.
-4. Setelah transaksi PostgreSQL selesai di-commit:
-   * Update nilai key dengan respons sukses dan perpanjang TTL (misal 24 jam) agar request berulang dengan key yang sama mengembalikan respons identik.
-
-#### 3. Action Items & Kriteria Selesai (Acceptance Criteria)
-- [ ] Buat middleware atau repository decorator `IdempotencyManager` di `services/wallet`.
-- [ ] Terapkan validasi header `Idempotency-Key` pada setiap mutasi finansial (POST / PATCH).
-- [ ] Simpan status dan hasil eksekusi ke Redis secara atomik dengan batas TTL.
-- [ ] Uji coba skenario *concurrent request*: tembakkan 5 request paralel dengan `Idempotency-Key` yang sama; pastikan hanya 1 request yang diproses oleh PostgreSQL/Ledger dan 4 lainnya ditolak dengan aman.
 
 ---
 
