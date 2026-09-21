@@ -8,49 +8,11 @@ Dokumen ini mencatat daftar **Technical Debt (Hutang Teknis)**, risiko arsitektu
 
 | ID | Komponen | Judul Masalah | Tingkat Keparahan | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **TD-008** | `services/identity` | Monolithic Service & Handler Bloat: Percampuran Tanggung Jawab Core Auth dan 2FA/MFA | **LOW (Code Organization & Maintainability)** | 🟡 OPEN (Backlog) |
 | **TD-009** | All Services | Ketiadaan Standarisasi Komentar Kode: Inkonsistensi Bahasa & Ketiadaan Step-by-Step per Section pada Fungsi Kompleks | **LOW (Readability & Maintainability)** | 🟡 OPEN (Backlog) |
 
 ---
 
 ## 📌 Detail Masalah
-
----
-
-### TD-008: Monolithic Service & Handler Bloat pada Fitur 2FA/MFA
-
-#### 1. Deskripsi Masalah (Context)
-File [`services/identity/service/auth_service.go`](file:///c:/Projects/bastion/services/identity/service/auth_service.go) (>500 baris) dan [`services/identity/handler/auth_handler.go`](file:///c:/Projects/bastion/services/identity/handler/auth_handler.go) (>300 baris) menggabungkan dua domain tanggung jawab (*sub-domains*) yang berbeda ke dalam satu file fisik monolitik:
-1. **Core Identity & Session Management:** Pendaftaran akun (`Register`), Otentikasi password (`Login`), Rotasi session token (`RefreshToken`), dan Logout.
-2. **Two-Factor Authentication (2FA / MFA):** Registrasi kunci TOTP (`Setup2FA`), Verifikasi dan aktivasi (`Enable2FA`), Pencabutan kunci (`Disable2FA`), dan Penyelesaian tantangan login 2FA (`Verify2FALogin`) beserta enkripsi simetris AES-256.
-
-#### 2. Risiko & Dampak Teknis (Impact)
-* **Pelanggaran Prinsip *Single Responsibility* & *High Cognitive Load*:** Developer harus membaca dan menelusuri ratusan baris kode yang mencampurkan logika otentikasi sesi JWT dasar dengan logika kriptografi TOTP dan pengelolaan master key enkripsi.
-* **Risiko *Merge Conflict* Git:** Jika ada developer yang memodifikasi alur rotasi refresh token sementara developer lain memperbaiki alur validasi OTP 2FA, risiko bentrokan (*merge conflict*) di file yang sama menjadi sangat tinggi.
-* **Pengujian Terisolasi yang Sulit:** File pengujian (`auth_service_test.go`) menjadi sangat panjang dan sulit dikelola karena mencakup pengujian sesi dan pengujian OTP dalam satu file raksasa.
-
-#### 3. Rekomendasi Solusi: Pemisahan Berbasis Sub-Domain (Domain-Focused Files)
-Memanfaatkan fitur package Go di mana method pada struct yang sama dapat dipecah ke dalam beberapa file fisik tanpa merusak antarmuka publik:
-
-```text
-services/identity/service/
-├── auth_service.go        (~250 baris: Register, Login, RefreshToken, Logout)
-└── two_factor_service.go  (~250 baris: Setup2FA, Enable2FA, Disable2FA, Verify2FALogin)
-
-services/identity/handler/
-├── auth_handler.go        (~150 baris: Handler Register, Login, Refresh, Logout)
-└── two_factor_handler.go  (~150 baris: Handler Setup2FA, Enable2FA, Disable2FA, Verify2FA)
-```
-
-Dengan pemisahan ini:
-* Struct `authService` dan `AuthHandler` tetap utuh tanpa merusak kode lain di luar package.
-* Ukuran setiap file menjadi ringkas (< 250 baris) dengan fokus tanggung jawab yang terisolasi rapi.
-
-#### 4. Action Items & Kriteria Selesai (Acceptance Criteria)
-- [ ] Pindahkan implementasi method `Setup2FA`, `Enable2FA`, `Disable2FA`, dan `Verify2FALogin` ke file baru `services/identity/service/two_factor_service.go`.
-- [ ] Pindahkan handler HTTP terkait 2FA ke file baru `services/identity/handler/two_factor_handler.go`.
-- [ ] Pastikan seluruh unit test dan kompilasi project (`go build ./...`) tetap berhasil tanpa ada perubahan *contract* publik.
-- [ ] Pastikan masing-masing file memiliki ukuran yang ideal dan terfokus pada satu domain tanggung jawab.
 
 ---
 
