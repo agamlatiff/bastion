@@ -3,7 +3,8 @@ import { NavLink } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
 import { BastionLogo } from '../../components/common/BastionLogo';
-import { navigationItems } from './navigation';
+import { navigationItems, adminNavigationItems } from './navigation';
+import { useAuth } from '../../features/auth/useAuth';
 
 export interface MobileNavProps {
     isOpen: boolean;
@@ -11,6 +12,7 @@ export interface MobileNavProps {
 }
 
 export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
+    const { isAdmin } = useAuth();
     return (
         <>
             {/* Backdrop */}
@@ -65,6 +67,35 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
                             </NavLink>
                         );
                     })}
+
+                    {isAdmin && (
+                        <div className="pt-4 mt-2 border-t border-zinc-800 space-y-1">
+                            <div className="px-3.5 pb-2 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                                Administrasi
+                            </div>
+                            {adminNavigationItems.map((item) => {
+                                const Icon = item.icon;
+                                return (
+                                    <NavLink
+                                        key={item.name}
+                                        to={item.href}
+                                        onClick={onClose}
+                                        className={({ isActive }) =>
+                                            clsx(
+                                                'flex items-center gap-3.5 px-3.5 py-3 text-sm font-medium rounded-xl transition-all',
+                                                isActive
+                                                    ? 'bg-amber-950/40 text-amber-300 font-semibold border border-amber-800/60'
+                                                    : 'text-zinc-400 hover:text-amber-200 hover:bg-zinc-900'
+                                            )
+                                        }
+                                    >
+                                        <Icon className="w-5 h-5 shrink-0 text-amber-400" />
+                                        {item.name}
+                                    </NavLink>
+                                );
+                            })}
+                        </div>
+                    )}
                 </nav>
             </div>
 

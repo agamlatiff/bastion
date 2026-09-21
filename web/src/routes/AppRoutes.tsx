@@ -4,6 +4,7 @@ import { AuthLayout } from '../layouts/AuthLayout';
 import { AppLayout } from '../layouts/AppLayout';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicRoute } from './PublicRoute';
+import { RoleRoute } from './RoleRoute';
 
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
@@ -12,6 +13,7 @@ import { WalletsPage } from '../pages/WalletsPage';
 import { WalletDetailPage } from '../pages/WalletDetailPage';
 import { ActivityPage } from '../pages/ActivityPage';
 import { ProfilePage } from '../pages/ProfilePage';
+import { AdminUsersPage } from '../pages/AdminUsersPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { LandingPage } from '../pages/LandingPage';
 
@@ -38,6 +40,11 @@ export const AppRoutes: React.FC = () => {
                     <Route path="/app/wallets/:walletId" element={<WalletDetailPage />} />
                     <Route path="/app/activity" element={<ActivityPage />} />
                     <Route path="/app/profile" element={<ProfilePage />} />
+
+                    {/* Administrator RBAC Protected Routes */}
+                    <Route element={<RoleRoute allowedRoles={['ADMIN']} />}>
+                        <Route path="/app/admin/users" element={<AdminUsersPage />} />
+                    </Route>
                 </Route>
             </Route>
 
