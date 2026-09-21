@@ -14,6 +14,7 @@ import (
 
 	"github.com/agamlatiff/bastion/services/identity/config"
 	"github.com/agamlatiff/bastion/services/identity/handler"
+	"github.com/agamlatiff/bastion/services/identity/middleware"
 	"github.com/agamlatiff/bastion/services/identity/outbox"
 	"github.com/agamlatiff/bastion/services/identity/repository"
 	"github.com/agamlatiff/bastion/services/identity/service"
@@ -71,7 +72,7 @@ func main() {
 		EncryptionKey:          cfg.EncryptionKey,
 	}
 	authSvc := service.NewAuthService(repo, authCfg)
-	authHdr := handler.NewAuthHandler(authSvc, cfg.JWTSecret)
+	authHdr := handler.NewAuthHandler(authSvc)
 
 	// Start Transactional Outbox background worker
 	outboxPub := outbox.NewOutboxPublisher(repo, strings.Split(cfg.KafkaBrokers, ","), "bastion.identity.events")
@@ -98,9 +99,34 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "READY", "service": "identity-service"})
 	})
 
-	// Register API routes: /v1/auth/*
+	// 6. Register API routes: /v1/auth/* (Composition Root)
 	v1 := router.Group("/v1")
-	authHdr.RegisterRoutes(v1, rdb)
+	auth := v1.Group("/auth")
+	{
+		// Register: max 5 requests per 1 minute
+		auth.POST("/register", middleware.RateLimit(rdb, "register", 5, 1*time.Minute), authHdr.Register)
+
+		// Login: max 5 requests per 1 minute (anti brute-force)
+		auth.POST("/login", middleware.RateLimit(rdb, "login", 5, 1*time.Minute), authHdr.Login)
+
+		// Refresh: max 10 requests per 1 minute
+		auth.POST("/refresh", middleware.RateLimit(rdb, "refresh", 10, 1*time.Minute), authHdr.RefreshToken)
+
+		// Logout: unthrottled
+		auth.POST("/logout", authHdr.Logout)
+
+		// 2FA Verification (Login Step 2): max 5 attempts per 1 minute
+		auth.POST("/2fa/verify", middleware.RateLimit(rdb, "2fa_verify", 5, 1*time.Minute), authHdr.Verify2FA)
+
+		// Protected 2FA Management Endpoints
+		twoFactor := auth.Group("/2fa")
+		twoFactor.Use(middleware.AuthRequired(cfg.JWTSecret))
+		{
+			twoFactor.POST("/setup", authHdr.Setup2FA)
+			twoFactor.POST("/enable", authHdr.Enable2FA)
+			twoFactor.POST("/disable", authHdr.Disable2FA)
+		}
+	}
 
 	// 6. Configure HTTP Server with sane timeouts
 	srv := &http.Server{

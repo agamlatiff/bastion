@@ -3,58 +3,23 @@ package handler
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/agamlatiff/bastion/services/identity/domain"
-	"github.com/agamlatiff/bastion/services/identity/middleware"
 	"github.com/agamlatiff/bastion/services/identity/repository"
 	"github.com/agamlatiff/bastion/services/identity/service"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 )
 
 // AuthHandler handles HTTP requests for authentication operations.
 type AuthHandler struct {
 	authService service.AuthService
-	jwtSecret   string
 }
 
 // NewAuthHandler creates a new AuthHandler.
-func NewAuthHandler(authService service.AuthService, jwtSecret string) *AuthHandler {
+func NewAuthHandler(authService service.AuthService) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
-		jwtSecret:   jwtSecret,
-	}
-}
-
-// RegisterRoutes registers auth endpoints into the provided Gin router group with Redis rate limiting.
-func (h *AuthHandler) RegisterRoutes(rg *gin.RouterGroup, rdb *redis.Client) {
-	auth := rg.Group("/auth")
-	{
-		// Register: max 5 requests per 1 minute
-		auth.POST("/register", middleware.RateLimit(rdb, "register", 5, 1*time.Minute), h.Register)
-
-		// Login: max 5 requests per 1 minute (anti brute-force)
-		auth.POST("/login", middleware.RateLimit(rdb, "login", 5, 1*time.Minute), h.Login)
-
-		// Refresh: max 10 requests per 1 minute
-		auth.POST("/refresh", middleware.RateLimit(rdb, "refresh", 10, 1*time.Minute), h.RefreshToken)
-
-		// Logout: unthrottled
-		auth.POST("/logout", h.Logout)
-
-		// 2FA Verification (Login Step 2): max 5 attempts per 1 minute
-		auth.POST("/2fa/verify", middleware.RateLimit(rdb, "2fa_verify", 5, 1*time.Minute), h.Verify2FA)
-
-		// Protected 2FA Management Endpoints
-		twoFactor := auth.Group("/2fa")
-		twoFactor.Use(middleware.AuthRequired(h.jwtSecret))
-		{
-			twoFactor.POST("/setup", h.Setup2FA)
-			twoFactor.POST("/enable", h.Enable2FA)
-			twoFactor.POST("/disable", h.Disable2FA)
-		}
 	}
 }
 
