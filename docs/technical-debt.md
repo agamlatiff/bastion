@@ -8,7 +8,6 @@ Dokumen ini mencatat daftar **Technical Debt (Hutang Teknis)**, risiko arsitektu
 
 | ID | Komponen | Judul Masalah | Tingkat Keparahan | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **TD-004** | `services/customer` | Ketiadaan Caching Layer pada Profil Nasabah (`/v1/customers/me`) via Repository Pattern | **MEDIUM (Performance & DB Offloading)** | 🟡 OPEN (Backlog) |
 | **TD-005** | `services/identity` | Fat Config Anti-Pattern: Injeksi Objek Global Config ke dalam Service Layer | **LOW - MEDIUM (Code Quality & Maintainability)** | 🟡 OPEN (Backlog) |
 | **TD-006** | `services/identity` | Leaky Infrastructure Dependency: Injeksi `*redis.Client` ke dalam `AuthHandler.RegisterRoutes` | **LOW (Code Smells & Separation of Concerns)** | 🟡 OPEN (Backlog) |
 | **TD-007** | `services/identity` | Ketiadaan Structured Error Logging pada HTTP Handler (Silent 500 Internal Server Errors) | **MEDIUM (Observability & Debuggability)** | 🟡 OPEN (Backlog) |
@@ -19,30 +18,6 @@ Dokumen ini mencatat daftar **Technical Debt (Hutang Teknis)**, risiko arsitektu
 
 ## 📌 Detail Masalah
 
-
----
-
-### TD-004: Ketiadaan Caching Layer pada Profil Nasabah di Customer Service
-
-#### 1. Deskripsi Masalah (Context)
-Pada [`services/customer`](file:///c:/Projects/bastion/services/customer), endpoint `GET /v1/customers/me` ([CustomerController.java](file:///c:/Projects/bastion/services/customer/src/main/java/com/bastion/customer/controller/CustomerController.java#L27-L38)) dipanggil secara masif oleh aplikasi klien (mobile/web) di hampir setiap navigasi layar untuk memvalidasi identitas nasabah, nama lengkap, nomor telepon, dan status KYC (`PENDING`, `VERIFIED`).
-* Saat ini setiap pemanggilan selalu melakukan query langsung ke database PostgreSQL `customer_db`.
-* Padahal, data profil nasabah memiliki rasio baca berbanding tulis (*read-to-write ratio*) yang sangat tinggi (99% dibaca, <1% diubah).
-
-#### 2. Rekomendasi Solusi: Cache-Aside via Repository Pattern (Spring Data Redis)
-1. **Tambahkan Dependensi Spring Data Redis:**
-   Gunakan `spring-boot-starter-data-redis` di `services/customer/pom.xml`.
-2. **Prinsip Repository Caching:**
-   Bungkus data access layer `CustomerRepository` dengan caching (misal menggunakan `@Cacheable` dan `@CacheEvict` atau implementasi custom `CachedCustomerRepository`):
-   * **Read (`getProfile`):** Cek Redis key `customer:profile:{identityUserId}`. Jika miss, query PostgreSQL dan simpan di Redis dengan TTL 15–30 menit.
-   * **Write (`updateProfile`):** Saat ada perubahan data via `PATCH /v1/customers/me`, update PostgreSQL terlebih dahulu, kemudian evict/hapus key di Redis.
-   * **Event-Driven Invalidation:** Saat event KYC disetujui (misal via Kafka), listener otomatis menghapus cache profil nasabah terkait.
-
-#### 3. Action Items & Kriteria Selesai (Acceptance Criteria)
-- [ ] Konfigurasi `RedisTemplate` dan connection pool di `services/customer`.
-- [ ] Terapkan caching pada pencarian nasabah berdasarkan `identityUserId`.
-- [ ] Terapkan invalidasi cache seketika saat `updateProfile` berhasil di-commit ke DB.
-- [ ] Pastikan respons `GET /v1/customers/me` ter-cache dengan waktu respons < 5ms pada pemanggilan kedua (Cache Hit).
 
 ---
 
