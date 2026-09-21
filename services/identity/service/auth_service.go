@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agamlatiff/bastion/services/identity/config"
 	"github.com/agamlatiff/bastion/services/identity/domain"
 	"github.com/agamlatiff/bastion/services/identity/event"
 	"github.com/agamlatiff/bastion/services/identity/repository"
@@ -28,6 +27,14 @@ var (
 	ErrInvalidTempToken        = errors.New("invalid or expired two-factor challenge token")
 )
 
+// AuthConfig holds configuration specific to the authentication service domain.
+type AuthConfig struct {
+	JWTSecret              string
+	AccessTokenExpiryMins  int
+	RefreshTokenExpiryDays int
+	EncryptionKey          string
+}
+
 // AuthService defines the business logic operations for authentication and identity.
 type AuthService interface {
 	Register(ctx context.Context, req domain.RegisterRequest, requestID, ip string) (*domain.UserResponse, error)
@@ -41,17 +48,15 @@ type AuthService interface {
 }
 
 type authService struct {
-	repo     repository.Repository
-	cfg      *config.Config
-	producer event.EventProducer
+	repo    repository.Repository
+	authCfg AuthConfig
 }
 
-// NewAuthService creates a new instance of AuthService.
-func NewAuthService(repo repository.Repository, cfg *config.Config, producer event.EventProducer) AuthService {
+// NewAuthService creates a new instance of AuthService with domain-scoped configuration.
+func NewAuthService(repo repository.Repository, authCfg AuthConfig) AuthService {
 	return &authService{
-		repo:     repo,
-		cfg:      cfg,
-		producer: producer,
+		repo:    repo,
+		authCfg: authCfg,
 	}
 }
 
@@ -148,7 +153,7 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest, reques
 
 	// If 2FA is enabled, issue short-lived challenge token instead of full session
 	if user.TwoFactorEnabled {
-		tempToken, err := security.Generate2FATempToken(user.ID.String(), user.Email, s.cfg.JWTSecret)
+		tempToken, err := security.Generate2FATempToken(user.ID.String(), user.Email, s.authCfg.JWTSecret)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate 2fa challenge token: %w", err)
 		}
@@ -176,9 +181,9 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest, reques
 		user.ID.String(),
 		user.Email,
 		primaryRole,
-		s.cfg.JWTSecret,
-		s.cfg.AccessTokenExpiryMins,
-		s.cfg.RefreshTokenExpiryDays,
+		s.authCfg.JWTSecret,
+		s.authCfg.AccessTokenExpiryMins,
+		s.authCfg.RefreshTokenExpiryDays,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate token pair: %w", err)
@@ -194,7 +199,7 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest, reques
 		DeviceID:         req.DeviceID,
 		UserAgent:        stringPtr(userAgent),
 		IPAddress:        stringPtr(ip),
-		ExpiresAt:        now.Add(time.Duration(s.cfg.RefreshTokenExpiryDays) * 24 * time.Hour),
+		ExpiresAt:        now.Add(time.Duration(s.authCfg.RefreshTokenExpiryDays) * 24 * time.Hour),
 		CreatedAt:        now,
 	}
 
@@ -222,7 +227,7 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest, reques
 // RefreshToken handles token rotation and automatic reuse-attack detection.
 func (s *authService) RefreshToken(ctx context.Context, oldRefreshToken, requestID, ip, userAgent string) (*domain.AuthResponse, error) {
 	// 1. Validate JWT structure and signature
-	claims, err := security.ValidateToken(oldRefreshToken, s.cfg.JWTSecret, security.TokenTypeRefresh)
+	claims, err := security.ValidateToken(oldRefreshToken, s.authCfg.JWTSecret, security.TokenTypeRefresh)
 	if err != nil {
 		return nil, ErrInvalidToken
 	}
@@ -260,9 +265,9 @@ func (s *authService) RefreshToken(ctx context.Context, oldRefreshToken, request
 		claims.UserID,
 		claims.Email,
 		claims.Role,
-		s.cfg.JWTSecret,
-		s.cfg.AccessTokenExpiryMins,
-		s.cfg.RefreshTokenExpiryDays,
+		s.authCfg.JWTSecret,
+		s.authCfg.AccessTokenExpiryMins,
+		s.authCfg.RefreshTokenExpiryDays,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate new token pair: %w", err)
@@ -278,7 +283,7 @@ func (s *authService) RefreshToken(ctx context.Context, oldRefreshToken, request
 		DeviceID:         session.DeviceID,
 		UserAgent:        stringPtr(userAgent),
 		IPAddress:        stringPtr(ip),
-		ExpiresAt:        now.Add(time.Duration(s.cfg.RefreshTokenExpiryDays) * 24 * time.Hour),
+		ExpiresAt:        now.Add(time.Duration(s.authCfg.RefreshTokenExpiryDays) * 24 * time.Hour),
 		CreatedAt:        now,
 	}
 
@@ -336,7 +341,7 @@ func (s *authService) Setup2FA(ctx context.Context, userID uuid.UUID) (*domain.T
 	}
 
 	// 3. Parse AES-256 master encryption key from configuration
-	encryptionKey, err := security.ParseEncryptionKey(s.cfg.EncryptionKey)
+	encryptionKey, err := security.ParseEncryptionKey(s.authCfg.EncryptionKey)
 	if err != nil {
 		return nil, fmt.Errorf("invalid encryption key config: %w", err)
 	}
@@ -375,7 +380,7 @@ func (s *authService) Enable2FA(ctx context.Context, userID uuid.UUID, code stri
 	}
 
 	// 2. Parse AES-256 encryption key from configuration
-	encryptionKey, err := security.ParseEncryptionKey(s.cfg.EncryptionKey)
+	encryptionKey, err := security.ParseEncryptionKey(s.authCfg.EncryptionKey)
 	if err != nil {
 		return fmt.Errorf("invalid encryption key config: %w", err)
 	}
@@ -412,7 +417,7 @@ func (s *authService) Disable2FA(ctx context.Context, userID uuid.UUID, code str
 		return ErrTwoFactorNotEnabled
 	}
 
-	encryptionKey, err := security.ParseEncryptionKey(s.cfg.EncryptionKey)
+	encryptionKey, err := security.ParseEncryptionKey(s.authCfg.EncryptionKey)
 	if err != nil {
 		return fmt.Errorf("invalid encryption key config: %w", err)
 	}
@@ -438,7 +443,7 @@ func (s *authService) Disable2FA(ctx context.Context, userID uuid.UUID, code str
 // Verify2FALogin verifies a temporary 2FA challenge token + 6-digit OTP and issues full tokens.
 func (s *authService) Verify2FALogin(ctx context.Context, req domain.TwoFactorVerifyRequest, requestID, ip, userAgent string) (*domain.AuthResponse, error) {
 	// 1. Validate the short-lived 2FA challenge token (TempToken)
-	claims, err := security.Validate2FATempToken(req.TempToken, s.cfg.JWTSecret)
+	claims, err := security.Validate2FATempToken(req.TempToken, s.authCfg.JWTSecret)
 	if err != nil {
 		return nil, ErrInvalidTempToken
 	}
@@ -458,7 +463,7 @@ func (s *authService) Verify2FALogin(ctx context.Context, req domain.TwoFactorVe
 	}
 
 	// 3. Parse AES-256 encryption key and decrypt stored TOTP secret
-	encryptionKey, err := security.ParseEncryptionKey(s.cfg.EncryptionKey)
+	encryptionKey, err := security.ParseEncryptionKey(s.authCfg.EncryptionKey)
 	if err != nil {
 		return nil, fmt.Errorf("invalid encryption key config: %w", err)
 	}
@@ -485,9 +490,9 @@ func (s *authService) Verify2FALogin(ctx context.Context, req domain.TwoFactorVe
 		user.ID.String(),
 		user.Email,
 		primaryRole,
-		s.cfg.JWTSecret,
-		s.cfg.AccessTokenExpiryMins,
-		s.cfg.RefreshTokenExpiryDays,
+		s.authCfg.JWTSecret,
+		s.authCfg.AccessTokenExpiryMins,
+		s.authCfg.RefreshTokenExpiryDays,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate token pair: %w", err)
@@ -502,7 +507,7 @@ func (s *authService) Verify2FALogin(ctx context.Context, req domain.TwoFactorVe
 		RefreshTokenHash: tokenHash,
 		UserAgent:        stringPtr(userAgent),
 		IPAddress:        stringPtr(ip),
-		ExpiresAt:        now.Add(time.Duration(s.cfg.RefreshTokenExpiryDays) * 24 * time.Hour),
+		ExpiresAt:        now.Add(time.Duration(s.authCfg.RefreshTokenExpiryDays) * 24 * time.Hour),
 		CreatedAt:        now,
 	}
 

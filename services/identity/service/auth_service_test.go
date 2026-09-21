@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/agamlatiff/bastion/services/identity/config"
 	"github.com/agamlatiff/bastion/services/identity/domain"
 	"github.com/agamlatiff/bastion/services/identity/event"
 	"github.com/agamlatiff/bastion/services/identity/service"
@@ -65,11 +64,11 @@ func (m *mockRepository) MarkOutboxEventFailed(ctx context.Context, id uuid.UUID
 
 func TestRegister_PersistsOutboxEvent(t *testing.T) {
 	mockRepo := &mockRepository{}
-	cfg := &config.Config{
+	authCfg := service.AuthConfig{
 		JWTSecret: "test-secret-32-bytes-long-key-!",
 	}
 
-	svc := service.NewAuthService(mockRepo, cfg, nil)
+	svc := service.NewAuthService(mockRepo, authCfg)
 
 	req := domain.RegisterRequest{
 		Email:    "Alice@Example.com",

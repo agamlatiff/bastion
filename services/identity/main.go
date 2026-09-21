@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/agamlatiff/bastion/services/identity/config"
-	"github.com/agamlatiff/bastion/services/identity/event"
 	"github.com/agamlatiff/bastion/services/identity/handler"
 	"github.com/agamlatiff/bastion/services/identity/outbox"
 	"github.com/agamlatiff/bastion/services/identity/repository"
@@ -65,9 +64,13 @@ func main() {
 
 	// 4. Initialize layers (Clean Architecture / Dependency Injection)
 	repo := repository.New(dbPool)
-	eventProducer := event.NewKafkaProducer(cfg.KafkaBrokers, "bastion.identity.events")
-	defer eventProducer.Close()
-	authSvc := service.NewAuthService(repo, cfg, eventProducer)
+	authCfg := service.AuthConfig{
+		JWTSecret:              cfg.JWTSecret,
+		AccessTokenExpiryMins:  cfg.AccessTokenExpiryMins,
+		RefreshTokenExpiryDays: cfg.RefreshTokenExpiryDays,
+		EncryptionKey:          cfg.EncryptionKey,
+	}
+	authSvc := service.NewAuthService(repo, authCfg)
 	authHdr := handler.NewAuthHandler(authSvc, cfg.JWTSecret)
 
 	// Start Transactional Outbox background worker
