@@ -19,6 +19,7 @@ import (
 	"github.com/agamlatiff/bastion/services/wallet/service"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -47,14 +48,25 @@ func main() {
 	}
 	log.Println("[Wallet Service] Connected to PostgreSQL (wallet_db)")
 
-	// 2. Initialize Layers
+	// 2. Redis Client Connection
+	rdb := redis.NewClient(&redis.Options{
+		Addr: cfg.RedisAddr,
+	})
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.Fatalf("[Wallet Service] Redis ping failed: %v", err)
+	}
+	defer rdb.Close()
+	log.Println("[Wallet Service] Connected to Redis successfully")
+
+	// 3. Initialize Layers (Clean Architecture / Repository Decorator)
 	ledgerClient := client.NewLedgerClient(cfg.LedgerServiceURL, cfg.InternalAuth)
-	walletRepo := repository.NewWalletRepository(pool)
-	walletService := service.NewWalletService(walletRepo, ledgerClient)
+	baseWalletRepo := repository.NewWalletRepository(pool)
+	cachedWalletRepo := repository.NewCachedWalletRepository(baseWalletRepo, rdb)
+	walletService := service.NewWalletService(cachedWalletRepo, ledgerClient)
 	walletHandler := handler.NewWalletHandler(walletService)
 
-	// 3. Start Outbox Publisher Background Worker
-	outboxPublisher := outbox.NewOutboxPublisher(walletRepo, cfg.KafkaBrokers, cfg.KafkaTopic)
+	// 4. Start Outbox Publisher Background Worker
+	outboxPublisher := outbox.NewOutboxPublisher(baseWalletRepo, cfg.KafkaBrokers, cfg.KafkaTopic)
 	outboxCtx, outboxCancel := context.WithCancel(context.Background())
 	defer outboxCancel()
 	go outboxPublisher.Start(outboxCtx)
