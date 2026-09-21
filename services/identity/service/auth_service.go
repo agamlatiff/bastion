@@ -62,6 +62,7 @@ func NewAuthService(repo repository.Repository, authCfg AuthConfig) AuthService 
 
 // Register registers a new user with default CUSTOMER role and Argon2id hashed password, persisting outbox event atomically.
 func (s *authService) Register(ctx context.Context, req domain.RegisterRequest, requestID, ip string) (*domain.UserResponse, error) {
+	// 1. Normalize email address and generate Argon2id password hash
 	email := strings.ToLower(strings.TrimSpace(req.Email))
 
 	hash, err := security.HashPassword(req.Password)
@@ -69,6 +70,7 @@ func (s *authService) Register(ctx context.Context, req domain.RegisterRequest, 
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
+	// 2. Construct user entity with default customer role
 	now := time.Now().UTC()
 	user := &domain.User{
 		ID:           uuid.New(),
@@ -80,7 +82,7 @@ func (s *authService) Register(ctx context.Context, req domain.RegisterRequest, 
 		UpdatedAt:    now,
 	}
 
-	// Prepare domain event envelope for reliable outbox publishing
+	// 3. Prepare domain event envelope for reliable outbox publishing
 	envelope := event.EventEnvelope{
 		EventID:       uuid.New().String(),
 		EventType:     "UserRegistered",
@@ -111,12 +113,12 @@ func (s *authService) Register(ctx context.Context, req domain.RegisterRequest, 
 		CreatedAt:     now,
 	}
 
-	// Save user and outbox event in the same ACID transaction
+	// 4. Save user and outbox event in the same ACID transaction
 	if err := s.repo.CreateUser(ctx, user, outboxEvt); err != nil {
 		return nil, err
 	}
 
-	// Record security audit event
+	// 5. Record immutable security audit event
 	s.repo.LogSecurityAudit(ctx, &user.ID, "USER_REGISTERED", requestID, ip)
 
 	return &domain.UserResponse{
@@ -130,6 +132,7 @@ func (s *authService) Register(ctx context.Context, req domain.RegisterRequest, 
 
 // Login verifies credentials and issues access & refresh tokens with session tracking.
 func (s *authService) Login(ctx context.Context, req domain.LoginRequest, requestID, ip, userAgent string) (*domain.AuthResponse, error) {
+	// 1. Normalize input email and retrieve user entity
 	email := strings.ToLower(strings.TrimSpace(req.Email))
 
 	user, err := s.repo.GetUserByEmail(ctx, email)
@@ -140,18 +143,20 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest, reques
 		return nil, err
 	}
 
+	// 2. Verify password against Argon2id hash
 	valid, err := security.VerifyPassword(req.Password, user.PasswordHash)
 	if err != nil || !valid {
 		s.repo.LogSecurityAudit(ctx, &user.ID, "LOGIN_FAILED_BAD_PASSWORD", requestID, ip)
 		return nil, ErrInvalidCredentials
 	}
 
+	// 3. Verify account active status
 	if user.Status != domain.StatusActive {
 		s.repo.LogSecurityAudit(ctx, &user.ID, "LOGIN_FAILED_INACTIVE_ACCOUNT", requestID, ip)
 		return nil, ErrAccountInactive
 	}
 
-	// If 2FA is enabled, issue short-lived challenge token instead of full session
+	// 4. Handle 2FA challenge branch if enabled
 	if user.TwoFactorEnabled {
 		tempToken, err := security.Generate2FATempToken(user.ID.String(), user.Email, s.authCfg.JWTSecret)
 		if err != nil {
@@ -171,12 +176,13 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest, reques
 		}, nil
 	}
 
+	// 5. Determine primary authorization role
 	primaryRole := "CUSTOMER"
 	if len(user.Roles) > 0 {
 		primaryRole = user.Roles[0]
 	}
 
-	// 1. Generate token pair using configured expiration
+	// 6. Generate cryptographic JWT access and refresh token pair
 	tokenPair, err := security.GenerateTokenPair(
 		user.ID.String(),
 		user.Email,
@@ -189,7 +195,7 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest, reques
 		return nil, fmt.Errorf("failed to generate token pair: %w", err)
 	}
 
-	// 2. Hash refresh token & persist session
+	// 7. Hash refresh token & persist active session to database
 	tokenHash := security.HashRefreshToken(tokenPair.RefreshToken)
 	now := time.Now().UTC()
 	session := &domain.Session{
@@ -207,6 +213,7 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest, reques
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
+	// 8. Record audit log and return full authentication response
 	s.repo.LogSecurityAudit(ctx, &user.ID, "LOGIN_SUCCESS", requestID, ip)
 
 	return &domain.AuthResponse{
@@ -291,6 +298,7 @@ func (s *authService) RefreshToken(ctx context.Context, oldRefreshToken, request
 		return nil, fmt.Errorf("failed to store rotated session: %w", err)
 	}
 
+	// 7. Record token refresh audit event and return authentication response
 	s.repo.LogSecurityAudit(ctx, &userID, "TOKEN_REFRESHED", requestID, ip)
 
 	return &domain.AuthResponse{
@@ -309,16 +317,21 @@ func (s *authService) RefreshToken(ctx context.Context, oldRefreshToken, request
 
 // Logout revokes the session associated with the provided refresh token.
 func (s *authService) Logout(ctx context.Context, refreshToken, requestID, ip string) error {
+	// 1. Compute SHA-256 hash of provided refresh token
 	tokenHash := security.HashRefreshToken(refreshToken)
+
+	// 2. Lookup session in database
 	session, err := s.repo.GetSessionByTokenHash(ctx, tokenHash)
 	if err != nil {
 		return nil // idempotent logout: don't error if session already gone
 	}
 
+	// 3. Mark session as revoked
 	if err := s.repo.RevokeSession(ctx, session.ID); err != nil {
 		return fmt.Errorf("failed to revoke session: %w", err)
 	}
 
+	// 4. Record security audit log
 	s.repo.LogSecurityAudit(ctx, &session.UserID, "USER_LOGGED_OUT", requestID, ip)
 	return nil
 }

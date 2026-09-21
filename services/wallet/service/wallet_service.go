@@ -32,6 +32,7 @@ func NewWalletService(repo repository.WalletRepository, ledgerClient client.Ledg
 	}
 }
 
+// CreateWallet provisions a new customer wallet, initializes ledger account, and emits WalletCreated outbox event.
 func (s *walletService) CreateWallet(ctx context.Context, customerID uuid.UUID, req domain.CreateWalletRequest) (*domain.WalletResponse, error) {
 	currency := strings.ToUpper(strings.TrimSpace(req.Currency))
 	if !domain.IsValidCurrency(currency) {
@@ -65,7 +66,7 @@ func (s *walletService) CreateWallet(ctx context.Context, customerID uuid.UUID, 
 		}
 	}
 
-	// 4. Ledger Account successfully created -> Promote CREATING -> ACTIVE and atomically save WalletCreated to outbox
+	// 4. Promote CREATING -> ACTIVE and atomically save WalletCreated to outbox
 	createdPayload := domain.WalletCreatedPayload{
 		WalletID:   wallet.ID,
 		CustomerID: customerID,
@@ -89,12 +90,15 @@ func (s *walletService) CreateWallet(ctx context.Context, customerID uuid.UUID, 
 	return toWalletResponse(wallet), nil
 }
 
+// GetWallet retrieves wallet details after verifying customer ownership.
 func (s *walletService) GetWallet(ctx context.Context, walletID uuid.UUID, customerID uuid.UUID) (*domain.WalletResponse, error) {
+	// 1. Retrieve wallet by ID from repository
 	wallet, err := s.repo.GetByID(ctx, walletID)
 	if err != nil {
 		return nil, err
 	}
 
+	// 2. Validate customer ownership of the wallet
 	if wallet.CustomerID != customerID {
 		return nil, domain.ErrUnauthorizedWalletAccess
 	}
@@ -102,12 +106,15 @@ func (s *walletService) GetWallet(ctx context.Context, walletID uuid.UUID, custo
 	return toWalletResponse(wallet), nil
 }
 
+// GetBalance retrieves current wallet balance after verifying customer ownership.
 func (s *walletService) GetBalance(ctx context.Context, walletID uuid.UUID, customerID uuid.UUID) (*domain.WalletBalanceResponse, error) {
+	// 1. Retrieve wallet by ID from repository
 	wallet, err := s.repo.GetByID(ctx, walletID)
 	if err != nil {
 		return nil, err
 	}
 
+	// 2. Validate customer ownership of the wallet
 	if wallet.CustomerID != customerID {
 		return nil, domain.ErrUnauthorizedWalletAccess
 	}
@@ -119,7 +126,9 @@ func (s *walletService) GetBalance(ctx context.Context, walletID uuid.UUID, cust
 	}, nil
 }
 
+// FreezeWallet transitions an active wallet to frozen state and emits WalletFrozen outbox event.
 func (s *walletService) FreezeWallet(ctx context.Context, walletID uuid.UUID, customerID uuid.UUID) (*domain.WalletResponse, error) {
+	// 1. Retrieve wallet by ID and verify customer ownership
 	wallet, err := s.repo.GetByID(ctx, walletID)
 	if err != nil {
 		return nil, err
@@ -129,11 +138,12 @@ func (s *walletService) FreezeWallet(ctx context.Context, walletID uuid.UUID, cu
 		return nil, domain.ErrUnauthorizedWalletAccess
 	}
 
+	// 2. Validate state transition compatibility
 	if !domain.CanTransition(wallet.Status, domain.StatusFrozen) {
 		return nil, domain.ErrInvalidTransition
 	}
 
-	// Atomically update status to FROZEN and save WalletFrozen event to outbox
+	// 3. Atomically update status to FROZEN and save WalletFrozen event to outbox
 	frozenPayload := domain.WalletStatusChangedPayload{
 		WalletID:   walletID,
 		CustomerID: customerID,
@@ -154,7 +164,9 @@ func (s *walletService) FreezeWallet(ctx context.Context, walletID uuid.UUID, cu
 	return toWalletResponse(wallet), nil
 }
 
+// UnfreezeWallet transitions a frozen wallet back to active state and emits WalletUnfrozen outbox event.
 func (s *walletService) UnfreezeWallet(ctx context.Context, walletID uuid.UUID, customerID uuid.UUID) (*domain.WalletResponse, error) {
+	// 1. Retrieve wallet by ID and verify customer ownership
 	wallet, err := s.repo.GetByID(ctx, walletID)
 	if err != nil {
 		return nil, err
@@ -164,11 +176,12 @@ func (s *walletService) UnfreezeWallet(ctx context.Context, walletID uuid.UUID, 
 		return nil, domain.ErrUnauthorizedWalletAccess
 	}
 
+	// 2. Validate state transition compatibility
 	if !domain.CanTransition(wallet.Status, domain.StatusActive) {
 		return nil, domain.ErrInvalidTransition
 	}
 
-	// Atomically update status to ACTIVE and save WalletUnfrozen event to outbox
+	// 3. Atomically update status to ACTIVE and save WalletUnfrozen event to outbox
 	unfrozenPayload := domain.WalletStatusChangedPayload{
 		WalletID:   walletID,
 		CustomerID: customerID,
@@ -189,12 +202,15 @@ func (s *walletService) UnfreezeWallet(ctx context.Context, walletID uuid.UUID, 
 	return toWalletResponse(wallet), nil
 }
 
+// ListCustomerWallets returns all wallets associated with the specified customer.
 func (s *walletService) ListCustomerWallets(ctx context.Context, customerID uuid.UUID) ([]*domain.WalletResponse, error) {
+	// 1. Retrieve all wallets belonging to customer
 	wallets, err := s.repo.GetByCustomerID(ctx, customerID)
 	if err != nil {
 		return nil, err
 	}
 
+	// 2. Map domain entities to response DTOs
 	responses := make([]*domain.WalletResponse, 0, len(wallets))
 	for _, w := range wallets {
 		responses = append(responses, toWalletResponse(w))
