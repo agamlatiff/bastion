@@ -8,7 +8,6 @@ Dokumen ini mencatat daftar **Technical Debt (Hutang Teknis)**, risiko arsitektu
 
 | ID | Komponen | Judul Masalah | Tingkat Keparahan | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **TD-005** | `services/identity` | Fat Config Anti-Pattern: Injeksi Objek Global Config ke dalam Service Layer | **LOW - MEDIUM (Code Quality & Maintainability)** | 🟡 OPEN (Backlog) |
 | **TD-006** | `services/identity` | Leaky Infrastructure Dependency: Injeksi `*redis.Client` ke dalam `AuthHandler.RegisterRoutes` | **LOW (Code Smells & Separation of Concerns)** | 🟡 OPEN (Backlog) |
 | **TD-007** | `services/identity` | Ketiadaan Structured Error Logging pada HTTP Handler (Silent 500 Internal Server Errors) | **MEDIUM (Observability & Debuggability)** | 🟡 OPEN (Backlog) |
 | **TD-008** | `services/identity` | Monolithic Service & Handler Bloat: Percampuran Tanggung Jawab Core Auth dan 2FA/MFA | **LOW (Code Organization & Maintainability)** | 🟡 OPEN (Backlog) |
@@ -18,43 +17,6 @@ Dokumen ini mencatat daftar **Technical Debt (Hutang Teknis)**, risiko arsitektu
 
 ## 📌 Detail Masalah
 
-
----
-
-### TD-005: Fat Config Anti-Pattern pada Injeksi Service Layer
-
-#### 1. Deskripsi Masalah (Context)
-Pada [`services/identity/service/auth_service.go:42-55`](file:///c:/Projects/bastion/services/identity/service/auth_service.go#L42-L55), struct `authService` menerima dan menyimpan seluruh objek pointer global konfigurasi (`cfg *config.Config`).
-* Objek `config.Config` menampung seluruh variabel konfigurasi level aplikasi, seperti `Port`, `DatabaseURL`, `RedisAddr`, dan `KafkaBrokers`.
-* Di dalam `authService`, hanya 4 variabel spesifik yang benar-benar digunakan: `JWTSecret`, `AccessTokenExpiryMins`, `RefreshTokenExpiryDays`, dan `EncryptionKey`.
-
-#### 2. Risiko & Dampak Teknis (Impact)
-* **Pelanggaran Prinsip *Least Privilege* & *Interface Segregation*:** Layer bisnis (`Service`) terpapar informasi level infrastruktur (`DatabaseURL`, `KafkaBrokers`, `Port`) yang tidak relevan dengan tanggung jawab domain autentikasi pengguna.
-* **Testing Friction (Menyulitkan Unit Testing):** Saat menyusun unit test terisolasi untuk `authService`, pengujian terpaksa membuat mock/dummy dari seluruh struct `Config`, termasuk field-field koneksi jaringan yang tidak dipakai.
-* **Risiko Kebocoran Data Sensitif di Log:** Jika suatu saat objek `authService` dicetak ke structured logger atau debugger (`%+v`), kredensial koneksi database dan broker berpotensi bocor ke file log.
-
-#### 3. Rekomendasi Solusi
-Gunakan salah satu dari dua pendekatan *Clean Architecture*:
-1. **Pendekatan Parameter Spesifik (Rekomendasi Utama):**
-   Ubah constructor `NewAuthService` untuk hanya menerima field primitif yang dibutuhkan oleh domain Auth:
-   ```go
-   type authService struct {
-       repo               repository.Repository
-       producer           event.EventProducer
-       jwtSecret          string
-       accessTokenExpiry  time.Duration
-       refreshTokenExpiry time.Duration
-       encryptionKey      []byte
-   }
-   ```
-2. **Pendekatan Sub-Config Terisolasi (`AuthConfig`):**
-   Kelompokkan konfigurasi otentikasi ke dalam struct terpisah `AuthConfig`, sehingga `main.go` hanya meneruskan sub-config tersebut ke service layer.
-
-#### 4. Action Items & Kriteria Selesai (Acceptance Criteria)
-- [ ] Refactor constructor `NewAuthService` untuk hanya menerima konfigurasi domain otentikasi (bukan seluruh `*config.Config`).
-- [ ] Hapus dependensi `cfg *config.Config` dari dalam struct `authService`.
-- [ ] Sesuaikan inisialisasi dependency injection di `services/identity/main.go`.
-- [ ] Pastikan seluruh unit test (jika ada) dan kompilasi aplikasi (`go build ./...`) berjalan bersih tanpa regresi.
 
 ---
 
