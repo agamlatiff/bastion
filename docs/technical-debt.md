@@ -8,7 +8,6 @@ Dokumen ini mencatat daftar **Technical Debt (Hutang Teknis)**, risiko arsitektu
 
 | ID | Komponen | Judul Masalah | Tingkat Keparahan | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **TD-002** | `services/wallet` | Ketiadaan Caching Layer & Rencana Implementasi Cache-Aside via Repository Pattern | **MEDIUM (Performance & Scalability)** | 🟡 OPEN (Backlog) |
 | **TD-003** | `services/wallet` & `services/transaction` | Ketiadaan Idempotency Key & Distributed Lock (Risiko Double-Debiting / Double-Click) | **HIGH (Financial Integrity)** | 🟡 OPEN (Backlog) |
 | **TD-004** | `services/customer` | Ketiadaan Caching Layer pada Profil Nasabah (`/v1/customers/me`) via Repository Pattern | **MEDIUM (Performance & DB Offloading)** | 🟡 OPEN (Backlog) |
 | **TD-005** | `services/identity` | Fat Config Anti-Pattern: Injeksi Objek Global Config ke dalam Service Layer | **LOW - MEDIUM (Code Quality & Maintainability)** | 🟡 OPEN (Backlog) |
@@ -21,60 +20,6 @@ Dokumen ini mencatat daftar **Technical Debt (Hutang Teknis)**, risiko arsitektu
 
 ## 📌 Detail Masalah
 
-
----
-
-### TD-002: Ketiadaan Caching Layer & Pola Cache-Aside via Repository Layer
-
-#### 1. Deskripsi Masalah (Context)
-Saat ini pembacaan data dompet pada [`services/wallet/service/wallet_service.go`](file:///c:/Projects/bastion/services/wallet/service/wallet_service.go) (seperti `GetWallet` dan `GetBalance`) selalu melakukan query langsung ke database PostgreSQL (`wallet_db`) melalui `s.repo.GetByID`.
-* Pada skenario produksi *read-heavy* (misal banyak pengguna mengecek saldo/profil dompet secara bersamaan), koneksi database berpotensi menjadi *bottleneck*.
-* Infrastruktur Redis (`redis:7-alpine`) sudah berjalan di `docker-compose.yml` dan konfigurasi `RedisAddr` sudah ada di `config.go`, namun belum dimanfaatkan untuk query caching.
-
-#### 2. Prinsip Arsitektur: Redis di Repository Layer (BUKAN di Service Layer)
-Untuk menjaga kepatuhan terhadap prinsip *Clean Architecture* dan *Hexagonal/Ports-and-Adapters*:
-* **Service Layer harus bebas dari urusan infrastruktur caching:** Service hanya tahu memanggil `repo.GetByID()` dan tidak boleh terkontaminasi oleh import `go-redis` atau logika serialisasi JSON Redis.
-* **Gunakan Repository Decorator Pattern:**
-  Buat implementasi `cachedWalletRepository` yang mengimplementasikan interface `repository.WalletRepository`:
-  ```text
-  [Wallet Service] 
-         │ (memanggil interface WalletRepository)
-         ▼
-  [CachedWalletRepository] ──(Hit)──> [ REDIS CACHE ]
-         │ (Miss / Invalidation)
-         ▼
-  [PostgresWalletRepository] ───────> [ POSTGRESQL DB ]
-  ```
-
-#### 3. Strategi Sinkronisasi & Invalidasi Data (Ketika DB Ada Update)
-Agar data di Redis tidak *stale* (basi) saat ada pembaruan di database:
-
-1. **Read Strategy (`GetByID`):**
-   * Periksa Redis key `wallet:{id}`.
-   * **Jika Cache Hit:** Kembalikan data seketika tanpa menyentuh PostgreSQL.
-   * **Jika Cache Miss:** Query database PostgreSQL $\rightarrow$ simpan hasil ke Redis dengan **TTL (Time-To-Live) 5 menit** $\rightarrow$ kembalikan data.
-
-2. **Write / Invalidation Strategy (`UpdateStatusWithOutbox` / status change):**
-   * Eksekusi transaksi update ke PostgreSQL terlebih dahulu.
-   * Begitu transaksi PostgreSQL berhasil di-`COMMIT`, jalankan:
-     ```go
-     rdb.Del(ctx, "wallet:" + walletID.String())
-     ```
-   * Dengan menghapus key (*cache invalidation*), request pembacaan berikutnya dijamin akan mengambil data status terbaru (`FROZEN`/`ACTIVE`) dari PostgreSQL.
-
-3. **Jaring Pengaman (Dual-Write Protection):**
-   * TTL 5 menit wajib dipasang pada setiap key sebagai batas maksimal toleransi jika koneksi ke Redis sempat terputus saat proses `DEL`.
-
-#### 4. Action Items & Kriteria Selesai (Acceptance Criteria)
-- [ ] Buat file `services/wallet/repository/cached_wallet_repository.go` yang membungkus `WalletRepository` bawaan dan `*redis.Client`.
-- [ ] Inisialisasi koneksi `redis.NewClient` di `services/wallet/main.go`.
-- [ ] Bungkus `walletRepo` dengan `NewCachedWalletRepository(walletRepo, rdb)` saat *dependency injection* di `main.go`.
-- [ ] Pastikan `wallet_service.go` **tetap bersih tanpa import Redis**.
-- [ ] Terapkan invalidasi cache (`rdb.Del`) pada fungsi repository yang melakukan mutasi data status dompet.
-- [ ] Uji skenario:
-  1. Panggil `GetWallet` (harus tersimpan di Redis).
-  2. Panggil `FreezeWallet` (key di Redis harus otomatis terhapus).
-  3. Panggil `GetWallet` kembali (data harus status FROZEN dan tersimpan ulang ke Redis).
 
 ---
 
