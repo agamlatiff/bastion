@@ -932,9 +932,9 @@ export const LandingPage: React.FC = () => {
                     <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
                 </div>
 
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
+                <div className="w-full space-y-14">
                     {/* Section Heading */}
-                    <div className="text-center max-w-3xl mx-auto space-y-3.5 sm:space-y-4">
+                    <div className="text-center max-w-3xl mx-auto px-4 sm:px-6 space-y-3.5 sm:space-y-4">
                         <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight font-heading leading-tight">
                             Kas Bisnis Anda Dijaga Otomatis.
                         </h2>
@@ -943,8 +943,8 @@ export const LandingPage: React.FC = () => {
                         </p>
                     </div>
 
-                    {/* Concentric Security Vault Architecture */}
-                    <div className="pt-2">
+                    {/* Concentric Security Vault Architecture - Full-width schematic stage */}
+                    <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-24">
                         <ConcentricVault />
                     </div>
                 </div>
