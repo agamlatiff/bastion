@@ -94,12 +94,12 @@ func main() {
 	v1 := router.Group("/v1/wallets")
 	v1.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 	{
-		v1.POST("", walletHandler.CreateWallet)
+		v1.POST("", middleware.IdempotencyMiddleware(rdb, 120*time.Second), walletHandler.CreateWallet)
 		v1.GET("", walletHandler.ListCustomerWallets)
 		v1.GET("/:id", walletHandler.GetWallet)
 		v1.GET("/:id/balance", walletHandler.GetBalance)
-		v1.POST("/:id/freeze", walletHandler.FreezeWallet)
-		v1.POST("/:id/unfreeze", walletHandler.UnfreezeWallet)
+		v1.POST("/:id/freeze", middleware.IdempotencyMiddleware(rdb, 120*time.Second), walletHandler.FreezeWallet)
+		v1.POST("/:id/unfreeze", middleware.IdempotencyMiddleware(rdb, 120*time.Second), walletHandler.UnfreezeWallet)
 	}
 
 	// 5. HTTP Server with Graceful Shutdown
