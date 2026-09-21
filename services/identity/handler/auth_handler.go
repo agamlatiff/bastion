@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/agamlatiff/bastion/services/identity/domain"
@@ -41,6 +42,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 			c.JSON(http.StatusConflict, gin.H{"error": "Email is already registered"})
 			return
 		}
+		log.Printf("[ERROR] [RequestID: %s] Failed to register user: %v", requestID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user account"})
 		return
 	}
@@ -74,6 +76,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Account is suspended or inactive"})
 			return
 		}
+		log.Printf("[ERROR] [RequestID: %s] Authentication failed: %v", requestID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Authentication failed"})
 		return
 	}
@@ -104,6 +107,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid, expired, or revoked refresh token"})
 			return
 		}
+		log.Printf("[ERROR] [RequestID: %s] Failed to refresh token: %v", requestID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to refresh token"})
 		return
 	}
@@ -123,7 +127,9 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	requestID := c.GetHeader("X-Request-ID")
 	ip := c.ClientIP()
 
-	_ = h.authService.Logout(c.Request.Context(), req.RefreshToken, requestID, ip)
+	if err := h.authService.Logout(c.Request.Context(), req.RefreshToken, requestID, ip); err != nil {
+		log.Printf("[ERROR] [RequestID: %s] Failed to revoke session during logout: %v", requestID, err)
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
@@ -148,7 +154,9 @@ func (h *AuthHandler) Setup2FA(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Two-factor authentication is already enabled"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to setup 2FA", "details": err.Error()})
+		requestID := c.GetHeader("X-Request-ID")
+		log.Printf("[ERROR] [RequestID: %s] Failed to setup 2FA for user %s: %v", requestID, userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to setup 2FA"})
 		return
 	}
 
@@ -191,7 +199,8 @@ func (h *AuthHandler) Enable2FA(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "2FA setup has not been initiated"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enable 2FA", "details": err.Error()})
+		log.Printf("[ERROR] [RequestID: %s] Failed to enable 2FA for user %s: %v", requestID, userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to activate 2FA"})
 		return
 	}
 
@@ -230,7 +239,8 @@ func (h *AuthHandler) Disable2FA(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Two-factor authentication is not currently enabled"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to disable 2FA", "details": err.Error()})
+		log.Printf("[ERROR] [RequestID: %s] Failed to disable 2FA for user %s: %v", requestID, userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to disable 2FA"})
 		return
 	}
 
@@ -260,7 +270,8 @@ func (h *AuthHandler) Verify2FA(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Challenge token expired or invalid. Please login again."})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify 2FA login", "details": err.Error()})
+		log.Printf("[ERROR] [RequestID: %s] Failed to verify 2FA login: %v", requestID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify 2FA login"})
 		return
 	}
 
