@@ -5,9 +5,10 @@ import {
     Fingerprint,
     CheckCircle2,
     Zap,
-    Cpu,
+    Users,
     Activity,
     Shield,
+    FileCheck,
 } from 'lucide-react';
 import { BastionLogo } from '../common/BastionLogo';
 
@@ -38,16 +39,16 @@ interface LayerInfo {
 const LAYERS: Record<LayerId, LayerInfo> = {
     1: {
         id: 1,
-        name: 'Lapisan 1: Anti-Dobel Bayar',
-        level: 'Di Kasir & Gateway Pembayaran',
+        name: 'Lapisan 1: Kasir & Pembayaran',
+        level: 'Di Mesin Kasir & Pembayaran',
         title: 'Uang Tidak Pernah Terpotong Dua Kali',
         description:
-            'Saat sinyal internet pembeli lemot atau kasir gugup menekan tombol bayar berulang kali, Bastion langsung menyaring transaksi tersebut dan membatalkan pemotongan kedua seketika.',
-        scenario: 'Tombol bayar terpencet 2x saat kasir ramai? Transaksi kedua otomatis ditahan.',
-        realBenefit: 'Bebas drama komplain dari pelanggan dan tidak perlu repot transfer uang balik.',
-        metricLabel: 'Risiko Terpotong 2x',
-        metricValue: '0% (Nol Potongan Ganda)',
-        status: 'Anti-Dobel Aktif',
+            'Saat internet pelanggan lambat atau tombol bayar tertekan berkali-kali, sistem otomatis menyaring transaksi sehingga saldo hanya terpotong satu kali.',
+        scenario: 'Kasir menekan tombol bayar 2x saat antrean ramai? Transaksi kedua otomatis ditahan.',
+        realBenefit: 'Bebas komplain dari pelanggan dan staf tidak perlu repot melakukan transfer balik.',
+        metricLabel: 'Potongan Ganda',
+        metricValue: '0x (Pasti Aman)',
+        status: 'Siaga Otomatis',
         accentColor: {
             glow: 'rgba(56, 189, 248, 0.35)',
             border: 'border-sky-500/30',
@@ -60,16 +61,16 @@ const LAYERS: Record<LayerId, LayerInfo> = {
     },
     2: {
         id: 2,
-        name: 'Lapisan 2: Anti-Saldo Minus',
-        level: 'Di Pengeluaran Kas & Dompet',
+        name: 'Lapisan 2: Rekening & Saldo Kas',
+        level: 'Saat Tarik & Transfer Uang',
         title: 'Saldo Kas Tidak Akan Pernah Minus',
         description:
-            'Sebelum uang keluar, sistem selalu mengecek sisa kas riil Anda. Jika dana kurang walaupun hanya seribu rupiah, pengeluaran langsung ditolak sebelum uang sempat berpindah tangan.',
-        scenario: 'Staf ingin bayar nota Rp 2.000.000 padahal kas cuma sisa Rp 1.500.000? Pengeluaran langsung ditolak.',
-        realBenefit: 'Kas operasional usaha Anda tidak akan pernah jebol atau berutang tanpa disadari.',
-        metricLabel: 'Jaminan Saldo',
-        metricValue: 'Selalu Pas & Akurat',
-        status: 'Anti-Minus Aktif',
+            'Sebelum uang keluar, sistem selalu mencocokkan sisa saldo riil. Pengeluaran langsung dibatalkan jika dana tidak mencukupi, meski hanya kurang seribu rupiah.',
+        scenario: 'Staf ingin bayar nota Rp 2.000.000 padahal kas cuma ada Rp 1.500.000? Pengeluaran langsung ditolak.',
+        realBenefit: 'Kas operasional usaha Anda tidak akan pernah bocor atau berutang tanpa disadari.',
+        metricLabel: 'Akurasi Saldo',
+        metricValue: '100% Sesuai Kas Riil',
+        status: 'Siaga Otomatis',
         accentColor: {
             glow: 'rgba(16, 185, 129, 0.35)',
             border: 'border-emerald-500/30',
@@ -82,16 +83,16 @@ const LAYERS: Record<LayerId, LayerInfo> = {
     },
     3: {
         id: 3,
-        name: 'Lapisan 3: Catatan Terkunci',
-        level: 'Di Buku Kas & Database Inti',
+        name: 'Lapisan 3: Riwayat & Buku Kas',
+        level: 'Di Laporan & Riwayat Pembukuan',
         title: 'Catatan Kas Tidak Bisa Diubah Diam-Diam',
         description:
-            'Setiap rupiah yang masuk atau keluar langsung disegel permanen. Siapa pun, termasuk staf atau kasir, tidak akan bisa menghapus nota atau memanipulasi angka di masa lalu.',
-        scenario: 'Ada yang berniat menghapus riwayat pengeluaran kemarin sore? Catatan terkunci rapat dan sistem menolak perubahan.',
-        realBenefit: 'Pembukuan Anda selalu jujur, rapi, dan siap dicek kapan saja tanpa takut data diakali.',
-        metricLabel: 'Keaslian Catatan',
-        metricValue: '100% Tersegel Permanen',
-        status: 'Catatan Terkunci',
+            'Setiap mutasi uang masuk atau keluar langsung dikunci secara permanen. Tidak ada staf yang bisa mengubah angka, mengganti tanggal nota, atau menghapus riwayat transaksi.',
+        scenario: 'Ada upaya menghapus riwayat pengeluaran kemarin sore? Catatan terkunci rapat dan sistem menolak perubahan.',
+        realBenefit: 'Pembukuan usaha Anda selalu jujur, rapi, dan siap dicek kapan saja tanpa khawatir data dimanipulasi.',
+        metricLabel: 'Keaslian Data',
+        metricValue: '100% Permanen & Asli',
+        status: 'Terkunci Permanen',
         accentColor: {
             glow: 'rgba(129, 140, 248, 0.35)',
             border: 'border-indigo-500/30',
@@ -122,36 +123,36 @@ export const ConcentricVault: React.FC = () => {
                 {/* 1. HEROIC TOP STAGE: THE CONCENTRIC FORTRESS VAULT                       */}
                 {/* ========================================================================= */}
                 <div className="relative z-10 flex flex-col items-center text-center space-y-6 sm:space-y-8">
-                    {/* Header Telemetry Pill */}
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800/80 text-[11px] font-mono text-zinc-300 shadow-sm">
+                    {/* Header Pill */}
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800/80 text-[11px] font-mono text-zinc-300 shadow-sm">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>Arsitektur Pertahanan Berlapis (Defense-in-Depth)</span>
+                        <span>3 Lapisan Pengaman Kas Usaha</span>
                         <span className="text-zinc-600">•</span>
-                        <span className="text-zinc-400 font-semibold uppercase tracking-wider">
-                            Real-Time Active
+                        <span className="text-emerald-400 font-semibold tracking-wide">
+                            Bekerja Otomatis di Setiap Transaksi
                         </span>
                     </div>
 
-                    {/* Central Concentric SVG Visualizer with Flanking Telemetry Badges */}
+                    {/* Central Concentric SVG Visualizer with Flanking Context Badges */}
                     <div className="relative w-full max-w-4xl flex items-center justify-center py-2 sm:py-4">
-                        {/* Left Telemetry Badges (Desktop Only) */}
+                        {/* Left Context Badges (Desktop Only) */}
                         <div className="hidden lg:flex flex-col gap-3 absolute left-4 xl:left-8 top-1/2 -translate-y-1/2 text-left z-20">
                             <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 backdrop-blur-md space-y-1 max-w-[210px] shadow-lg">
                                 <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold">
-                                    <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                                    <span>Zero-Trust Guard</span>
+                                    <Users className="w-3.5 h-3.5 shrink-0" />
+                                    <span>Hak Akses Staf</span>
                                 </div>
                                 <p className="text-[11px] text-zinc-400 leading-tight">
-                                    Pemeriksaan hak akses peran & validitas token di tiap request.
+                                    Hanya staf dengan izin resmi yang bisa membuka dan memproses kas.
                                 </p>
                             </div>
                             <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 backdrop-blur-md space-y-1 max-w-[210px] shadow-lg">
                                 <div className="flex items-center gap-1.5 text-sky-400 text-xs font-semibold">
-                                    <Cpu className="w-3.5 h-3.5 shrink-0" />
-                                    <span>Kunci Idempoten</span>
+                                    <Zap className="w-3.5 h-3.5 shrink-0" />
+                                    <span>Cegah Klik Dobel</span>
                                 </div>
                                 <p className="text-[11px] text-zinc-400 leading-tight">
-                                    Redis atomic mutex mencegah mutasi ganda dalam hitungan mikrodetik.
+                                    Jika tombol bayar terpencet berkali-kali, sistem hanya memotong satu kali.
                                 </p>
                             </div>
                         </div>
@@ -309,7 +310,7 @@ export const ConcentricVault: React.FC = () => {
                                         letterSpacing="1.5"
                                         fontWeight={activeLayer === 3 ? 'bold' : 'normal'}
                                     >
-                                        LAPISAN 3: CATATAN TERKUNCI
+                                        LAPISAN 3: BUKU KAS TERKUNCI
                                     </text>
                                 </g>
 
@@ -344,30 +345,30 @@ export const ConcentricVault: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Right Telemetry Badges (Desktop Only) */}
+                        {/* Right Context Badges (Desktop Only) */}
                         <div className="hidden lg:flex flex-col gap-3 absolute right-4 xl:right-8 top-1/2 -translate-y-1/2 text-left z-20">
                             <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 backdrop-blur-md space-y-1 max-w-[210px] shadow-lg">
                                 <div className="flex items-center gap-1.5 text-indigo-400 text-xs font-semibold">
-                                    <Activity className="w-3.5 h-3.5 shrink-0" />
-                                    <span>Buku Kas Tersegel</span>
+                                    <FileCheck className="w-3.5 h-3.5 shrink-0" />
+                                    <span>Buku Kas Permanen</span>
                                 </div>
                                 <p className="text-[11px] text-zinc-400 leading-tight">
-                                    Setiap pergerakan dana dicatat pada double-entry ledger immutable.
+                                    Setiap rupiah yang masuk dan keluar tercatat utuh tanpa bisa diubah diam-diam.
                                 </p>
                             </div>
                             <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 backdrop-blur-md space-y-1 max-w-[210px] shadow-lg">
                                 <div className="flex items-center gap-1.5 text-amber-400 text-xs font-semibold">
                                     <Shield className="w-3.5 h-3.5 shrink-0" />
-                                    <span>Bank-Grade Isolation</span>
+                                    <span>Pencegah Selisih</span>
                                 </div>
                                 <p className="text-[11px] text-zinc-400 leading-tight">
-                                    Tingkat isolasi SERIALIZABLE menjamin kebal race condition.
+                                    Transaksi diproses berurutan sehingga hitungan kas selalu cocok.
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Active Layer Focus Banner (Real-Time Dynamic Summary) */}
+                    {/* Active Layer Focus Banner */}
                     <div className="inline-flex items-center gap-2 sm:gap-3 px-4 py-2 rounded-2xl bg-zinc-950/90 border border-zinc-800 text-xs text-zinc-300 max-w-xl shadow-lg transition-all duration-300">
                         <span
                             className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -461,7 +462,7 @@ export const ConcentricVault: React.FC = () => {
                                                     className="w-1.5 h-1.5 rounded-full"
                                                     style={{ backgroundColor: item.accentColor.ringStroke }}
                                                 />
-                                                <span>Kasus Nyata di Lapangan:</span>
+                                                <span>Contoh Nyata di Lapangan:</span>
                                             </div>
                                             <p className="text-[11px] text-zinc-400 leading-relaxed">
                                                 {item.scenario}
@@ -485,25 +486,25 @@ export const ConcentricVault: React.FC = () => {
                 </div>
 
                 {/* ========================================================================= */}
-                {/* 3. BOTTOM TRUST & COMPLIANCE STRIP                                        */}
+                {/* 3. BOTTOM TRUST STRIP                                                     */}
                 {/* ========================================================================= */}
                 <div className="relative z-10 pt-8 sm:pt-10 mt-8 border-t border-zinc-800/60">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
                         <div className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-zinc-950/40 border border-zinc-800/60 text-zinc-400 text-xs">
                             <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                            <span className="truncate">Enkripsi AES-256 GCM</span>
+                            <span className="truncate">Enkripsi Standar Perbankan</span>
                         </div>
                         <div className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-zinc-950/40 border border-zinc-800/60 text-zinc-400 text-xs">
                             <Lock className="w-4 h-4 text-sky-400 shrink-0" />
-                            <span className="truncate">Tingkat Isolasi SERIALIZABLE</span>
+                            <span className="truncate">Pembukuan Bebas Selisih</span>
                         </div>
                         <div className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-zinc-950/40 border border-zinc-800/60 text-zinc-400 text-xs">
                             <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />
-                            <span className="truncate">Multi-Role RBAC & 2FA TOTP</span>
+                            <span className="truncate">Izin Akses Staf & 2FA</span>
                         </div>
                         <div className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-zinc-950/40 border border-zinc-800/60 text-zinc-400 text-xs">
                             <Fingerprint className="w-4 h-4 text-amber-400 shrink-0" />
-                            <span className="truncate">Audit Log Immutable</span>
+                            <span className="truncate">Riwayat Transaksi Permanen</span>
                         </div>
                     </div>
                 </div>
