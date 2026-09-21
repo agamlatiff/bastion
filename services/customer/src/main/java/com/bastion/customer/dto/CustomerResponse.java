@@ -14,7 +14,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CustomerResponse {
+public class CustomerResponse implements java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private UUID id;
     private UUID identityUserId;
