@@ -74,6 +74,9 @@ func main() {
 	authSvc := service.NewAuthService(repo, authCfg)
 	authHdr := handler.NewAuthHandler(authSvc)
 
+	adminSvc := service.NewAdminService(repo)
+	adminHdr := handler.NewAdminHandler(adminSvc)
+
 	// Start Transactional Outbox background worker
 	outboxPub := outbox.NewOutboxPublisher(repo, strings.Split(cfg.KafkaBrokers, ","), "bastion.identity.events")
 	go outboxPub.Start(context.Background())
@@ -126,6 +129,16 @@ func main() {
 			twoFactor.POST("/enable", authHdr.Enable2FA)
 			twoFactor.POST("/disable", authHdr.Disable2FA)
 		}
+	}
+
+	// 7. Register Admin RBAC routes: /v1/admin/* (Protected by AuthRequired + RequireRole("ADMIN"))
+	admin := v1.Group("/admin")
+	admin.Use(middleware.AuthRequired(cfg.JWTSecret), middleware.RequireRole("ADMIN"))
+	{
+		admin.GET("/users", adminHdr.ListUsers)
+		admin.POST("/users/:id/roles", adminHdr.AssignRole)
+		admin.DELETE("/users/:id/roles/:role", adminHdr.RevokeRole)
+		admin.GET("/roles", adminHdr.ListRoles)
 	}
 
 	// 6. Configure HTTP Server with sane timeouts

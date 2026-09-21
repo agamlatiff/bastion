@@ -176,17 +176,11 @@ func (s *authService) Login(ctx context.Context, req domain.LoginRequest, reques
 		}, nil
 	}
 
-	// 5. Determine primary authorization role
-	primaryRole := "CUSTOMER"
-	if len(user.Roles) > 0 {
-		primaryRole = user.Roles[0]
-	}
-
-	// 6. Generate cryptographic JWT access and refresh token pair
+	// 5. Generate cryptographic JWT access and refresh token pair with multi-role claims
 	tokenPair, err := security.GenerateTokenPair(
 		user.ID.String(),
 		user.Email,
-		primaryRole,
+		user.Roles,
 		s.authCfg.JWTSecret,
 		s.authCfg.AccessTokenExpiryMins,
 		s.authCfg.RefreshTokenExpiryDays,
@@ -267,11 +261,16 @@ func (s *authService) RefreshToken(ctx context.Context, oldRefreshToken, request
 		return nil, fmt.Errorf("failed to revoke old session: %w", err)
 	}
 
-	// 5. Issue new token pair
+	// 5. Issue new token pair preserving all user roles
+	roles := claims.Roles
+	if len(roles) == 0 && claims.Role != "" {
+		roles = []string{claims.Role}
+	}
+
 	tokenPair, err := security.GenerateTokenPair(
 		claims.UserID,
 		claims.Email,
-		claims.Role,
+		roles,
 		s.authCfg.JWTSecret,
 		s.authCfg.AccessTokenExpiryMins,
 		s.authCfg.RefreshTokenExpiryDays,
@@ -310,7 +309,7 @@ func (s *authService) RefreshToken(ctx context.Context, oldRefreshToken, request
 			ID:     userID,
 			Email:  claims.Email,
 			Status: domain.StatusActive,
-			Roles:  []string{claims.Role},
+			Roles:  roles,
 		},
 	}, nil
 }

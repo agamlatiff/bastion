@@ -17,6 +17,7 @@ var (
 	ErrDuplicateEmail  = errors.New("email already registered")
 	ErrUserNotFound    = errors.New("user not found")
 	ErrSessionNotFound = errors.New("session not found")
+	ErrRoleNotFound    = errors.New("role not found")
 )
 
 // Repository defines the contract for identity persistence operations.
@@ -25,6 +26,10 @@ type Repository interface {
 	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*domain.User, error)
 	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]string, error)
+	AssignUserRole(ctx context.Context, userID uuid.UUID, roleName string) error
+	RevokeUserRole(ctx context.Context, userID uuid.UUID, roleName string) error
+	ListUsers(ctx context.Context, limit, offset int) ([]*domain.User, int, error)
+	ListRoles(ctx context.Context) ([]string, error)
 	UpdateTwoFactor(ctx context.Context, userID uuid.UUID, secretEncrypted *string, enabled bool) error
 	CreateSession(ctx context.Context, session *domain.Session) error
 	GetSessionByTokenHash(ctx context.Context, tokenHash string) (*domain.Session, error)
@@ -341,5 +346,131 @@ func (r *pgxRepository) MarkOutboxEventFailed(ctx context.Context, id uuid.UUID,
 	`
 	_, err := r.db.Exec(ctx, query, maxRetries, id)
 	return err
+}
+
+// AssignUserRole assigns a named role to a user.
+func (r *pgxRepository) AssignUserRole(ctx context.Context, userID uuid.UUID, roleName string) error {
+	// 1. Verify user existence
+	var userExists bool
+	err := r.db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)", userID).Scan(&userExists)
+	if err != nil {
+		return err
+	}
+	if !userExists {
+		return ErrUserNotFound
+	}
+
+	// 2. Lookup role ID
+	var roleID uuid.UUID
+	err = r.db.QueryRow(ctx, "SELECT id FROM roles WHERE UPPER(name) = UPPER($1)", roleName).Scan(&roleID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrRoleNotFound
+		}
+		return err
+	}
+
+	// 3. Insert assignment idempotently
+	query := `
+		INSERT INTO user_roles (user_id, role_id)
+		VALUES ($1, $2)
+		ON CONFLICT (user_id, role_id) DO NOTHING
+	`
+	_, err = r.db.Exec(ctx, query, userID, roleID)
+	return err
+}
+
+// RevokeUserRole removes an assigned role from a user.
+func (r *pgxRepository) RevokeUserRole(ctx context.Context, userID uuid.UUID, roleName string) error {
+	query := `
+		DELETE FROM user_roles
+		WHERE user_id = $1 
+		  AND role_id = (SELECT id FROM roles WHERE UPPER(name) = UPPER($2))
+	`
+	tag, err := r.db.Exec(ctx, query, userID, roleName)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		var userExists bool
+		_ = r.db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)", userID).Scan(&userExists)
+		if !userExists {
+			return ErrUserNotFound
+		}
+	}
+	return nil
+}
+
+// ListUsers retrieves paginated user records along with total count.
+func (r *pgxRepository) ListUsers(ctx context.Context, limit, offset int) ([]*domain.User, int, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	var total int
+	err := r.db.QueryRow(ctx, "SELECT COUNT(*) FROM users").Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	query := `
+		SELECT id, email, status, two_factor_enabled, created_at, updated_at
+		FROM users
+		ORDER BY created_at DESC
+		LIMIT $1 OFFSET $2
+	`
+	rows, err := r.db.Query(ctx, query, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var users []*domain.User
+	for rows.Next() {
+		u := &domain.User{}
+		if err := rows.Scan(
+			&u.ID,
+			&u.Email,
+			&u.Status,
+			&u.TwoFactorEnabled,
+			&u.CreatedAt,
+			&u.UpdatedAt,
+		); err != nil {
+			return nil, 0, err
+		}
+		users = append(users, u)
+	}
+
+	// Populate roles for each user
+	for _, u := range users {
+		roles, err := r.GetUserRoles(ctx, u.ID)
+		if err == nil {
+			u.Roles = roles
+		}
+	}
+
+	return users, total, nil
+}
+
+// ListRoles returns all role names available in the system.
+func (r *pgxRepository) ListRoles(ctx context.Context) ([]string, error) {
+	query := `SELECT name FROM roles ORDER BY name ASC`
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var roles []string
+	for rows.Next() {
+		var role string
+		if err := rows.Scan(&role); err == nil {
+			roles = append(roles, role)
+		}
+	}
+	return roles, nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -24,9 +25,33 @@ const (
 type TokenClaims struct {
 	UserID    string    `json:"user_id"`
 	Email     string    `json:"email"`
-	Role      string    `json:"role"`
+	Role      string    `json:"role"`  // Primary role for backward compatibility
+	Roles     []string  `json:"roles"` // Complete role list for multi-role RBAC
 	TokenType TokenType `json:"token_type"`
 	jwt.RegisteredClaims
+}
+
+// HasRole checks if the token claims include the specified role (case-insensitive).
+func (c *TokenClaims) HasRole(role string) bool {
+	for _, r := range c.Roles {
+		if strings.EqualFold(r, role) {
+			return true
+		}
+	}
+	if strings.EqualFold(c.Role, role) {
+		return true
+	}
+	return false
+}
+
+// HasAnyRole checks if the token claims include at least one of the specified roles.
+func (c *TokenClaims) HasAnyRole(roles ...string) bool {
+	for _, required := range roles {
+		if c.HasRole(required) {
+			return true
+		}
+	}
+	return false
 }
 
 // TokenPair represents an access token and refresh token returned upon login/refresh.
@@ -36,16 +61,22 @@ type TokenPair struct {
 	ExpiresInSeconds int64  `json:"expires_in"`
 }
 
-// GenerateTokenPair generates both an access token (short-lived) and a refresh token (long-lived).
-func GenerateTokenPair(userID, email, role, secret string, accessMins, refreshDays int) (*TokenPair, error) {
+// GenerateTokenPair generates both an access token (short-lived) and a refresh token (long-lived) with multi-role support.
+func GenerateTokenPair(userID, email string, roles []string, secret string, accessMins, refreshDays int) (*TokenPair, error) {
 	now := time.Now().UTC()
+
+	primaryRole := "CUSTOMER"
+	if len(roles) > 0 && roles[0] != "" {
+		primaryRole = roles[0]
+	}
 
 	// 1. Access Token
 	accessExpiry := now.Add(time.Duration(accessMins) * time.Minute)
 	accessClaims := TokenClaims{
 		UserID:    userID,
 		Email:     email,
-		Role:      role,
+		Role:      primaryRole,
+		Roles:     roles,
 		TokenType: TokenTypeAccess,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        uuid.New().String(), // jti (JWT ID)
@@ -66,7 +97,8 @@ func GenerateTokenPair(userID, email, role, secret string, accessMins, refreshDa
 	refreshClaims := TokenClaims{
 		UserID:    userID,
 		Email:     email,
-		Role:      role,
+		Role:      primaryRole,
+		Roles:     roles,
 		TokenType: TokenTypeRefresh,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        uuid.New().String(), // jti (JWT ID)
@@ -109,6 +141,10 @@ func ValidateToken(tokenString, secret string, expectedType TokenType) (*TokenCl
 
 	if claims.TokenType != expectedType {
 		return nil, fmt.Errorf("invalid token type: expected %s, got %s", expectedType, claims.TokenType)
+	}
+
+	if len(claims.Roles) == 0 && claims.Role != "" {
+		claims.Roles = []string{claims.Role}
 	}
 
 	return claims, nil
