@@ -11,7 +11,9 @@ import {
     ArrowDownLeft,
     X,
     Sparkles,
+    ShieldCheck,
 } from 'lucide-react';
+import { useAuth } from '../../features/auth/useAuth';
 
 export interface CommandPaletteProps {
     isOpen: boolean;
@@ -27,6 +29,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     const [query, setQuery] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
     const navigate = useNavigate();
+    const { isAdmin } = useAuth();
 
     const commands = [
         {
@@ -91,6 +94,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 if (onTriggerAction) onTriggerAction('new-wallet');
             },
         },
+        ...(isAdmin
+            ? [
+                  {
+                      id: 'nav-admin-users',
+                      category: 'Administrasi',
+                      title: 'Tata Kelola Hak Akses & Pengguna (RBAC)',
+                      description: 'Kelola otorisasi peran, inspeksi status, dan audit pengguna',
+                      icon: ShieldCheck,
+                      action: () => navigate('/app/admin/users'),
+                  },
+              ]
+            : []),
     ];
 
     const filtered = commands.filter(

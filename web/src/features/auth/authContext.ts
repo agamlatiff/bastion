@@ -9,6 +9,10 @@ export interface AuthContextType {
     verify2FA: (tempToken: string, code: string) => Promise<void>;
     logout: () => Promise<void>;
     setUser: (user: User | null) => void;
+    hasRole: (role: string) => boolean;
+    hasAnyRole: (roles: string[]) => boolean;
+    isAdmin: boolean;
+    isCustomer: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

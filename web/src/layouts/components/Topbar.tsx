@@ -4,6 +4,7 @@ import { BastionLogo } from '../../components/common/BastionLogo';
 import { useAuth } from '../../features/auth/useAuth';
 import { useCustomerProfile } from '../../features/customer/hooks';
 import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
 import { NotificationCenter } from '../../components/common/NotificationCenter';
 
 export interface TopbarProps {
@@ -12,10 +13,11 @@ export interface TopbarProps {
 }
 
 export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileNav, onOpenCommandPalette }) => {
-    const { user, logout } = useAuth();
+    const { user, logout, isAdmin } = useAuth();
     const { data: profile } = useCustomerProfile();
 
     const displayName = profile?.fullName || profile?.full_name || user?.email || 'User';
+    const primaryRole = isAdmin ? 'ADMIN' : (user?.roles?.[0] || 'CUSTOMER');
 
     return (
         <header className="h-14 border-b border-zinc-800/80 bg-[#09090b]/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30">
@@ -63,12 +65,19 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileNav, onOpenCommandPa
                 {/* Notification Center */}
                 <NotificationCenter />
 
-                {/* Profile Chip */}
+                {/* Profile Chip & Role Badge */}
                 <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-zinc-900/80 border border-zinc-800 text-xs">
                     <UserIcon className="w-3.5 h-3.5 text-zinc-400" />
                     <span className="font-medium text-zinc-200 text-xs truncate max-w-[120px] sm:max-w-[160px]">
                         {displayName}
                     </span>
+                    <Badge
+                        variant={primaryRole === 'ADMIN' ? 'warning' : 'cyan'}
+                        showDot={primaryRole === 'ADMIN'}
+                        className="hidden sm:inline-flex py-0 px-1.5 text-[9px]"
+                    >
+                        {primaryRole}
+                    </Badge>
                 </div>
 
                 {/* Logout Button */}
