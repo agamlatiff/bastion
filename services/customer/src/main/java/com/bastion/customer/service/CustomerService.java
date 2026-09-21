@@ -2,6 +2,8 @@ package com.bastion.customer.service;
 
 import java.util.UUID;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
-    // Retrieve customer profile by identity user ID
 
+    // Retrieve customer profile by identity user ID (Cache-Aside: TTL 30m)
+    @Cacheable(value = "customer:profile", key = "#identityUserId")
     @Transactional(readOnly = true)
     public CustomerResponse getProfile(UUID identityUserId) {
         Customer customer = customerRepository.findByIdentityUserId(identityUserId)
@@ -30,7 +33,8 @@ public class CustomerService {
         return CustomerResponse.fromEntity(customer);
     }
 
-    // Update customer profile details (PATCH)
+    // Update customer profile details (PATCH) and evict cache entry
+    @CacheEvict(value = "customer:profile", key = "#identityUserId")
     @Transactional
     public CustomerResponse updateProfile(UUID identityUserId, UpdateCustomerRequest request) {
         Customer customer = customerRepository.findByIdentityUserId(identityUserId)
