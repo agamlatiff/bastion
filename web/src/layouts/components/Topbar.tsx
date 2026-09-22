@@ -23,9 +23,23 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileNav, onOpenCommandPa
 
     // Dynamic Breadcrumbs Path Mapping
     const getBreadcrumbs = (pathname: string) => {
+        if (pathname === '/app/dashboard/analytics') {
+            return [
+                { label: 'Bastion', href: '/app/dashboard' },
+                { label: 'Dasbor Finansial', href: '/app/dashboard' },
+                { label: 'Rincian Analitik Arus Kas', href: undefined },
+            ];
+        }
+        if (pathname === '/app/dashboard/channels') {
+            return [
+                { label: 'Bastion', href: '/app/dashboard' },
+                { label: 'Dasbor Finansial', href: '/app/dashboard' },
+                { label: 'Rincian Saluran Kasir', href: undefined },
+            ];
+        }
         if (pathname.startsWith('/app/wallets/') && pathname !== '/app/wallets') {
             return [
-                { label: 'Aplikasi', href: '/app/dashboard' },
+                { label: 'Bastion', href: '/app/dashboard' },
                 { label: 'Dompet & Rekening', href: '/app/wallets' },
                 { label: 'Rincian Rekening', href: undefined },
             ];
@@ -33,7 +47,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileNav, onOpenCommandPa
         switch (pathname) {
             case '/app/dashboard':
                 return [
-                    { label: 'Aplikasi', href: '/app/dashboard' },
+                    { label: 'Bastion', href: '/app/dashboard' },
                     { label: 'Dasbor Finansial', href: undefined },
                 ];
             case '/app/wallets':
