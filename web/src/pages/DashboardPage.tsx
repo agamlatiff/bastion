@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Calendar,
-    ChevronDown,
     ArrowUpRight,
     ArrowDownRight,
     Store,
@@ -18,6 +17,7 @@ import {
     Check,
     ArrowRight,
     ArrowDownLeft,
+    History,
 } from 'lucide-react';
 import { useCustomerProfile } from '../features/customer/hooks';
 import { useWallets, useCreateWallet } from '../features/wallet/hooks';
@@ -29,7 +29,6 @@ import { Alert } from '../components/ui/Alert';
 import { VirtualDebitCard } from '../components/wallet/VirtualDebitCard';
 import { MoneyMovementModal } from '../components/dashboard/MoneyMovementModal';
 import { CurrencyConverter } from '../components/dashboard/CurrencyConverter';
-import { BastionLogo } from '../components/common/BastionLogo';
 import { formatCurrency } from '../lib/formatters';
 
 type PeriodType = 'feb26' | 'jan26' | 'q1_26';
@@ -45,8 +44,8 @@ interface MonthDataPoint {
     isSurplus: boolean;
     change: string;
     coordX: number;
-    coordY: number; // for inflow / all
-    outflowY: number; // for outflow
+    coordY: number;
+    outflowY: number;
 }
 
 const MONTH_DATA_POINTS: MonthDataPoint[] = [
@@ -72,10 +71,6 @@ const PERIOD_METRICS: Record<
         targetNominal: string;
         growthBadge: string;
         growthSub: string;
-        totalVolume: string;
-        volumeGrowth: string;
-        peakMonth: string;
-        peakNominal: string;
         yAxisInflow: string[];
         yAxisOutflow: string[];
         grossInflow: string;
@@ -88,15 +83,11 @@ const PERIOD_METRICS: Record<
     }
 > = {
     feb26: {
-        label: 'Feb 2026',
+        label: 'Februari 2026',
         dateRange: '01 Feb - 28 Feb 2026',
         targetNominal: 'Rp 864.250.000',
         growthBadge: '+12.4%',
         growthSub: 'Surplus vs bulan lalu',
-        totalVolume: '15.140',
-        volumeGrowth: '+32% volume kasir',
-        peakMonth: 'Agu',
-        peakNominal: 'Rp 864 Jt',
         yAxisInflow: ['1 M', '750 Jt', '500 Jt', '250 Jt', '0 Jt'],
         yAxisOutflow: ['600 Jt', '450 Jt', '300 Jt', '150 Jt', '0 Jt'],
         grossInflow: '+Rp 1.420.000.000',
@@ -108,15 +99,11 @@ const PERIOD_METRICS: Record<
         avgTicket: 'Rp 1,25 Jt',
     },
     jan26: {
-        label: 'Jan 2026',
+        label: 'Januari 2026',
         dateRange: '01 Jan - 31 Jan 2026',
         targetNominal: 'Rp 768.800.000',
         growthBadge: '+9.8%',
         growthSub: 'Surplus vs Des 2025',
-        totalVolume: '13.480',
-        volumeGrowth: '+18% volume kasir',
-        peakMonth: 'Jul',
-        peakNominal: 'Rp 768 Jt',
         yAxisInflow: ['900 Jt', '675 Jt', '450 Jt', '225 Jt', '0 Jt'],
         yAxisOutflow: ['500 Jt', '375 Jt', '250 Jt', '125 Jt', '0 Jt'],
         grossInflow: '+Rp 1.280.000.000',
@@ -128,15 +115,11 @@ const PERIOD_METRICS: Record<
         avgTicket: 'Rp 1,18 Jt',
     },
     q1_26: {
-        label: 'Kuartal 1 (Q1)',
+        label: 'Kuartal 1 (Q1 2026)',
         dateRange: '01 Jan - 31 Mar 2026',
         targetNominal: 'Rp 2.450.000.000',
         growthBadge: '+28.6%',
         growthSub: 'Surplus vs Q4 2025',
-        totalVolume: '42.600',
-        volumeGrowth: '+41% volume kasir',
-        peakMonth: 'Agu',
-        peakNominal: 'Rp 2.45 M',
         yAxisInflow: ['3.0 M', '2.25 M', '1.5 M', '750 Jt', '0 M'],
         yAxisOutflow: ['1.8 M', '1.35 M', '900 Jt', '450 Jt', '0 M'],
         grossInflow: '+Rp 4.150.000.000',
@@ -156,134 +139,44 @@ interface ChannelDetail {
     txCount: string;
     share: number;
     dotColor: string;
-    barColor: string;
-    borderColor: string;
-    glowColor: string;
 }
 
 const CHANNELS_DATA: Record<PeriodType, ChannelDetail[]> = {
     feb26: [
-        {
-            id: 'qris',
-            name: 'QRIS Dinamis',
-            nominal: 'Rp 475.300.000',
-            txCount: '237 tx',
-            share: 55,
-            dotColor: 'bg-emerald-400 shadow-[0_0_8px_#10b981]',
-            barColor: 'bg-gradient-to-r from-emerald-600 to-emerald-400',
-            borderColor: 'border-emerald-500/40',
-            glowColor: 'shadow-[0_0_18px_rgba(16,185,129,0.15)]',
-        },
-        {
-            id: 'bank',
-            name: 'Transfer Bank',
-            nominal: 'Rp 259.250.000',
-            txCount: '129 tx',
-            share: 30,
-            dotColor: 'bg-indigo-400 shadow-[0_0_8px_#818cf8]',
-            barColor: 'bg-gradient-to-r from-indigo-600 to-indigo-400',
-            borderColor: 'border-indigo-500/40',
-            glowColor: 'shadow-[0_0_18px_rgba(129,140,248,0.15)]',
-        },
-        {
-            id: 'edc',
-            name: 'Mesin EDC',
-            nominal: 'Rp 129.700.000',
-            txCount: '65 tx',
-            share: 15,
-            dotColor: 'bg-amber-400 shadow-[0_0_8px_#f59e0b]',
-            barColor: 'bg-gradient-to-r from-amber-600 to-amber-400',
-            borderColor: 'border-amber-500/40',
-            glowColor: 'shadow-[0_0_18px_rgba(245,158,11,0.15)]',
-        },
+        { id: 'qris', name: 'QRIS Dinamis', nominal: 'Rp 475.300.000', txCount: '237 tx', share: 55, dotColor: 'bg-emerald-400 shadow-[0_0_8px_#10b981]' },
+        { id: 'bank', name: 'Transfer Bank & VA', nominal: 'Rp 259.250.000', txCount: '129 tx', share: 30, dotColor: 'bg-indigo-400 shadow-[0_0_8px_#818cf8]' },
+        { id: 'edc', name: 'Mesin EDC Toko', nominal: 'Rp 129.700.000', txCount: '65 tx', share: 15, dotColor: 'bg-amber-400 shadow-[0_0_8px_#f59e0b]' },
     ],
     jan26: [
-        {
-            id: 'qris',
-            name: 'QRIS Dinamis',
-            nominal: 'Rp 399.700.000',
-            txCount: '202 tx',
-            share: 52,
-            dotColor: 'bg-emerald-400 shadow-[0_0_8px_#10b981]',
-            barColor: 'bg-gradient-to-r from-emerald-600 to-emerald-400',
-            borderColor: 'border-emerald-500/40',
-            glowColor: 'shadow-[0_0_18px_rgba(16,185,129,0.15)]',
-        },
-        {
-            id: 'bank',
-            name: 'Transfer Bank',
-            nominal: 'Rp 253.700.000',
-            txCount: '131 tx',
-            share: 33,
-            dotColor: 'bg-indigo-400 shadow-[0_0_8px_#818cf8]',
-            barColor: 'bg-gradient-to-r from-indigo-600 to-indigo-400',
-            borderColor: 'border-indigo-500/40',
-            glowColor: 'shadow-[0_0_18px_rgba(129,140,248,0.15)]',
-        },
-        {
-            id: 'edc',
-            name: 'Mesin EDC',
-            nominal: 'Rp 115.400.000',
-            txCount: '58 tx',
-            share: 15,
-            dotColor: 'bg-amber-400 shadow-[0_0_8px_#f59e0b]',
-            barColor: 'bg-gradient-to-r from-amber-600 to-amber-400',
-            borderColor: 'border-amber-500/40',
-            glowColor: 'shadow-[0_0_18px_rgba(245,158,11,0.15)]',
-        },
+        { id: 'qris', name: 'QRIS Dinamis', nominal: 'Rp 399.700.000', txCount: '202 tx', share: 52, dotColor: 'bg-emerald-400 shadow-[0_0_8px_#10b981]' },
+        { id: 'bank', name: 'Transfer Bank & VA', nominal: 'Rp 253.700.000', txCount: '131 tx', share: 33, dotColor: 'bg-indigo-400 shadow-[0_0_8px_#818cf8]' },
+        { id: 'edc', name: 'Mesin EDC Toko', nominal: 'Rp 115.400.000', txCount: '58 tx', share: 15, dotColor: 'bg-amber-400 shadow-[0_0_8px_#f59e0b]' },
     ],
     q1_26: [
-        {
-            id: 'qris',
-            name: 'QRIS Dinamis',
-            nominal: 'Rp 1.347.500.000',
-            txCount: '685 tx',
-            share: 55,
-            dotColor: 'bg-emerald-400 shadow-[0_0_8px_#10b981]',
-            barColor: 'bg-gradient-to-r from-emerald-600 to-emerald-400',
-            borderColor: 'border-emerald-500/40',
-            glowColor: 'shadow-[0_0_18px_rgba(16,185,129,0.15)]',
-        },
-        {
-            id: 'bank',
-            name: 'Transfer Bank',
-            nominal: 'Rp 735.000.000',
-            txCount: '372 tx',
-            share: 30,
-            dotColor: 'bg-indigo-400 shadow-[0_0_8px_#818cf8]',
-            barColor: 'bg-gradient-to-r from-indigo-600 to-indigo-400',
-            borderColor: 'border-indigo-500/40',
-            glowColor: 'shadow-[0_0_18px_rgba(129,140,248,0.15)]',
-        },
-        {
-            id: 'edc',
-            name: 'Mesin EDC',
-            nominal: 'Rp 367.500.000',
-            txCount: '185 tx',
-            share: 15,
-            dotColor: 'bg-amber-400 shadow-[0_0_8px_#f59e0b]',
-            barColor: 'bg-gradient-to-r from-amber-600 to-amber-400',
-            borderColor: 'border-amber-500/40',
-            glowColor: 'shadow-[0_0_18px_rgba(245,158,11,0.14)]',
-        },
+        { id: 'qris', name: 'QRIS Dinamis', nominal: 'Rp 1.347.500.000', txCount: '685 tx', share: 55, dotColor: 'bg-emerald-400 shadow-[0_0_8px_#10b981]' },
+        { id: 'bank', name: 'Transfer Bank & VA', nominal: 'Rp 735.000.000', txCount: '372 tx', share: 30, dotColor: 'bg-indigo-400 shadow-[0_0_8px_#818cf8]' },
+        { id: 'edc', name: 'Mesin EDC Toko', nominal: 'Rp 367.500.000', txCount: '185 tx', share: 15, dotColor: 'bg-amber-400 shadow-[0_0_8px_#f59e0b]' },
     ],
 };
 
-const LIVE_EVENTS = [
-    { text: 'Baru saja: QRIS Kasir Toko +Rp 450.000 tervalidasi otomatis', isSurplus: true },
-    { text: '3 detik lalu: Transfer Antar Bank +Rp 12.500.000 tercatat dalam buku besar', isSurplus: true },
-    { text: '6 detik lalu: Beban Operasional Logistik -Rp 1.250.000 dipotong seimbang', isSurplus: false },
-    { text: '10 detik lalu: Mesin EDC Kasir #2 menyelesaikan kliring Rp 850.000', isSurplus: true },
-    { text: '14 detik lalu: Rekonsiliasi cabang Jakarta seimbang (Nol Selisih)', isSurplus: true },
-];
+interface RecentActivityItem {
+    id: string;
+    title: string;
+    walletType: string;
+    amount: number;
+    currency: string;
+    type: 'IN' | 'OUT';
+    time: string;
+    status: string;
+}
 
 export const DashboardPage: React.FC = () => {
-    // Real User Profile and Wallets Hooks
+    // Real Customer Profile and Wallets Hooks
     const { data: profile, isLoading: isProfileLoading, error: profileError } = useCustomerProfile();
     const { data: wallets = [], isLoading: isWalletsLoading, refetch: refetchWallets, isRefetching } = useWallets();
     const { mutateAsync: createWallet, isPending: isCreatingWallet } = useCreateWallet();
 
-    // Modals & Form State
+    // Modals & Action State
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [moneyModalState, setMoneyModalState] = useState<{
         isOpen: boolean;
@@ -294,13 +187,46 @@ export const DashboardPage: React.FC = () => {
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [simulatedOffset, setSimulatedOffset] = useState<number>(0);
 
-    // Dynamic Workbench Controls & Interactivity
+    // Recent Mutations Local Activity Log
+    const [recentActivities, setRecentActivities] = useState<RecentActivityItem[]>([
+        {
+            id: 'act-1',
+            title: 'Isi Saldo Kasir Otomatis',
+            walletType: 'Dompet Rupiah',
+            amount: 5000000,
+            currency: 'IDR',
+            type: 'IN',
+            time: '12 menit lalu',
+            status: 'Tercatat Sah',
+        },
+        {
+            id: 'act-2',
+            title: 'Biaya Pengadaan & Operasional',
+            walletType: 'Dompet Rupiah',
+            amount: 1450000,
+            currency: 'IDR',
+            type: 'OUT',
+            time: '1 jam lalu',
+            status: 'Tercatat Sah',
+        },
+        {
+            id: 'act-3',
+            title: 'Settlement Kliring QRIS Toko',
+            walletType: 'Dompet Rupiah',
+            amount: 2850000,
+            currency: 'IDR',
+            type: 'IN',
+            time: '3 jam lalu',
+            status: 'Tercatat Sah',
+        },
+    ]);
+
+    // Financial Analytics Controls & State
     const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('feb26');
     const [chartMode, setChartViewMode] = useState<ChartViewMode>('curve');
     const [flowCategory, setFlowCategory] = useState<FlowCategory>('all');
     const [activeHoverPoint, setActiveHoverPoint] = useState<MonthDataPoint>(MONTH_DATA_POINTS[7]);
     const [selectedMilestone, setSelectedMilestone] = useState<number>(82);
-    const [liveEventIndex, setLiveEventIndex] = useState<number>(0);
 
     const displayName = profile?.fullName || profile?.full_name || 'PT Kopi Nusantara';
 
@@ -322,14 +248,6 @@ export const DashboardPage: React.FC = () => {
     const currentPeriod = PERIOD_METRICS[selectedPeriod];
     const currentChannels = CHANNELS_DATA[selectedPeriod];
 
-    // Cycle real-time simulated ledger ticker
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setLiveEventIndex((prev) => (prev + 1) % LIVE_EVENTS.length);
-        }, 3800);
-        return () => clearInterval(interval);
-    }, []);
-
     const handleCopyId = (id: string, e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -341,8 +259,34 @@ export const DashboardPage: React.FC = () => {
     const handleMoneySuccess = (amount: number, type: 'transfer' | 'topup') => {
         if (type === 'topup') {
             setSimulatedOffset((prev) => prev + amount);
+            setRecentActivities((prev) => [
+                {
+                    id: `act-${Date.now()}`,
+                    title: 'Top Up Saldo Mandiri',
+                    walletType: 'Dompet Rupiah',
+                    amount: amount,
+                    currency: 'IDR',
+                    type: 'IN',
+                    time: 'Baru saja',
+                    status: 'Tercatat Sah',
+                },
+                ...prev.slice(0, 4),
+            ]);
         } else {
             setSimulatedOffset((prev) => Math.max(0, prev - amount));
+            setRecentActivities((prev) => [
+                {
+                    id: `act-${Date.now()}`,
+                    title: 'Transfer Dana Keluar',
+                    walletType: 'Dompet Rupiah',
+                    amount: amount,
+                    currency: 'IDR',
+                    type: 'OUT',
+                    time: 'Baru saja',
+                    status: 'Tercatat Sah',
+                },
+                ...prev.slice(0, 4),
+            ]);
         }
         refetchWallets();
     };
@@ -361,7 +305,7 @@ export const DashboardPage: React.FC = () => {
         }
     };
 
-    // Full-Width Dynamic Polyline Paths
+    // Full-Width Dynamic Polyline Paths for Spline Curve
     const isInflowView = flowCategory !== 'outflow';
 
     const splineAreaPathInflow =
@@ -388,875 +332,879 @@ export const DashboardPage: React.FC = () => {
                 </Alert>
             )}
 
+            {/* SVG Global Pattern Definitions for Spline Curve & Beams */}
+            <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden="true">
+                <defs>
+                    <linearGradient id="app-spline-emerald-glow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.28" />
+                        <stop offset="65%" stopColor="#10b981" stopOpacity="0.06" />
+                        <stop offset="100%" stopColor="#09090b" stopOpacity="0.0" />
+                    </linearGradient>
+
+                    <linearGradient id="app-spline-rose-glow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.28" />
+                        <stop offset="65%" stopColor="#f43f5e" stopOpacity="0.06" />
+                        <stop offset="100%" stopColor="#09090b" stopOpacity="0.0" />
+                    </linearGradient>
+
+                    <linearGradient id="app-beam-emerald" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.32" />
+                        <stop offset="60%" stopColor="#10b981" stopOpacity="0.08" />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                    </linearGradient>
+
+                    <linearGradient id="app-beam-rose" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.32" />
+                        <stop offset="60%" stopColor="#f43f5e" stopOpacity="0.08" />
+                        <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.0" />
+                    </linearGradient>
+                </defs>
+            </svg>
+
             {/* ========================================================================= */}
-            {/* 1. MASTER WORKBENCH: MENGIKUTI PERSIS DESAIN DASHBOARD STATISTICS PREVIEW */}
+            {/* 1. NATIVE APPLICATION HEADER & QUICK ACTION BAR (NO FAKE MAC WINDOW DOTS) */}
             {/* ========================================================================= */}
-            <div className="w-full rounded-2xl sm:rounded-3xl border border-white/10 bg-[#0c0c10]/95 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,0.85)] ring-1 ring-white/5 overflow-hidden text-left flex flex-col">
-                {/* SVG Global Pattern Definitions */}
-                <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden="true">
-                    <defs>
-                        <pattern
-                            id="app-hatch-rose"
-                            width="8"
-                            height="8"
-                            patternTransform="rotate(45 0 0)"
-                            patternUnits="userSpaceOnUse"
-                        >
-                            <line x1="0" y1="0" x2="0" y2="8" stroke="#f43f5e" strokeWidth="2.5" opacity="0.85" />
-                        </pattern>
-
-                        <linearGradient id="app-spline-emerald-glow" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.28" />
-                            <stop offset="65%" stopColor="#10b981" stopOpacity="0.06" />
-                            <stop offset="100%" stopColor="#09090b" stopOpacity="0.0" />
-                        </linearGradient>
-
-                        <linearGradient id="app-spline-rose-glow" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.28" />
-                            <stop offset="65%" stopColor="#f43f5e" stopOpacity="0.06" />
-                            <stop offset="100%" stopColor="#09090b" stopOpacity="0.0" />
-                        </linearGradient>
-
-                        <linearGradient id="app-beam-emerald" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.32" />
-                            <stop offset="60%" stopColor="#10b981" stopOpacity="0.08" />
-                            <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
-                        </linearGradient>
-
-                        <linearGradient id="app-beam-rose" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.32" />
-                            <stop offset="60%" stopColor="#f43f5e" stopOpacity="0.08" />
-                            <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.0" />
-                        </linearGradient>
-                    </defs>
-                </svg>
-
-                {/* Header Bar Jendela Aplikasi Bastion (Brand Authentic + Status Riil) */}
-                <div className="px-4 sm:px-6 py-3 border-b border-white/10 bg-[#121217] flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-                    {/* Window Dots & Business Identity */}
-                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-start">
-                        <div className="flex items-center gap-2.5">
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-2.5 h-2.5 rounded-full bg-red-500/80 border border-red-400/40" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80 border border-amber-400/40" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 border border-emerald-400/40" />
-                            </div>
-                            <div className="h-4 w-px bg-white/10" />
-
-                            <div className="flex items-center gap-2">
-                                <BastionLogo className="w-5 h-5 text-white shrink-0" />
-                                <span className="font-bold text-xs text-white tracking-tight font-heading">
-                                    Bastion Financial OS
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-xs">
-                            <span className="text-zinc-600 hidden sm:inline">•</span>
-                            <span className="text-zinc-300 font-medium text-[11px] sm:text-xs">
-                                {isProfileLoading ? <Skeleton className="h-4 w-28 inline-block" /> : displayName}
-                            </span>
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                <span>Buku Kas Terkunci</span>
-                            </span>
-                            <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-900 border border-white/10 text-zinc-400">
-                                <span>Nol Selisih ✓</span>
-                            </span>
-                        </div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-zinc-800/80">
+                <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-zinc-400 font-medium">Selamat datang kembali,</span>
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            Akun Terverifikasi
+                        </span>
+                        <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400">
+                            Buku Kas Terkunci • Nol Selisih ✓
+                        </span>
                     </div>
-
-                    {/* Top Right: Period Selector Pills & Quick Action Controls */}
-                    <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-between md:justify-end">
-                        <div className="p-0.5 rounded-lg bg-zinc-900/90 border border-white/10 flex items-center gap-0.5">
-                            {(['feb26', 'jan26', 'q1_26'] as PeriodType[]).map((p) => (
-                                <button
-                                    key={p}
-                                    type="button"
-                                    onClick={() => setSelectedPeriod(p)}
-                                    className={`px-2.5 py-1 rounded-md text-[10px] font-mono transition-all cursor-pointer ${
-                                        selectedPeriod === p
-                                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold shadow-sm'
-                                            : 'text-zinc-400 hover:text-zinc-200'
-                                    }`}
-                                >
-                                    {PERIOD_METRICS[p].label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Quick Operation Actions */}
-                        <div className="flex items-center gap-1.5">
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => setMoneyModalState({ isOpen: true, mode: 'topup' })}
-                                leftIcon={<ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />}
-                                className="text-xs font-semibold"
-                            >
-                                Isi Saldo
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => setMoneyModalState({ isOpen: true, mode: 'transfer' })}
-                                leftIcon={<ArrowUpRight className="w-3.5 h-3.5 text-blue-400" />}
-                                className="text-xs font-semibold"
-                            >
-                                Kirim Uang
-                            </Button>
-                            <Button
-                                size="sm"
-                                onClick={() => setIsCreateModalOpen(true)}
-                                leftIcon={<Plus className="w-3.5 h-3.5" />}
-                                className="text-xs font-semibold"
-                            >
-                                Buka Dompet
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => refetchWallets()}
-                                leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} />}
-                                disabled={isRefetching}
-                                className="text-zinc-400 hover:text-white p-2"
-                                title="Segarkan Data Dompet"
-                            />
-                        </div>
-                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-heading">
+                        {isProfileLoading ? <Skeleton className="h-8 w-48 inline-block" /> : displayName}
+                    </h1>
                 </div>
 
-                {/* Main Workbench Shell (7 Kolom Kiri + 5 Kolom Kanan) */}
-                <div className="w-full p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                    {/* ========================================================== */}
-                    {/* KOLOM KIRI (7 Kolom): STATISTIK TARGET & KURVA GARIS FOTO 2 */}
-                    {/* ========================================================== */}
-                    <div className="lg:col-span-7 space-y-6">
-                        {/* WIDGET 1: TARGET PERTUMBUHAN ARUS KAS DENGAN SALDO RIIL */}
-                        <div className="rounded-2xl border border-white/10 bg-[#111116] p-5 sm:p-7 relative overflow-hidden shadow-xl">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+                {/* Primary Action Controls */}
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setMoneyModalState({ isOpen: true, mode: 'topup' })}
+                        leftIcon={<ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />}
+                        className="text-xs font-semibold"
+                    >
+                        Isi Saldo
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setMoneyModalState({ isOpen: true, mode: 'transfer' })}
+                        leftIcon={<ArrowUpRight className="w-3.5 h-3.5 text-blue-400" />}
+                        className="text-xs font-semibold"
+                    >
+                        Kirim Uang
+                    </Button>
+                    <Button
+                        size="sm"
+                        onClick={() => setIsCreateModalOpen(true)}
+                        leftIcon={<Plus className="w-3.5 h-3.5" />}
+                        className="text-xs font-semibold"
+                    >
+                        Buka Dompet
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => refetchWallets()}
+                        leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} />}
+                        disabled={isRefetching}
+                        className="text-zinc-400 hover:text-white"
+                        title="Segarkan Saldo"
+                    >
+                        Segarkan
+                    </Button>
+                </div>
+            </div>
 
-                            <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-white/5 relative z-10">
-                                <div className="flex items-center gap-2.5">
-                                    <h3 className="text-sm sm:text-base font-bold text-white tracking-tight font-heading">
-                                        Target Pertumbuhan Arus Kas
-                                    </h3>
-                                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-mono">
-                                        Surplus Berjalan
-                                    </span>
-                                </div>
+            {/* ========================================================================= */}
+            {/* 2. MASTER FINANCIAL ANALYTICS SURFACE (PREMIUM FINTECH WORKBENCH)          */}
+            {/* ========================================================================= */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* ====================================================== */}
+                {/* KOLOM KIRI (7 Kolom): SALDO KAS & KURVA FLUKTUASI      */}
+                {/* ====================================================== */}
+                <div className="lg:col-span-7 space-y-6">
+                    {/* WIDGET 1: TOTAL SALDO KAS & RASIO EMOSIONAL */}
+                    <div className="rounded-2xl border border-zinc-800/90 bg-[#111116] p-5 sm:p-7 relative overflow-hidden shadow-xl">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
-                                <div className="flex items-center gap-2">
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/5 text-[11px] font-medium text-zinc-300">
-                                        <span>Semua Divisi</span>
-                                        <ChevronDown className="w-3 h-3 text-zinc-500" />
-                                    </span>
-                                </div>
+                        <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-zinc-800/80 relative z-10">
+                            <div className="flex items-center gap-2.5">
+                                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight font-heading">
+                                    Target Pertumbuhan Arus Kas
+                                </h3>
+                                <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-mono">
+                                    Surplus Berjalan
+                                </span>
                             </div>
 
-                            <div className="pt-5 flex flex-col sm:flex-row sm:items-end justify-between gap-6 relative z-10">
-                                {/* Giant Nominal & Real Wallet Integration */}
-                                <div className="space-y-2.5 min-w-0 flex-1">
-                                    <div className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                                        <Wallet className="w-3.5 h-3.5 text-emerald-400" />
-                                        <span>Total Saldo Tersedia</span>
+                            {/* Periode Switcher Pills */}
+                            <div className="p-0.5 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center gap-0.5">
+                                {(['feb26', 'jan26', 'q1_26'] as PeriodType[]).map((p) => (
+                                    <button
+                                        key={p}
+                                        type="button"
+                                        onClick={() => setSelectedPeriod(p)}
+                                        className={`px-2 py-0.5 rounded text-[10px] font-mono transition-all cursor-pointer ${
+                                            selectedPeriod === p
+                                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold shadow-sm'
+                                                : 'text-zinc-400 hover:text-zinc-200'
+                                        }`}
+                                    >
+                                        {p === 'feb26' ? 'Feb' : p === 'jan26' ? 'Jan' : 'Q1'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="pt-5 flex flex-col sm:flex-row sm:items-end justify-between gap-6 relative z-10">
+                            {/* Giant Nominal & Real Wallet Integration */}
+                            <div className="space-y-2 min-w-0 flex-1">
+                                <div className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                                    <Wallet className="w-3.5 h-3.5 text-emerald-400" />
+                                    <span>Total Saldo Kas Tersedia</span>
+                                </div>
+
+                                {isWalletsLoading ? (
+                                    <Skeleton className="h-10 w-56 my-1" />
+                                ) : (
+                                    <div className="text-2xl sm:text-3xl xl:text-4xl font-extrabold font-mono text-white tracking-tight">
+                                        {formatCurrency(totalIdrBalance, 'IDR')}
                                     </div>
+                                )}
 
-                                    {isWalletsLoading ? (
-                                        <Skeleton className="h-10 w-56 my-1" />
-                                    ) : (
-                                        <div className="text-2xl sm:text-3xl xl:text-4xl font-extrabold font-mono text-white tracking-tight">
-                                            {formatCurrency(totalIdrBalance, 'IDR')}
-                                        </div>
-                                    )}
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                                        <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
+                                        <span>
+                                            {currentPeriod.growthBadge} {currentPeriod.growthSub}
+                                        </span>
+                                    </span>
+                                </div>
 
-                                    <div className="flex items-center gap-2">
-                                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full whitespace-nowrap">
-                                            <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
-                                            <span>
-                                                {currentPeriod.growthBadge} {currentPeriod.growthSub}
-                                            </span>
+                                <div className="pt-2 flex flex-wrap items-center gap-2">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-400">
+                                        <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                                        <span className="text-[11px] text-zinc-500 font-medium">Buku Kas:</span>
+                                        <span className="font-mono text-zinc-200 font-medium text-[11px]">
+                                            {currentPeriod.dateRange}
                                         </span>
                                     </div>
 
-                                    <div className="pt-2 flex flex-wrap items-center gap-2">
-                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900/90 border border-white/5 text-xs text-zinc-400">
-                                            <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-                                            <span className="text-[11px] text-zinc-500 font-medium">Periode:</span>
-                                            <span className="font-mono text-zinc-200 font-medium text-[11px]">
-                                                {currentPeriod.dateRange}
-                                            </span>
+                                    {nonIdrWallets.length > 0 && (
+                                        <div className="flex items-center gap-1.5">
+                                            {nonIdrWallets.map((w) => (
+                                                <span
+                                                    key={w.id}
+                                                    className="px-2 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-zinc-300"
+                                                >
+                                                    {w.currency}: {formatCurrency(w.balance, w.currency)}
+                                                </span>
+                                            ))}
                                         </div>
+                                    )}
+                                </div>
+                            </div>
 
-                                        {nonIdrWallets.length > 0 && (
-                                            <div className="flex items-center gap-1.5">
-                                                {nonIdrWallets.map((w) => (
-                                                    <span
-                                                        key={w.id}
-                                                        className="px-2 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-zinc-300"
-                                                    >
-                                                        {w.currency}: {formatCurrency(w.balance, w.currency)}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
+                            {/* Sub-Visual Kanan: Komparasi Rasio Kas Nyata (Masuk vs Beban vs Bersih) */}
+                            <div className="bg-[#14141c] rounded-xl border border-zinc-800/80 p-4 sm:w-60 shrink-0 relative">
+                                <div className="text-[11px] font-semibold text-zinc-400 mb-2 flex items-center justify-between">
+                                    <span>Rasio Kas Nyata</span>
+                                    <span className="text-[10px] text-emerald-400 font-mono font-medium">Sehat ✓</span>
+                                </div>
+
+                                {/* Floating Tooltip Pill */}
+                                <div className="absolute top-10 right-4 sm:right-6 z-20 pointer-events-none">
+                                    <div className="px-2.5 py-1 rounded-md bg-zinc-900 border border-emerald-500/30 text-[10px] font-medium text-emerald-300 shadow-xl flex items-center gap-1.5 relative">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                        <span>Surplus: {currentPeriod.netReserve}</span>
+                                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-zinc-900 border-r border-b border-emerald-500/30 rotate-45" />
                                     </div>
                                 </div>
 
-                                {/* Sub-Visual Kanan: Komparasi Murni Kas Masuk (Hijau) vs Beban (Merah) vs Bersih */}
-                                <div className="bg-[#14141c] rounded-xl border border-white/5 p-4 sm:w-60 shrink-0 relative">
-                                    <div className="text-[11px] font-semibold text-zinc-400 mb-2 flex items-center justify-between">
-                                        <span>Rasio Kas Nyata</span>
-                                        <span className="text-[10px] text-emerald-400 font-mono font-medium">Sehat ✓</span>
+                                {/* 3 Mini Bars: Masuk (Hijau) vs Beban (Merah) vs Bersih (Hijau Mint) */}
+                                <div className="h-28 flex items-end justify-center gap-3.5 pt-4 px-2">
+                                    <div className="flex-1 flex flex-col items-center gap-1.5" title={`Kas Masuk: ${currentPeriod.grossInflow}`}>
+                                        <div className="w-full h-22 rounded-t-md bg-gradient-to-t from-emerald-700/50 to-emerald-400/90 border-t-2 border-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+                                        <span className="text-[9px] font-mono text-emerald-400 font-bold">Masuk</span>
                                     </div>
 
-                                    {/* Floating Tooltip Pill */}
-                                    <div className="absolute top-10 right-4 sm:right-6 z-20 pointer-events-none">
-                                        <div className="px-2.5 py-1 rounded-md bg-zinc-900 border border-emerald-500/30 text-[10px] font-medium text-emerald-300 shadow-xl flex items-center gap-1.5 relative">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                            <span>Surplus Bersih: {currentPeriod.peakNominal}</span>
-                                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-zinc-900 border-r border-b border-emerald-500/30 rotate-45" />
-                                        </div>
+                                    <div className="flex-1 flex flex-col items-center gap-1.5" title={`Beban: ${currentPeriod.operatingExpense}`}>
+                                        <div className="w-full h-12 rounded-t-md bg-gradient-to-t from-rose-900/60 to-rose-500/80 border-t border-rose-400/80" />
+                                        <span className="text-[9px] font-mono text-rose-400 font-semibold">Beban</span>
                                     </div>
 
-                                    {/* 3 Mini Bars: Hijau (Kas Masuk) vs Merah (Beban) vs Bersih (Hijau Mint) */}
-                                    <div className="h-28 flex items-end justify-center gap-3.5 pt-4 px-2">
-                                        <div className="flex-1 flex flex-col items-center gap-1.5" title={`Kas Masuk: ${currentPeriod.grossInflow}`}>
-                                            <div className="w-full h-22 rounded-t-md bg-gradient-to-t from-emerald-700/50 to-emerald-400/90 border-t-2 border-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
-                                            <span className="text-[9px] font-mono text-emerald-400 font-bold">Masuk</span>
-                                        </div>
-
-                                        <div className="flex-1 flex flex-col items-center gap-1.5" title={`Beban Keluar: ${currentPeriod.operatingExpense}`}>
-                                            <div className="w-full h-12 rounded-t-md bg-gradient-to-t from-rose-900/60 to-rose-500/80 border-t border-rose-400/80" />
-                                            <span className="text-[9px] font-mono text-rose-400 font-semibold">Beban</span>
-                                        </div>
-
-                                        <div className="flex-1 flex flex-col items-center gap-1.5" title={`Saldo Bersih: ${currentPeriod.netReserve}`}>
-                                            <div className="w-full h-18 rounded-t-md bg-gradient-to-t from-emerald-600/40 to-emerald-300/80 border-t-2 border-emerald-200 shadow-[0_0_10px_rgba(16,185,129,0.2)]" />
-                                            <span className="text-[9px] font-mono text-emerald-300 font-bold">Bersih</span>
-                                        </div>
+                                    <div className="flex-1 flex flex-col items-center gap-1.5" title={`Saldo Bersih: ${currentPeriod.netReserve}`}>
+                                        <div className="w-full h-18 rounded-t-md bg-gradient-to-t from-emerald-600/40 to-emerald-300/80 border-t-2 border-emerald-200 shadow-[0_0_10px_rgba(16,185,129,0.2)]" />
+                                        <span className="text-[9px] font-mono text-emerald-300 font-bold">Bersih</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        {/* WIDGET 2: AREA CURVE CHART (FOTO KEDUA) & EMOTIONAL TOGGLE */}
-                        <div className="rounded-2xl border border-white/10 bg-[#111116] p-5 sm:p-7 space-y-4 shadow-xl relative overflow-hidden transition-all">
-                            {/* Header Widget 2: Tab Kategori Sesuai Foto 2 + Saklar Mode */}
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-white/5">
-                                <div>
-                                    <h3 className="text-sm sm:text-base font-bold text-white tracking-tight font-heading flex items-center gap-2">
-                                        <span>Arus Kas Bulanan & Dinamika Fluktuasi</span>
-                                    </h3>
-                                    <p className="text-[11px] text-zinc-400 pt-0.5">
-                                        Pergerakan pasang surut uang masuk dan efisiensi pengeluaran usaha.
-                                    </p>
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                    {/* Category Filter Tabs */}
-                                    <div className="flex items-center gap-1 p-0.5 rounded-lg bg-zinc-900 border border-white/5 text-xs">
-                                        <button
-                                            type="button"
-                                            onClick={() => setFlowCategory('all')}
-                                            className={`px-2.5 py-1 rounded-md transition-all cursor-pointer font-medium ${
-                                                flowCategory === 'all'
-                                                    ? 'bg-zinc-800 text-white font-semibold shadow-sm'
-                                                    : 'text-zinc-400 hover:text-white'
-                                            }`}
-                                        >
-                                            Semua Arus
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setFlowCategory('inflow')}
-                                            className={`px-2.5 py-1 rounded-md transition-all cursor-pointer font-medium flex items-center gap-1 ${
-                                                flowCategory === 'inflow'
-                                                    ? 'bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30'
-                                                    : 'text-zinc-400 hover:text-emerald-300'
-                                            }`}
-                                        >
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                            <span>Masuk</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setFlowCategory('outflow')}
-                                            className={`px-2.5 py-1 rounded-md transition-all cursor-pointer font-medium flex items-center gap-1 ${
-                                                flowCategory === 'outflow'
-                                                    ? 'bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/30'
-                                                    : 'text-zinc-400 hover:text-rose-300'
-                                            }`}
-                                        >
-                                            <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-                                            <span>Beban</span>
-                                        </button>
-                                    </div>
-
-                                    {/* Saklar Tampilan: Kurva Garis vs Batang Emosional */}
-                                    <div className="p-0.5 rounded-lg bg-zinc-900 border border-white/10 flex items-center gap-0.5">
-                                        <button
-                                            type="button"
-                                            onClick={() => setChartViewMode('curve')}
-                                            className={`p-1.5 rounded-md transition-all cursor-pointer ${
-                                                chartMode === 'curve'
-                                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
-                                                    : 'text-zinc-500 hover:text-zinc-300'
-                                            }`}
-                                            title="Tampilan Kurva Garis (Foto 2)"
-                                        >
-                                            <LineChart className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setChartViewMode('bars')}
-                                            className={`p-1.5 rounded-md transition-all cursor-pointer ${
-                                                chartMode === 'bars'
-                                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
-                                                    : 'text-zinc-500 hover:text-zinc-300'
-                                            }`}
-                                            title="Tampilan Batang Emosional (Hijau vs Merah)"
-                                        >
-                                            <BarChart3 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
+                    {/* WIDGET 2: AREA CURVE CHART (FOTO 2) & SAKLAR MODE EMOSIONAL */}
+                    <div className="rounded-2xl border border-zinc-800/90 bg-[#111116] p-5 sm:p-7 space-y-4 shadow-xl relative overflow-hidden transition-all">
+                        {/* Header Widget 2: Tab Kategori + Saklar Mode */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-zinc-800/80">
+                            <div>
+                                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight font-heading flex items-center gap-2">
+                                    <span>Arus Kas Bulanan & Fluktuasi Omzet</span>
+                                </h3>
+                                <p className="text-[11px] text-zinc-400 pt-0.5">
+                                    Tren pasang surut uang masuk dan efisiensi pengeluaran usaha.
+                                </p>
                             </div>
 
-                            {/* Metrik Nilai Utama di Atas Grafik */}
-                            <div className="flex flex-wrap items-baseline gap-3 pt-1">
-                                <span className="text-2xl sm:text-3xl font-extrabold font-mono text-white">
-                                    {activeHoverPoint.nominal}
-                                </span>
-                                <span
-                                    className={`text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                                        activeHoverPoint.isSurplus
-                                            ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
-                                            : 'text-rose-400 bg-rose-500/10 border border-rose-500/20'
-                                    }`}
-                                >
-                                    {activeHoverPoint.isSurplus ? (
-                                        <ArrowUpRight className="w-3.5 h-3.5" />
-                                    ) : (
-                                        <ArrowDownRight className="w-3.5 h-3.5" />
-                                    )}
-                                    <span>
-                                        {activeHoverPoint.change} ({activeHoverPoint.isSurplus ? 'Surplus' : 'Beban Terkendali'})
-                                    </span>
-                                </span>
-                                <span className="text-xs text-zinc-500 font-mono">
-                                    • {activeHoverPoint.label} ({activeHoverPoint.volume})
-                                </span>
-                            </div>
+                            <div className="flex items-center gap-3">
+                                {/* Category Filter Tabs */}
+                                <div className="flex items-center gap-1 p-0.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFlowCategory('all')}
+                                        className={`px-2.5 py-1 rounded-md transition-all cursor-pointer font-medium ${
+                                            flowCategory === 'all'
+                                                ? 'bg-zinc-800 text-white font-semibold shadow-sm'
+                                                : 'text-zinc-400 hover:text-white'
+                                        }`}
+                                    >
+                                        Semua Arus
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFlowCategory('inflow')}
+                                        className={`px-2.5 py-1 rounded-md transition-all cursor-pointer font-medium flex items-center gap-1 ${
+                                            flowCategory === 'inflow'
+                                                ? 'bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30'
+                                                : 'text-zinc-400 hover:text-emerald-300'
+                                        }`}
+                                    >
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                        <span>Masuk</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFlowCategory('outflow')}
+                                        className={`px-2.5 py-1 rounded-md transition-all cursor-pointer font-medium flex items-center gap-1 ${
+                                            flowCategory === 'outflow'
+                                                ? 'bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/30'
+                                                : 'text-zinc-400 hover:text-rose-300'
+                                        }`}
+                                    >
+                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                                        <span>Keluar</span>
+                                    </button>
+                                </div>
 
-                            {/* TAMPILAN 1: KURVA GARIS AREA KONTINYU */}
-                            {chartMode === 'curve' ? (
-                                <div className="relative pt-6 pb-2">
-                                    <div className="relative h-60 sm:h-72 flex flex-col justify-between pointer-events-none">
-                                        {(isInflowView ? currentPeriod.yAxisInflow : currentPeriod.yAxisOutflow).map((val) => (
-                                            <div key={val} className="w-full flex items-center gap-2">
-                                                <span className="text-[10px] font-mono text-zinc-500 w-11 text-right shrink-0">
-                                                    {val}
+                                {/* Saklar Tampilan: Kurva Garis vs Batang Emosional */}
+                                <div className="p-0.5 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center gap-0.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setChartViewMode('curve')}
+                                        className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                                            chartMode === 'curve'
+                                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
+                                                : 'text-zinc-500 hover:text-zinc-300'
+                                        }`}
+                                        title="Tampilan Kurva Garis (Foto 2)"
+                                    >
+                                        <LineChart className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setChartViewMode('bars')}
+                                        className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                                            chartMode === 'bars'
+                                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
+                                                : 'text-zinc-500 hover:text-zinc-300'
+                                        }`}
+                                        title="Tampilan Batang Emosional (Hijau vs Merah)"
+                                    >
+                                        <BarChart3 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Metrik Nilai Utama di Atas Grafik */}
+                        <div className="flex flex-wrap items-baseline gap-3 pt-1">
+                            <span className="text-2xl sm:text-3xl font-extrabold font-mono text-white">
+                                {activeHoverPoint.nominal}
+                            </span>
+                            <span
+                                className={`text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                                    activeHoverPoint.isSurplus
+                                        ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+                                        : 'text-rose-400 bg-rose-500/10 border border-rose-500/20'
+                                }`}
+                            >
+                                {activeHoverPoint.isSurplus ? (
+                                    <ArrowUpRight className="w-3.5 h-3.5" />
+                                ) : (
+                                    <ArrowDownRight className="w-3.5 h-3.5" />
+                                )}
+                                <span>
+                                    {activeHoverPoint.change} ({activeHoverPoint.isSurplus ? 'Surplus' : 'Beban Terkendali'})
+                                </span>
+                            </span>
+                            <span className="text-xs text-zinc-500 font-mono">
+                                • {activeHoverPoint.label} ({activeHoverPoint.volume})
+                            </span>
+                        </div>
+
+                        {/* TAMPILAN 1: KURVA GARIS AREA KONTINYU */}
+                        {chartMode === 'curve' ? (
+                            <div className="relative pt-6 pb-2">
+                                <div className="relative h-60 sm:h-72 flex flex-col justify-between pointer-events-none">
+                                    {(isInflowView ? currentPeriod.yAxisInflow : currentPeriod.yAxisOutflow).map((val) => (
+                                        <div key={val} className="w-full flex items-center gap-2">
+                                            <span className="text-[10px] font-mono text-zinc-500 w-11 text-right shrink-0">
+                                                {val}
+                                            </span>
+                                            <div className="h-px w-full bg-white/[0.04]" />
+                                        </div>
+                                    ))}
+
+                                    <div className="absolute inset-0 left-13 right-0 pointer-events-auto">
+                                        {/* Floating Apex Tooltip Pill */}
+                                        <div
+                                            style={{
+                                                left: `${(activeHoverPoint.coordX / 600) * 100}%`,
+                                                top: `${(activeCurrentY / 220) * 100}%`,
+                                            }}
+                                            className="absolute -translate-x-1/2 -translate-y-[135%] z-20 pointer-events-none"
+                                        >
+                                            <div className="px-3.5 py-1.5 rounded-lg bg-[#16161f] border border-white/20 text-xs text-white shadow-[0_12px_32px_rgba(0,0,0,0.95)] flex flex-col items-center relative backdrop-blur-md">
+                                                <span className="font-mono font-extrabold text-sm text-white tracking-tight">
+                                                    {activeHoverPoint.nominal}
                                                 </span>
-                                                <div className="h-px w-full bg-white/[0.04]" />
+                                                <span
+                                                    className={`text-[9px] font-semibold font-mono ${
+                                                        isInflowView ? 'text-emerald-400' : 'text-rose-400'
+                                                    }`}
+                                                >
+                                                    {activeHoverPoint.label}: {isInflowView ? 'Surplus' : 'Beban'} ({activeHoverPoint.change})
+                                                </span>
+                                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#16161f] border-r border-b border-white/20 rotate-45" />
                                             </div>
-                                        ))}
+                                        </div>
 
-                                        <div className="absolute inset-0 left-13 right-0 pointer-events-auto">
-                                            {/* Floating Apex Tooltip Pill */}
-                                            <div
-                                                style={{
-                                                    left: `${(activeHoverPoint.coordX / 600) * 100}%`,
-                                                    top: `${(activeCurrentY / 220) * 100}%`,
-                                                }}
-                                                className="absolute -translate-x-1/2 -translate-y-[135%] z-20 pointer-events-none"
-                                            >
-                                                <div className="px-3.5 py-1.5 rounded-lg bg-[#16161f] border border-white/20 text-xs text-white shadow-[0_12px_32px_rgba(0,0,0,0.95)] flex flex-col items-center relative backdrop-blur-md">
-                                                    <span className="font-mono font-extrabold text-sm text-white tracking-tight">
-                                                        {activeHoverPoint.nominal}
-                                                    </span>
-                                                    <span
-                                                        className={`text-[9px] font-semibold font-mono ${
-                                                            isInflowView ? 'text-emerald-400' : 'text-rose-400'
-                                                        }`}
+                                        <svg
+                                            viewBox="0 0 600 220"
+                                            className="w-full h-full overflow-visible"
+                                            preserveAspectRatio="none"
+                                        >
+                                            {/* Vertical Spotlight Beam Column */}
+                                            <rect
+                                                x={activeHoverPoint.coordX - 10}
+                                                y={activeCurrentY}
+                                                width="20"
+                                                height={220 - activeCurrentY}
+                                                fill={isInflowView ? 'url(#app-beam-emerald)' : 'url(#app-beam-rose)'}
+                                                rx="3"
+                                                className="pointer-events-none"
+                                            />
+
+                                            {/* Vertical Indicator Center Line */}
+                                            <line
+                                                x1={activeHoverPoint.coordX}
+                                                y1={activeCurrentY}
+                                                x2={activeHoverPoint.coordX}
+                                                y2="220"
+                                                stroke={isInflowView ? '#10b981' : '#f43f5e'}
+                                                strokeDasharray="3 3"
+                                                strokeWidth="1.5"
+                                                opacity="0.65"
+                                            />
+
+                                            {/* Area Dynamic Gradient Fill */}
+                                            <path
+                                                d={activeAreaPath}
+                                                fill={isInflowView ? 'url(#app-spline-emerald-glow)' : 'url(#app-spline-rose-glow)'}
+                                                className="transition-all duration-300"
+                                            />
+
+                                            {/* Dynamic Financial Stroke Line */}
+                                            <path
+                                                d={activeStrokePath}
+                                                fill="none"
+                                                stroke={isInflowView ? '#10b981' : '#f43f5e'}
+                                                strokeWidth="2.8"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                className="transition-all duration-300"
+                                            />
+
+                                            {/* Interactive Point Nodes across 12 Months */}
+                                            {MONTH_DATA_POINTS.map((pt) => {
+                                                const isActive = activeHoverPoint.month === pt.month;
+                                                const pointY = isInflowView ? pt.coordY : pt.outflowY;
+
+                                                return (
+                                                    <g
+                                                        key={pt.month}
+                                                        onClick={() => setActiveHoverPoint(pt)}
+                                                        onMouseEnter={() => setActiveHoverPoint(pt)}
+                                                        className="cursor-pointer"
                                                     >
-                                                        {activeHoverPoint.label}: {isInflowView ? 'Surplus' : 'Beban'} ({activeHoverPoint.change})
-                                                    </span>
-                                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#16161f] border-r border-b border-white/20 rotate-45" />
-                                                </div>
-                                            </div>
-
-                                            <svg
-                                                viewBox="0 0 600 220"
-                                                className="w-full h-full overflow-visible"
-                                                preserveAspectRatio="none"
-                                            >
-                                                {/* Vertical Spotlight Beam Column */}
-                                                <rect
-                                                    x={activeHoverPoint.coordX - 10}
-                                                    y={activeCurrentY}
-                                                    width="20"
-                                                    height={220 - activeCurrentY}
-                                                    fill={isInflowView ? 'url(#app-beam-emerald)' : 'url(#app-beam-rose)'}
-                                                    rx="3"
-                                                    className="pointer-events-none"
-                                                />
-
-                                                {/* Vertical Indicator Center Line */}
-                                                <line
-                                                    x1={activeHoverPoint.coordX}
-                                                    y1={activeCurrentY}
-                                                    x2={activeHoverPoint.coordX}
-                                                    y2="220"
-                                                    stroke={isInflowView ? '#10b981' : '#f43f5e'}
-                                                    strokeDasharray="3 3"
-                                                    strokeWidth="1.5"
-                                                    opacity="0.65"
-                                                />
-
-                                                {/* Area Dynamic Gradient Fill */}
-                                                <path
-                                                    d={activeAreaPath}
-                                                    fill={isInflowView ? 'url(#app-spline-emerald-glow)' : 'url(#app-spline-rose-glow)'}
-                                                    className="transition-all duration-300"
-                                                />
-
-                                                {/* Dynamic Financial Stroke Line */}
-                                                <path
-                                                    d={activeStrokePath}
-                                                    fill="none"
-                                                    stroke={isInflowView ? '#10b981' : '#f43f5e'}
-                                                    strokeWidth="2.8"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    className="transition-all duration-300"
-                                                />
-
-                                                {/* Interactive Point Nodes across 12 Months */}
-                                                {MONTH_DATA_POINTS.map((pt) => {
-                                                    const isActive = activeHoverPoint.month === pt.month;
-                                                    const pointY = isInflowView ? pt.coordY : pt.outflowY;
-
-                                                    return (
-                                                        <g
-                                                            key={pt.month}
-                                                            onClick={() => setActiveHoverPoint(pt)}
-                                                            onMouseEnter={() => setActiveHoverPoint(pt)}
-                                                            className="cursor-pointer"
-                                                        >
-                                                            <rect
-                                                                x={pt.coordX - 25}
-                                                                y="0"
-                                                                width="50"
-                                                                height="220"
-                                                                fill="transparent"
-                                                            />
-                                                            {isActive && (
-                                                                <circle
-                                                                    cx={pt.coordX}
-                                                                    cy={pointY}
-                                                                    r="8"
-                                                                    fill={isInflowView ? '#10b981' : '#f43f5e'}
-                                                                    opacity="0.35"
-                                                                />
-                                                            )}
+                                                        <rect
+                                                            x={pt.coordX - 25}
+                                                            y="0"
+                                                            width="50"
+                                                            height="220"
+                                                            fill="transparent"
+                                                        />
+                                                        {isActive && (
                                                             <circle
                                                                 cx={pt.coordX}
                                                                 cy={pointY}
-                                                                r={isActive ? '5' : '3.5'}
-                                                                fill={isActive ? '#ffffff' : '#18181b'}
-                                                                stroke={
-                                                                    isActive
-                                                                        ? isInflowView
-                                                                            ? '#10b981'
-                                                                            : '#f43f5e'
-                                                                        : 'rgba(255,255,255,0.45)'
-                                                                }
-                                                                strokeWidth="2"
+                                                                r="8"
+                                                                fill={isInflowView ? '#10b981' : '#f43f5e'}
+                                                                opacity="0.35"
                                                             />
-                                                        </g>
-                                                    );
-                                                })}
-                                            </svg>
-                                        </div>
-                                    </div>
-
-                                    {/* Sumbu X Label Bulan Interaktif */}
-                                    <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-3 pl-13 pr-2">
-                                        {MONTH_DATA_POINTS.map((pt) => {
-                                            const isActive = activeHoverPoint.month === pt.month;
-                                            return (
-                                                <button
-                                                    key={pt.month}
-                                                    type="button"
-                                                    onClick={() => setActiveHoverPoint(pt)}
-                                                    onMouseEnter={() => setActiveHoverPoint(pt)}
-                                                    className={`transition-colors cursor-pointer py-1 px-1.5 rounded ${
-                                                        isActive
-                                                            ? 'text-white font-bold bg-white/10'
-                                                            : 'hover:text-zinc-300'
-                                                    }`}
-                                                >
-                                                    {pt.month}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            ) : (
-                                /* TAMPILAN 2: GRAFIK BATANG EMOSIONAL */
-                                <div className="relative pt-6 pb-2">
-                                    <div className="relative h-60 sm:h-72 flex flex-col justify-between pointer-events-none">
-                                        {[100, 80, 60, 40, 20, 0].map((val) => (
-                                            <div key={val} className="w-full flex items-center gap-2">
-                                                <span className="text-[10px] font-mono text-zinc-500 w-8 text-right shrink-0">
-                                                    {val}%
-                                                </span>
-                                                <div className="h-px w-full bg-white/[0.04]" />
-                                            </div>
-                                        ))}
-
-                                        <div className="absolute inset-0 left-10 flex items-end justify-between gap-1.5 sm:gap-3 pointer-events-auto px-1 sm:px-3">
-                                            {MONTH_DATA_POINTS.map((bar) => {
-                                                const isHovered = activeHoverPoint.month === bar.month;
-
-                                                return (
-                                                    <div
-                                                        key={bar.month}
-                                                        onMouseEnter={() => setActiveHoverPoint(bar)}
-                                                        onClick={() => setActiveHoverPoint(bar)}
-                                                        className="flex-1 h-full flex flex-col justify-end items-center group cursor-pointer"
-                                                    >
-                                                        <div
-                                                            style={{ height: `${bar.percentage}%` }}
-                                                            className={`w-full max-w-[54px] rounded-t-md transition-all duration-300 relative ${
-                                                                isHovered ? 'brightness-125' : ''
-                                                            }`}
-                                                        >
-                                                            {bar.isSurplus ? (
-                                                                <div className="w-full h-full rounded-t-md bg-gradient-to-t from-emerald-950/40 via-emerald-600/70 to-emerald-400 border-t-2 border-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)] relative" />
-                                                            ) : (
-                                                                <div className="w-full h-full rounded-t-md border border-rose-500/50 relative overflow-hidden bg-rose-950/25">
-                                                                    <div
-                                                                        className="w-full h-full"
-                                                                        style={{
-                                                                            backgroundImage:
-                                                                                'repeating-linear-gradient(45deg, #f43f5e 0, #f43f5e 2px, transparent 0, transparent 6px)',
-                                                                        }}
-                                                                    />
-                                                                    <div className="absolute top-0 inset-x-0 h-1 bg-rose-400" />
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        <span
-                                                            className={`text-[10px] sm:text-xs font-mono pt-2.5 transition-colors ${
-                                                                isHovered ? 'text-white font-bold' : 'text-zinc-500'
-                                                            }`}
-                                                        >
-                                                            {bar.month}
-                                                        </span>
-                                                    </div>
+                                                        )}
+                                                        <circle
+                                                            cx={pt.coordX}
+                                                            cy={pointY}
+                                                            r={isActive ? '5' : '3.5'}
+                                                            fill={isActive ? '#ffffff' : '#18181b'}
+                                                            stroke={
+                                                                isActive
+                                                                    ? isInflowView
+                                                                        ? '#10b981'
+                                                                        : '#f43f5e'
+                                                                    : 'rgba(255,255,255,0.45)'
+                                                            }
+                                                            strokeWidth="2"
+                                                        />
+                                                    </g>
                                                 );
                                             })}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-center gap-5 pt-3 text-[11px]">
-                                        <div className="flex items-center gap-1.5 text-emerald-400">
-                                            <div className="w-2.5 h-2.5 rounded-sm bg-emerald-400 shadow-[0_0_6px_#10b981]" />
-                                            <span>Bulan Surplus (Uang Masuk Bertambah)</span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5 text-rose-400">
-                                            <div className="w-2.5 h-2.5 rounded-sm bg-rose-500/80 border border-rose-400" />
-                                            <span>Bulan Beban (Koreksi / Biaya Operasional)</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* ========================================================== */}
-                    {/* KOLOM KANAN (5 Kolom): SLIDER TARGET, RETENSI, & DONUT     */}
-                    {/* ========================================================== */}
-                    <div className="lg:col-span-5 space-y-6">
-                        {/* WIDGET 3: ALOKASI KAS & TARGET REALISASI */}
-                        <div className="rounded-2xl border border-white/10 bg-[#111116] p-5 space-y-4 shadow-xl transition-all">
-                            <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                                <div>
-                                    <h3 className="text-sm font-bold text-white tracking-tight font-heading">
-                                        Alokasi Kas & Target Realisasi
-                                    </h3>
-                                    <p className="text-[11px] text-zinc-400 pt-0.5">
-                                        Porsi saldo cadangan dan pemenuhan pagu operasional kasir.
-                                    </p>
-                                </div>
-                                <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-800/40">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                    <span>Real-Time</span>
-                                </span>
-                            </div>
-
-                            {/* Multi-Segmented Meter Bar */}
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                                    <span>Porsi Dana Terpetakan</span>
-                                    <span className="font-mono text-zinc-300">100% Terkunci</span>
-                                </div>
-                                <div className="flex h-2.5 rounded-full overflow-hidden gap-1 bg-zinc-900 p-0.5 border border-white/5">
-                                    <div className="h-full rounded-l-full bg-amber-500 w-[50%]" title="50% Operasional Kasir (Amber)" />
-                                    <div className="h-full bg-zinc-600 w-[30%]" title="30% Cadangan Pajak (Abu-abu / Slate)" />
-                                    <div className="h-full rounded-r-full bg-emerald-400 w-[20%]" title="20% Laba Bersih Aman (Emerald)" />
-                                </div>
-                                <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 pt-0.5">
-                                    <span className="flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                        <span>50% Operasional</span>
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
-                                        <span>30% Cadangan</span>
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                        <span>20% Surplus</span>
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Interactive Target Milestone Track */}
-                            <div className="pt-2 border-t border-white/5 space-y-2">
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="text-zinc-400 text-[11px]">Pencapaian Target Kas</span>
-                                    <span className="font-mono text-emerald-400 font-bold text-xs flex items-center gap-1">
-                                        <Sparkles className="w-3 h-3 text-emerald-400" />
-                                        <span>{selectedMilestone}% Tercapai</span>
-                                    </span>
-                                </div>
-
-                                <div className="h-2 w-full rounded-full bg-zinc-900 border border-white/5 overflow-hidden">
-                                    <div
-                                        style={{ width: `${selectedMilestone}%` }}
-                                        className="h-full rounded-full bg-gradient-to-r from-emerald-700 via-emerald-500 to-emerald-400 transition-all duration-300 shadow-[0_0_12px_rgba(16,185,129,0.35)]"
-                                    />
-                                </div>
-
-                                <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
-                                    {[0, 25, 75, 82, 100].map((m) => (
-                                        <button
-                                            key={m}
-                                            type="button"
-                                            onClick={() => setSelectedMilestone(m)}
-                                            className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
-                                                selectedMilestone === m
-                                                    ? 'text-emerald-300 font-bold bg-emerald-500/15 border border-emerald-500/30'
-                                                    : 'hover:text-white'
-                                            }`}
-                                        >
-                                            {m}%
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {/* 3 Mini KPI Cards */}
-                                <div className="grid grid-cols-3 gap-2 pt-1">
-                                    <div className="p-2 rounded-xl bg-zinc-900/70 border border-white/5 space-y-0.5 text-center">
-                                        <div className="text-[10px] text-zinc-400 font-medium truncate flex items-center justify-center gap-1">
-                                            <Store className="w-3 h-3 text-emerald-400" />
-                                            <span>Kasir Siaga</span>
-                                        </div>
-                                        <div className="font-mono text-xs font-bold text-white">
-                                            {currentPeriod.cashierCount}
-                                        </div>
-                                    </div>
-
-                                    <div className="p-2 rounded-xl bg-zinc-900/70 border border-white/5 space-y-0.5 text-center">
-                                        <div className="text-[10px] text-zinc-400 font-medium truncate flex items-center justify-center gap-1">
-                                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                                            <span>Pencairan Sah</span>
-                                        </div>
-                                        <div className="font-mono text-xs font-bold text-white">
-                                            {currentPeriod.disbursementCount}
-                                        </div>
-                                    </div>
-
-                                    <div className="p-2 rounded-xl bg-zinc-900/70 border border-white/5 space-y-0.5 text-center">
-                                        <div className="text-[10px] text-zinc-400 font-medium truncate">
-                                            Rata-rata Nota
-                                        </div>
-                                        <div className="font-mono text-xs font-bold text-white truncate">
-                                            {currentPeriod.avgTicket}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Financial Health Summary Table */}
-                            <div className="pt-2.5 border-t border-white/5 space-y-1.5 text-xs">
-                                <div className="flex items-center justify-between text-zinc-400">
-                                    <span>Arus Kas Masuk Kotor</span>
-                                    <span className="font-mono font-medium text-emerald-400">{currentPeriod.grossInflow}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-zinc-400">
-                                    <span>Beban Pokok & Operasional</span>
-                                    <span className="font-mono font-medium text-rose-400">{currentPeriod.operatingExpense}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-zinc-400">
-                                    <span>Tingkat Retensi Dana</span>
-                                    <span className="font-mono font-bold text-emerald-400">{currentPeriod.retentionRate}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-zinc-400 pt-1 border-t border-white/5">
-                                    <span className="font-semibold text-zinc-200">Saldo Cadangan Bersih</span>
-                                    <span className="font-mono font-bold text-emerald-300">{currentPeriod.netReserve}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* WIDGET 4: 3 SALURAN KASIR TERBESAR (Donut Breakdown) */}
-                        <div className="rounded-2xl border border-white/10 bg-[#111116] p-6 space-y-5 shadow-xl transition-all">
-                            <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                                <div>
-                                    <h3 className="text-sm sm:text-base font-bold text-white tracking-tight font-heading">
-                                        3 Saluran Kasir Terbesar
-                                    </h3>
-                                    <p className="text-[11px] text-zinc-400 pt-0.5">
-                                        Porsi penerimaan dana riil per kanal kasir periode {currentPeriod.label}.
-                                    </p>
-                                </div>
-                                <span className="text-[10px] text-zinc-300 font-mono px-2.5 py-1 rounded-full bg-zinc-900 border border-white/10">
-                                    {currentPeriod.label}
-                                </span>
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row items-center justify-center gap-10 sm:gap-16 py-4">
-                                {/* Clean Static Donut Chart */}
-                                <div className="relative w-44 h-44 sm:w-52 sm:h-52 flex items-center justify-center shrink-0">
-                                    <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                                        <circle
-                                            cx="50"
-                                            cy="50"
-                                            r="47"
-                                            fill="transparent"
-                                            stroke="rgba(255, 255, 255, 0.08)"
-                                            strokeWidth="1"
-                                        />
-                                        <circle
-                                            cx="50"
-                                            cy="50"
-                                            r="38"
-                                            fill="transparent"
-                                            stroke="#27272a"
-                                            strokeWidth="9"
-                                        />
-                                        {/* Segment 1: QRIS */}
-                                        <circle
-                                            cx="50"
-                                            cy="50"
-                                            r="38"
-                                            fill="transparent"
-                                            stroke="#10b981"
-                                            strokeWidth="9.5"
-                                            strokeDasharray="238.76"
-                                            strokeDashoffset={238.76 * (1 - (currentChannels[0]?.share ?? 55) / 100)}
-                                            strokeLinecap="round"
-                                        />
-                                        {/* Segment 2: Transfer Bank */}
-                                        <circle
-                                            cx="50"
-                                            cy="50"
-                                            r="38"
-                                            fill="transparent"
-                                            stroke="#818cf8"
-                                            strokeWidth="9.5"
-                                            strokeDasharray="238.76"
-                                            strokeDashoffset={238.76 * (1 - (currentChannels[1]?.share ?? 30) / 100)}
-                                            transform={`rotate(${((currentChannels[0]?.share ?? 55) / 100) * 360} 50 50)`}
-                                        />
-                                        {/* Segment 3: EDC Kasir */}
-                                        <circle
-                                            cx="50"
-                                            cy="50"
-                                            r="38"
-                                            fill="transparent"
-                                            stroke="#f59e0b"
-                                            strokeWidth="9.5"
-                                            strokeDasharray="238.76"
-                                            strokeDashoffset={238.76 * (1 - (currentChannels[2]?.share ?? 15) / 100)}
-                                            transform={`rotate(${(((currentChannels[0]?.share ?? 55) + (currentChannels[1]?.share ?? 30)) / 100) * 360} 50 50)`}
-                                        />
-                                    </svg>
-
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                                        <span className="text-xs text-zinc-400 font-medium">
-                                            Transaksi Kasir
-                                        </span>
-                                        <span className="text-3xl sm:text-4xl font-extrabold font-mono text-white tracking-tight py-0.5">
-                                            {selectedPeriod === 'feb26' ? '431' : selectedPeriod === 'jan26' ? '391' : '1.242'}
-                                        </span>
-                                        <span className="text-xs font-semibold text-emerald-400 flex items-center gap-0.5">
-                                            <span>↑</span>
-                                            <span>{currentPeriod.growthBadge}</span>
-                                        </span>
+                                        </svg>
                                     </div>
                                 </div>
 
-                                {/* Clean Minimalist Channel List */}
-                                <div className="space-y-4 sm:space-y-5 text-left">
-                                    {currentChannels.map((ch) => {
-                                        const rawNum = parseInt(ch.nominal.replace(/[^0-9]/g, ''), 10);
-                                        const displayNominal =
-                                            rawNum >= 1000000000
-                                                ? `Rp ${(rawNum / 1000000000).toFixed(2).replace('.', ',')} M`
-                                                : `Rp ${(rawNum / 1000000).toFixed(0)} Jt`;
-
+                                {/* Sumbu X Label Bulan Interaktif */}
+                                <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-3 pl-13 pr-2">
+                                    {MONTH_DATA_POINTS.map((pt) => {
+                                        const isActive = activeHoverPoint.month === pt.month;
                                         return (
-                                            <div key={ch.id} className="flex items-start gap-3.5">
-                                                <span className={`w-3 h-3 rounded-full ${ch.dotColor} mt-1 shrink-0`} />
-                                                <div className="space-y-0.5">
-                                                    <div className="text-sm sm:text-base font-semibold text-white tracking-tight">
-                                                        {ch.name}
-                                                    </div>
-                                                    <div className="text-xs sm:text-sm text-zinc-400 font-mono">
-                                                        {ch.share.toFixed(1)}%{' '}
-                                                        <span className="text-zinc-500">
-                                                            ({displayNominal} • {ch.txCount})
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <button
+                                                key={pt.month}
+                                                type="button"
+                                                onClick={() => setActiveHoverPoint(pt)}
+                                                onMouseEnter={() => setActiveHoverPoint(pt)}
+                                                className={`transition-colors cursor-pointer py-1 px-1.5 rounded ${
+                                                    isActive
+                                                        ? 'text-white font-bold bg-white/10'
+                                                        : 'hover:text-zinc-300'
+                                                }`}
+                                            >
+                                                {pt.month}
+                                            </button>
                                         );
                                     })}
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            /* TAMPILAN 2: GRAFIK BATANG EMOSIONAL */
+                            <div className="relative pt-6 pb-2">
+                                <div className="relative h-60 sm:h-72 flex flex-col justify-between pointer-events-none">
+                                    {[100, 80, 60, 40, 20, 0].map((val) => (
+                                        <div key={val} className="w-full flex items-center gap-2">
+                                            <span className="text-[10px] font-mono text-zinc-500 w-8 text-right shrink-0">
+                                                {val}%
+                                            </span>
+                                            <div className="h-px w-full bg-white/[0.04]" />
+                                        </div>
+                                    ))}
+
+                                    <div className="absolute inset-0 left-10 flex items-end justify-between gap-1.5 sm:gap-3 pointer-events-auto px-1 sm:px-3">
+                                        {MONTH_DATA_POINTS.map((bar) => {
+                                            const isHovered = activeHoverPoint.month === bar.month;
+
+                                            return (
+                                                <div
+                                                    key={bar.month}
+                                                    onMouseEnter={() => setActiveHoverPoint(bar)}
+                                                    onClick={() => setActiveHoverPoint(bar)}
+                                                    className="flex-1 h-full flex flex-col justify-end items-center group cursor-pointer"
+                                                >
+                                                    <div
+                                                        style={{ height: `${bar.percentage}%` }}
+                                                        className={`w-full max-w-[54px] rounded-t-md transition-all duration-300 relative ${
+                                                            isHovered ? 'brightness-125' : ''
+                                                        }`}
+                                                    >
+                                                        {bar.isSurplus ? (
+                                                            <div className="w-full h-full rounded-t-md bg-gradient-to-t from-emerald-950/40 via-emerald-600/70 to-emerald-400 border-t-2 border-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)] relative" />
+                                                        ) : (
+                                                            <div className="w-full h-full rounded-t-md border border-rose-500/50 relative overflow-hidden bg-rose-950/25">
+                                                                <div
+                                                                    className="w-full h-full"
+                                                                    style={{
+                                                                        backgroundImage:
+                                                                            'repeating-linear-gradient(45deg, #f43f5e 0, #f43f5e 2px, transparent 0, transparent 6px)',
+                                                                    }}
+                                                                />
+                                                                <div className="absolute top-0 inset-x-0 h-1 bg-rose-400" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <span
+                                                        className={`text-[10px] sm:text-xs font-mono pt-2.5 transition-colors ${
+                                                            isHovered ? 'text-white font-bold' : 'text-zinc-500'
+                                                        }`}
+                                                    >
+                                                        {bar.month}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-center gap-5 pt-3 text-[11px]">
+                                    <div className="flex items-center gap-1.5 text-emerald-400">
+                                        <div className="w-2.5 h-2.5 rounded-sm bg-emerald-400 shadow-[0_0_6px_#10b981]" />
+                                        <span>Bulan Surplus (Uang Masuk Bertambah)</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-rose-400">
+                                        <div className="w-2.5 h-2.5 rounded-sm bg-rose-500/80 border border-rose-400" />
+                                        <span>Bulan Beban (Biaya Operasional)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Footer Bar: Live Stream Ticker & Real-Time Sync Status */}
-                <div className="px-4 sm:px-6 py-3 border-t border-white/5 bg-[#0a0a0d] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-400">
-                    <div className="flex items-center gap-2.5 overflow-hidden">
-                        <span
-                            className={`w-2 h-2 rounded-full animate-pulse shrink-0 ${
-                                LIVE_EVENTS[liveEventIndex].isSurplus ? 'bg-emerald-400' : 'bg-rose-400'
-                            }`}
-                        />
-                        <span className="text-zinc-500 text-[11px] font-mono shrink-0">[LIVE SYNC]</span>
-                        <span className="text-zinc-300 text-xs truncate transition-all duration-300">
-                            {LIVE_EVENTS[liveEventIndex].text}
-                        </span>
+                {/* ====================================================== */}
+                {/* KOLOM KANAN (5 Kolom): ALOKASI DANA & KANAL KASIR      */}
+                {/* ====================================================== */}
+                <div className="lg:col-span-5 space-y-6">
+                    {/* WIDGET 3: ALOKASI KAS & TARGET REALISASI */}
+                    <div className="rounded-2xl border border-zinc-800/90 bg-[#111116] p-5 space-y-4 shadow-xl transition-all">
+                        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+                            <div>
+                                <h3 className="text-sm font-bold text-white tracking-tight font-heading">
+                                    Alokasi Saldo & Pagu Operasional
+                                </h3>
+                                <p className="text-[11px] text-zinc-400 pt-0.5">
+                                    Porsi saldo cadangan dan pemenuhan pagu operasional kasir.
+                                </p>
+                            </div>
+                            <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-800/40">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                <span>Real-Time</span>
+                            </span>
+                        </div>
+
+                        {/* Multi-Segmented Meter Bar */}
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                                <span>Porsi Dana Terpetakan</span>
+                                <span className="font-mono text-zinc-300">100% Terkunci</span>
+                            </div>
+                            <div className="flex h-2.5 rounded-full overflow-hidden gap-1 bg-zinc-900 p-0.5 border border-zinc-800">
+                                <div className="h-full rounded-l-full bg-amber-500 w-[50%]" title="50% Operasional Kasir (Amber)" />
+                                <div className="h-full bg-zinc-600 w-[30%]" title="30% Cadangan Pajak (Abu-abu / Slate)" />
+                                <div className="h-full rounded-r-full bg-emerald-400 w-[20%]" title="20% Laba Bersih Aman (Emerald)" />
+                            </div>
+                            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 pt-0.5">
+                                <span className="flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                    <span>50% Operasional</span>
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+                                    <span>30% Cadangan</span>
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                    <span>20% Surplus</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Interactive Target Milestone Track */}
+                        <div className="pt-2 border-t border-zinc-800/80 space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-zinc-400 text-[11px]">Pencapaian Target Kas Bulanan</span>
+                                <span className="font-mono text-emerald-400 font-bold text-xs flex items-center gap-1">
+                                    <Sparkles className="w-3 h-3 text-emerald-400" />
+                                    <span>{selectedMilestone}% Tercapai</span>
+                                </span>
+                            </div>
+
+                            <div className="h-2 w-full rounded-full bg-zinc-900 border border-zinc-800 overflow-hidden">
+                                <div
+                                    style={{ width: `${selectedMilestone}%` }}
+                                    className="h-full rounded-full bg-gradient-to-r from-emerald-700 via-emerald-500 to-emerald-400 transition-all duration-300 shadow-[0_0_12px_rgba(16,185,129,0.35)]"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
+                                {[0, 25, 75, 82, 100].map((m) => (
+                                    <button
+                                        key={m}
+                                        type="button"
+                                        onClick={() => setSelectedMilestone(m)}
+                                        className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                                            selectedMilestone === m
+                                                ? 'text-emerald-300 font-bold bg-emerald-500/15 border border-emerald-500/30'
+                                                : 'hover:text-white'
+                                        }`}
+                                    >
+                                        {m}%
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* 3 Mini KPI Cards */}
+                            <div className="grid grid-cols-3 gap-2 pt-1">
+                                <div className="p-2 rounded-xl bg-zinc-900/70 border border-zinc-800/80 space-y-0.5 text-center">
+                                    <div className="text-[10px] text-zinc-400 font-medium truncate flex items-center justify-center gap-1">
+                                        <Store className="w-3 h-3 text-emerald-400" />
+                                        <span>Kasir Siaga</span>
+                                    </div>
+                                    <div className="font-mono text-xs font-bold text-white">
+                                        {currentPeriod.cashierCount}
+                                    </div>
+                                </div>
+
+                                <div className="p-2 rounded-xl bg-zinc-900/70 border border-zinc-800/80 space-y-0.5 text-center">
+                                    <div className="text-[10px] text-zinc-400 font-medium truncate flex items-center justify-center gap-1">
+                                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                                        <span>Pencairan Sah</span>
+                                    </div>
+                                    <div className="font-mono text-xs font-bold text-white">
+                                        {currentPeriod.disbursementCount}
+                                    </div>
+                                </div>
+
+                                <div className="p-2 rounded-xl bg-zinc-900/70 border border-zinc-800/80 space-y-0.5 text-center">
+                                    <div className="text-[10px] text-zinc-400 font-medium truncate">
+                                        Rata-rata Nota
+                                    </div>
+                                    <div className="font-mono text-xs font-bold text-white truncate">
+                                        {currentPeriod.avgTicket}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Financial Health Summary Table */}
+                        <div className="pt-2.5 border-t border-zinc-800/80 space-y-1.5 text-xs">
+                            <div className="flex items-center justify-between text-zinc-400">
+                                <span>Arus Kas Masuk Kotor</span>
+                                <span className="font-mono font-medium text-emerald-400">{currentPeriod.grossInflow}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-zinc-400">
+                                <span>Beban Pokok & Operasional</span>
+                                <span className="font-mono font-medium text-rose-400">{currentPeriod.operatingExpense}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-zinc-400">
+                                <span>Tingkat Retensi Dana</span>
+                                <span className="font-mono font-bold text-emerald-400">{currentPeriod.retentionRate}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-zinc-400 pt-1 border-t border-zinc-800/80">
+                                <span className="font-semibold text-zinc-200">Saldo Cadangan Bersih</span>
+                                <span className="font-mono font-bold text-emerald-300">{currentPeriod.netReserve}</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-3 font-mono text-[11px] text-zinc-500 shrink-0">
-                        <span className="text-zinc-400 font-medium">Latensi: 0.04s</span>
-                        <span>•</span>
-                        <span className="text-emerald-400 font-medium">Integritas 100%</span>
+                    {/* WIDGET 4: DISTRIBUSI PENERIMAAN KASIR (Donut Breakdown) */}
+                    <div className="rounded-2xl border border-zinc-800/90 bg-[#111116] p-6 space-y-5 shadow-xl transition-all">
+                        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+                            <div>
+                                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight font-heading">
+                                    Penerimaan Kanal Kasir
+                                </h3>
+                                <p className="text-[11px] text-zinc-400 pt-0.5">
+                                    Distribusi penerimaan omzet riil per saluran transaksi {currentPeriod.label}.
+                                </p>
+                            </div>
+                            <span className="text-[10px] text-zinc-300 font-mono px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800">
+                                {currentPeriod.label}
+                            </span>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-12 py-3">
+                            {/* Donut SVG Ring */}
+                            <div className="relative w-40 h-40 sm:w-44 sm:h-44 flex items-center justify-center shrink-0">
+                                <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                                    <circle
+                                        cx="50"
+                                        cy="50"
+                                        r="47"
+                                        fill="transparent"
+                                        stroke="rgba(255, 255, 255, 0.06)"
+                                        strokeWidth="1"
+                                    />
+                                    <circle
+                                        cx="50"
+                                        cy="50"
+                                        r="38"
+                                        fill="transparent"
+                                        stroke="#27272a"
+                                        strokeWidth="9"
+                                    />
+                                    {/* QRIS 55% */}
+                                    <circle
+                                        cx="50"
+                                        cy="50"
+                                        r="38"
+                                        fill="transparent"
+                                        stroke="#10b981"
+                                        strokeWidth="9.5"
+                                        strokeDasharray="238.76"
+                                        strokeDashoffset={238.76 * (1 - (currentChannels[0]?.share ?? 55) / 100)}
+                                        strokeLinecap="round"
+                                    />
+                                    {/* Bank 30% */}
+                                    <circle
+                                        cx="50"
+                                        cy="50"
+                                        r="38"
+                                        fill="transparent"
+                                        stroke="#818cf8"
+                                        strokeWidth="9.5"
+                                        strokeDasharray="238.76"
+                                        strokeDashoffset={238.76 * (1 - (currentChannels[1]?.share ?? 30) / 100)}
+                                        transform={`rotate(${((currentChannels[0]?.share ?? 55) / 100) * 360} 50 50)`}
+                                    />
+                                    {/* EDC 15% */}
+                                    <circle
+                                        cx="50"
+                                        cy="50"
+                                        r="38"
+                                        fill="transparent"
+                                        stroke="#f59e0b"
+                                        strokeWidth="9.5"
+                                        strokeDasharray="238.76"
+                                        strokeDashoffset={238.76 * (1 - (currentChannels[2]?.share ?? 15) / 100)}
+                                        transform={`rotate(${(((currentChannels[0]?.share ?? 55) + (currentChannels[1]?.share ?? 30)) / 100) * 360} 50 50)`}
+                                    />
+                                </svg>
+
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                                    <span className="text-[11px] text-zinc-400 font-medium">
+                                        Transaksi
+                                    </span>
+                                    <span className="text-2xl sm:text-3xl font-extrabold font-mono text-white tracking-tight py-0.5">
+                                        {selectedPeriod === 'feb26' ? '431' : selectedPeriod === 'jan26' ? '391' : '1.242'}
+                                    </span>
+                                    <span className="text-[10px] font-semibold text-emerald-400 flex items-center gap-0.5">
+                                        <span>↑ {currentPeriod.growthBadge}</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Minimalist Channel Breakdown */}
+                            <div className="space-y-3.5 text-left flex-1 min-w-0">
+                                {currentChannels.map((ch) => (
+                                    <div key={ch.id} className="flex items-start gap-3">
+                                        <span className={`w-2.5 h-2.5 rounded-full ${ch.dotColor} mt-1 shrink-0`} />
+                                        <div className="space-y-0.5 min-w-0">
+                                            <div className="text-xs sm:text-sm font-semibold text-white truncate">
+                                                {ch.name}
+                                            </div>
+                                            <div className="text-[11px] text-zinc-400 font-mono">
+                                                {ch.share}% • <span className="text-zinc-300 font-medium">{ch.nominal}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* ========================================================================= */}
-            {/* 2. OPERATIONAL DECK: REKENING DOMPET DIGITAL & KARTU VIRTUAL              */}
+            {/* 3. MUTASI TRANSAKSI TERAKHIR (REAL ACCOUNT ACTIVITY INSTEAD OF FAKE TICKER)*/}
+            {/* ========================================================================= */}
+            <div className="rounded-2xl border border-zinc-800/90 bg-[#111116] p-5 sm:p-6 space-y-4 shadow-xl text-left">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
+                    <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                            <History className="w-4 h-4 text-emerald-400" />
+                            <h3 className="text-sm font-bold text-white tracking-tight font-heading">
+                                Aktivitas Mutasi Terakhir Akun Anda
+                            </h3>
+                        </div>
+                        <p className="text-xs text-zinc-400">
+                            Setiap mutasi dana selalu seimbang, tercatat detik itu juga, dan tidak bisa berubah diam-diam.
+                        </p>
+                    </div>
+
+                    <Link
+                        to="/app/activity"
+                        className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold transition-colors shrink-0"
+                    >
+                        <span>Buka Buku Besar Lengkap</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                </div>
+
+                <div className="divide-y divide-zinc-800/60">
+                    {recentActivities.map((act) => (
+                        <div
+                            key={act.id}
+                            className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:bg-zinc-900/30 px-2 rounded-lg transition-colors"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div
+                                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
+                                        act.type === 'IN'
+                                            ? 'bg-emerald-950/40 border-emerald-800/50 text-emerald-400'
+                                            : 'bg-rose-950/40 border-rose-800/50 text-rose-400'
+                                    }`}
+                                >
+                                    {act.type === 'IN' ? (
+                                        <ArrowDownLeft className="w-4 h-4" />
+                                    ) : (
+                                        <ArrowUpRight className="w-4 h-4" />
+                                    )}
+                                </div>
+                                <div className="space-y-0.5">
+                                    <div className="font-semibold text-white">{act.title}</div>
+                                    <div className="text-[11px] text-zinc-500 font-mono">
+                                        {act.walletType} • {act.time}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between sm:justify-end gap-3 pl-11 sm:pl-0">
+                                <span
+                                    className={`font-mono font-bold text-sm ${
+                                        act.type === 'IN' ? 'text-emerald-400' : 'text-rose-400'
+                                    }`}
+                                >
+                                    {act.type === 'IN' ? '+' : '-'}
+                                    {formatCurrency(act.amount, act.currency)}
+                                </span>
+                                <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400">
+                                    {act.status} ✓
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* ========================================================================= */}
+            {/* 4. DEK OPERASIONAL: REKENING DOMPET MULTI-VALAS & KARTU VIRTUAL             */}
             {/* ========================================================================= */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* Left Column (7 cols): DOMPET DIGITAL AKTIF */}
@@ -1328,7 +1276,7 @@ export const DashboardPage: React.FC = () => {
 
                                             <button
                                                 onClick={(e) => handleCopyId(wallet.id, e)}
-                                                className="inline-flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 hover:text-zinc-200 transition-colors"
+                                                className="inline-flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
                                                 title="Salin Nomor Rekening"
                                             >
                                                 <span>Rek: •••• {wallet.id.slice(-4)}</span>
@@ -1400,29 +1348,6 @@ export const DashboardPage: React.FC = () => {
                     {/* FX Currency Converter Widget */}
                     <CurrencyConverter />
                 </div>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 3. QUICK OVERVIEW / ACTIVITY HELPER                                       */}
-            {/* ========================================================================= */}
-            <div className="rounded-xl border border-zinc-800 bg-[#111114] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-left">
-                <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400 shrink-0">
-                        <CheckCircle2 className="w-5 h-5" />
-                    </div>
-                    <div className="space-y-0.5">
-                        <h4 className="text-xs font-bold text-white">Semua Transaksi Tercatat Otomatis</h4>
-                        <p className="text-xs text-zinc-400">
-                            Setiap mutasi dana selalu seimbang dan tidak bisa hilang. Lihat riwayat lengkap di menu mutasi.
-                        </p>
-                    </div>
-                </div>
-
-                <Link to="/app/activity" className="shrink-0">
-                    <Button variant="outline" size="sm" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
-                        Buka Riwayat Mutasi
-                    </Button>
-                </Link>
             </div>
 
             {/* Modal Buka Dompet Baru */}
@@ -1501,7 +1426,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
             )}
 
-            {/* Modal Kirim Uang & Top-Up Simulasi */}
+            {/* Modal Kirim Uang & Top-Up */}
             <MoneyMovementModal
                 isOpen={moneyModalState.isOpen}
                 mode={moneyModalState.mode}
