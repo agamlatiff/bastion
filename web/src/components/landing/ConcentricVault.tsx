@@ -1,11 +1,4 @@
 import React, { useState } from 'react';
-import {
-    ShieldCheck,
-    Lock,
-    Zap,
-    FileCheck,
-    CheckCircle2,
-} from 'lucide-react';
 import { BastionLogo } from '../common/BastionLogo';
 
 type LayerId = 1 | 2 | 3;
@@ -701,29 +694,6 @@ export const ConcentricVault: React.FC = () => {
                 </div>
             </div>
 
-            {/* ========================================================================= */}
-            {/* BOTTOM COMPLIANCE & STANDARDS (CLEAN MINIMAL HAIRLINE BAR)                */}
-            {/* ========================================================================= */}
-            <div className="pt-8 border-t border-zinc-800/50">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                    <div className="flex items-center justify-center gap-2 text-zinc-400 text-xs py-2">
-                        <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span>Enkripsi Standar Perbankan</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-zinc-400 text-xs py-2">
-                        <Lock className="w-4 h-4 text-sky-400 shrink-0" />
-                        <span>Pembukuan Bebas Selisih</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-zinc-400 text-xs py-2">
-                        <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />
-                        <span>Izin Akses Staf & 2FA</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-zinc-400 text-xs py-2">
-                        <FileCheck className="w-4 h-4 text-amber-400 shrink-0" />
-                        <span>Riwayat Transaksi Permanen</span>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };
