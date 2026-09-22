@@ -1,23 +1,35 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, WalletCards, RefreshCw, Copy, Check, ArrowRight } from 'lucide-react';
+import { Plus, WalletCards, RefreshCw, Copy, Check, ArrowRight, CreditCard } from 'lucide-react';
 import { useWallets, useCreateWallet } from '../features/wallet/hooks';
+import { useCustomerProfile } from '../features/customer/hooks';
 import { PageHeader } from '../components/common/PageHeader';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Alert } from '../components/ui/Alert';
+import { VirtualDebitCard } from '../components/wallet/VirtualDebitCard';
+import { CurrencyConverter } from '../components/dashboard/CurrencyConverter';
 import { formatCurrency, formatDate } from '../lib/formatters';
 
 export const WalletsPage: React.FC = () => {
     const { data: wallets = [], isLoading, error, refetch, isRefetching } = useWallets();
     const { mutateAsync: createWallet, isPending: isCreating } = useCreateWallet();
+    const { data: profile } = useCustomerProfile();
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [currency, setCurrency] = useState('IDR');
     const [createError, setCreateError] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
+
+    const displayName = profile?.fullName || profile?.full_name || 'Nasabah Bastion';
+    const primaryWallet = wallets[0] || {
+        id: 'w-default-8492019',
+        currency: 'IDR',
+        balance: 0,
+        status: 'ACTIVE',
+    };
 
     const handleCopyId = (id: string, e: React.MouseEvent) => {
         e.preventDefault();
@@ -42,7 +54,7 @@ export const WalletsPage: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8 text-left">
             <PageHeader
                 title="Dompet & Rekening Saya"
                 description="Kelola seluruh dompet multi-mata uang Anda, pantau saldo aktif, dan atur keamanan rekening."
@@ -74,6 +86,7 @@ export const WalletsPage: React.FC = () => {
                 </Alert>
             )}
 
+            {/* Table Section */}
             {isLoading ? (
                 <div className="space-y-3">
                     <Skeleton className="h-16 rounded-xl" />
@@ -114,15 +127,23 @@ export const WalletsPage: React.FC = () => {
                                                     {wallet.currency}
                                                 </span>
                                                 <div>
-                                                    <span className="block">{wallet.currency === 'IDR' ? 'Rupiah Indonesia' : wallet.currency === 'USD' ? 'US Dollar' : wallet.currency}</span>
-                                                    <span className="text-[10px] text-zinc-500 font-mono font-normal">{wallet.currency}</span>
+                                                    <span className="block">
+                                                        {wallet.currency === 'IDR'
+                                                            ? 'Rupiah Indonesia'
+                                                            : wallet.currency === 'USD'
+                                                            ? 'US Dollar'
+                                                            : wallet.currency}
+                                                    </span>
+                                                    <span className="text-[10px] text-zinc-500 font-mono font-normal">
+                                                        {wallet.currency}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="p-4">
                                             <button
                                                 onClick={(e) => handleCopyId(wallet.id, e)}
-                                                className="inline-flex items-center gap-1.5 font-mono text-[11px] text-zinc-400 hover:text-white transition-colors"
+                                                className="inline-flex items-center gap-1.5 font-mono text-[11px] text-zinc-400 hover:text-white transition-colors cursor-pointer"
                                                 title="Klik untuk menyalin nomor rekening"
                                             >
                                                 <span>{wallet.id}</span>
@@ -143,7 +164,11 @@ export const WalletsPage: React.FC = () => {
                                                         : 'neutral'
                                                 }
                                             >
-                                                {wallet.status === 'ACTIVE' ? 'Aktif' : wallet.status === 'FROZEN' ? 'Dibekukan' : wallet.status}
+                                                {wallet.status === 'ACTIVE'
+                                                    ? 'Aktif'
+                                                    : wallet.status === 'FROZEN'
+                                                    ? 'Dibekukan'
+                                                    : wallet.status}
                                             </Badge>
                                         </td>
                                         <td className="p-4 text-zinc-400 text-xs hidden md:table-cell">
@@ -169,9 +194,43 @@ export const WalletsPage: React.FC = () => {
                 </div>
             )}
 
+            {/* Integrated Virtual Card & FX Calculator Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pt-4 border-t border-zinc-800/80">
+                {/* Visual 3D Virtual Debit Card */}
+                <div className="lg:col-span-6 space-y-3 text-left">
+                    <div className="flex items-center justify-between px-1">
+                        <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                            <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Kartu Virtual Bisnis</span>
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-mono">
+                            Klik kartu untuk membalik
+                        </span>
+                    </div>
+
+                    <VirtualDebitCard
+                        currency={primaryWallet.currency}
+                        balance={Number(primaryWallet.balance) || 0}
+                        walletId={primaryWallet.id}
+                        holderName={displayName.toUpperCase()}
+                        status={primaryWallet.status}
+                    />
+                </div>
+
+                {/* FX Currency Converter Widget */}
+                <div className="lg:col-span-6 space-y-3">
+                    <div className="px-1 text-left">
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">
+                            Kalkulator Konversi Valas
+                        </span>
+                    </div>
+                    <CurrencyConverter />
+                </div>
+            </div>
+
             {/* Modal Buka Dompet Baru */}
             {isCreateOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs select-none">
                     <div className="w-full max-w-sm bg-[#111114] border border-zinc-800 rounded-xl p-6 shadow-2xl space-y-4">
                         <div className="space-y-1 text-left">
                             <h3 className="text-base font-bold text-white">Buka Dompet Baru</h3>
