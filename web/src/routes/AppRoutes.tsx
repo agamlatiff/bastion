@@ -9,6 +9,8 @@ import { RoleRoute } from './RoleRoute';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { DashboardPage } from '../pages/DashboardPage';
+import { DashboardAnalyticsDetailPage } from '../pages/DashboardAnalyticsDetailPage';
+import { DashboardChannelsDetailPage } from '../pages/DashboardChannelsDetailPage';
 import { WalletsPage } from '../pages/WalletsPage';
 import { WalletDetailPage } from '../pages/WalletDetailPage';
 import { ActivityPage } from '../pages/ActivityPage';
@@ -36,6 +38,8 @@ export const AppRoutes: React.FC = () => {
                 <Route element={<AppLayout />}>
                     <Route path="/app" element={<Navigate to="/app/dashboard" replace />} />
                     <Route path="/app/dashboard" element={<DashboardPage />} />
+                    <Route path="/app/dashboard/analytics" element={<DashboardAnalyticsDetailPage />} />
+                    <Route path="/app/dashboard/channels" element={<DashboardChannelsDetailPage />} />
                     <Route path="/app/wallets" element={<WalletsPage />} />
                     <Route path="/app/wallets/:walletId" element={<WalletDetailPage />} />
                     <Route path="/app/activity" element={<ActivityPage />} />

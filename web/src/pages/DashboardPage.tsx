@@ -165,7 +165,7 @@ interface RecentActivityItem {
 
 export const DashboardPage: React.FC = () => {
     // Real Customer Profile and Wallets Hooks
-    const { data: profile, isLoading: isProfileLoading, error: profileError } = useCustomerProfile();
+    const { data: profile, isLoading: isProfileLoading } = useCustomerProfile();
     const { data: wallets = [], isLoading: isWalletsLoading, refetch: refetchWallets, isRefetching } = useWallets();
     const { mutateAsync: createWallet, isPending: isCreatingWallet } = useCreateWallet();
 
@@ -303,12 +303,6 @@ export const DashboardPage: React.FC = () => {
 
     return (
         <div className="space-y-8 text-left">
-            {profileError && (
-                <Alert variant="warning" title="Sinkronisasi Profil">
-                    Data profil Anda sedang diperbarui secara otomatis di latar belakang.
-                </Alert>
-            )}
-
             {/* SVG Global Pattern Definitions for Spline Curve & Beams */}
             <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden="true">
                 <defs>
@@ -607,6 +601,16 @@ export const DashboardPage: React.FC = () => {
                                         <BarChart3 className="w-4 h-4" />
                                     </button>
                                 </div>
+
+                                {/* Tombol Buka Rincian Analitik Arus Kas */}
+                                <Link
+                                    to="/app/dashboard/analytics"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900/90 hover:bg-emerald-500/10 border border-zinc-800 hover:border-emerald-500/30 text-xs font-semibold text-zinc-300 hover:text-emerald-300 transition-all shadow-sm"
+                                    title="Buka rincian analitik arus kas lengkap"
+                                >
+                                    <span>Lihat Rincian</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
                             </div>
                         </div>
 
@@ -1002,7 +1006,7 @@ export const DashboardPage: React.FC = () => {
 
                     {/* WIDGET 4: DISTRIBUSI PENERIMAAN KASIR (Donut Breakdown) */}
                     <div className="rounded-2xl border border-zinc-800/90 bg-[#111116] p-6 space-y-5 shadow-xl transition-all">
-                        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800/80 pb-3">
                             <div>
                                 <h3 className="text-sm sm:text-base font-bold text-white tracking-tight font-heading">
                                     Penerimaan Kanal Kasir
@@ -1011,9 +1015,19 @@ export const DashboardPage: React.FC = () => {
                                     Distribusi penerimaan omzet riil per saluran transaksi {currentPeriod.label}.
                                 </p>
                             </div>
-                            <span className="text-[10px] text-zinc-300 font-mono px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800">
-                                {currentPeriod.label}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-zinc-300 font-mono px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800">
+                                    {currentPeriod.label}
+                                </span>
+                                <Link
+                                    to="/app/dashboard/channels"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900/90 hover:bg-emerald-500/10 border border-zinc-800 hover:border-emerald-500/30 text-xs font-semibold text-zinc-300 hover:text-emerald-300 transition-all shadow-sm"
+                                    title="Buka rincian kanal kasir lengkap"
+                                >
+                                    <span>Rincian Kanal</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
+                            </div>
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-12 py-3">
