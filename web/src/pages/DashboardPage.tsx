@@ -12,9 +12,6 @@ import {
     Plus,
     RefreshCw,
     Wallet,
-    CreditCard,
-    Copy,
-    Check,
     ArrowRight,
     ArrowDownLeft,
     History,
@@ -22,13 +19,9 @@ import {
 import { useCustomerProfile } from '../features/customer/hooks';
 import { useWallets, useCreateWallet } from '../features/wallet/hooks';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
-import { EmptyState } from '../components/ui/EmptyState';
 import { Alert } from '../components/ui/Alert';
-import { VirtualDebitCard } from '../components/wallet/VirtualDebitCard';
 import { MoneyMovementModal } from '../components/dashboard/MoneyMovementModal';
-import { CurrencyConverter } from '../components/dashboard/CurrencyConverter';
 import { formatCurrency } from '../lib/formatters';
 
 type PeriodType = 'feb26' | 'jan26' | 'q1_26';
@@ -184,10 +177,9 @@ export const DashboardPage: React.FC = () => {
     }>({ isOpen: false, mode: 'topup' });
     const [selectedCurrency, setSelectedCurrency] = useState('IDR');
     const [createError, setCreateError] = useState<string | null>(null);
-    const [copiedId, setCopiedId] = useState<string | null>(null);
     const [simulatedOffset, setSimulatedOffset] = useState<number>(0);
 
-    // Recent Mutations Local Activity Log
+    // Recent Mutations Activity Log
     const [recentActivities, setRecentActivities] = useState<RecentActivityItem[]>([
         {
             id: 'act-1',
@@ -238,23 +230,8 @@ export const DashboardPage: React.FC = () => {
 
     const nonIdrWallets = wallets.filter((w) => w.currency !== 'IDR' && w.status !== 'CLOSED');
 
-    const primaryWallet = wallets[0] || {
-        id: 'w-default-8492019',
-        currency: 'IDR',
-        balance: totalIdrBalance,
-        status: 'ACTIVE',
-    };
-
     const currentPeriod = PERIOD_METRICS[selectedPeriod];
     const currentChannels = CHANNELS_DATA[selectedPeriod];
-
-    const handleCopyId = (id: string, e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        navigator.clipboard.writeText(id);
-        setCopiedId(id);
-        setTimeout(() => setCopiedId(null), 2000);
-    };
 
     const handleMoneySuccess = (amount: number, type: 'transfer' | 'topup') => {
         if (type === 'topup') {
@@ -362,7 +339,7 @@ export const DashboardPage: React.FC = () => {
             </svg>
 
             {/* ========================================================================= */}
-            {/* 1. NATIVE APPLICATION HEADER & QUICK ACTION BAR (NO FAKE MAC WINDOW DOTS) */}
+            {/* 1. NATIVE APPLICATION HEADER & QUICK ACTION BAR (CLEAN & SPACIOUS)        */}
             {/* ========================================================================= */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-zinc-800/80">
                 <div className="space-y-1">
@@ -424,7 +401,7 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* ========================================================================= */}
-            {/* 2. MASTER FINANCIAL ANALYTICS SURFACE (PREMIUM FINTECH WORKBENCH)          */}
+            {/* 2. MASTER FINANCIAL ANALYTICS SURFACE (FOCUSED TWO-COLUMN BENCH)          */}
             {/* ========================================================================= */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* ====================================================== */}
@@ -1132,7 +1109,7 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* ========================================================================= */}
-            {/* 3. MUTASI TRANSAKSI TERAKHIR (REAL ACCOUNT ACTIVITY INSTEAD OF FAKE TICKER)*/}
+            {/* 3. MUTASI TRANSAKSI TERAKHIR (CLEAN ACTIVITY FEED INSTEAD OF FAKE TICKER) */}
             {/* ========================================================================= */}
             <div className="rounded-2xl border border-zinc-800/90 bg-[#111116] p-5 sm:p-6 space-y-4 shadow-xl text-left">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
@@ -1200,153 +1177,6 @@ export const DashboardPage: React.FC = () => {
                             </div>
                         </div>
                     ))}
-                </div>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 4. DEK OPERASIONAL: REKENING DOMPET MULTI-VALAS & KARTU VIRTUAL             */}
-            {/* ========================================================================= */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* Left Column (7 cols): DOMPET DIGITAL AKTIF */}
-                <div className="lg:col-span-7 space-y-4 text-left">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-base font-bold text-white tracking-tight">
-                                Rekening Dompet Saya
-                            </h2>
-                            <p className="text-xs text-zinc-400">
-                                Pilih dompet untuk melihat rincian saldo dan transaksi.
-                            </p>
-                        </div>
-
-                        {wallets.length > 0 && (
-                            <Link
-                                to="/app/wallets"
-                                className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 font-medium transition-colors"
-                            >
-                                Kelola Semua ({wallets.length}) <ArrowRight className="w-3.5 h-3.5" />
-                            </Link>
-                        )}
-                    </div>
-
-                    {isWalletsLoading ? (
-                        <div className="space-y-3">
-                            <Skeleton className="h-28 rounded-xl" />
-                            <Skeleton className="h-28 rounded-xl" />
-                        </div>
-                    ) : wallets.length === 0 ? (
-                        <EmptyState
-                            icon={<Wallet className="w-6 h-6 text-zinc-400" />}
-                            title="Belum Memiliki Rekening Dompet"
-                            description="Buka dompet IDR atau USD pertama Anda untuk mulai menyimpan dan memindahkan dana dengan aman."
-                            action={
-                                <Button size="sm" onClick={() => setIsCreateModalOpen(true)}>
-                                    Buat Dompet Pertama Saya
-                                </Button>
-                            }
-                        />
-                    ) : (
-                        <div className="space-y-3">
-                            {wallets.map((wallet) => (
-                                <div
-                                    key={wallet.id}
-                                    className="group relative rounded-xl border border-zinc-800 hover:border-zinc-700 bg-gradient-to-br from-[#121215] via-[#0f0f12] to-[#09090b] p-4 sm:p-5 shadow-lg transition-all duration-200 hover:-translate-y-0.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                                >
-                                    <div className="flex items-center gap-3.5">
-                                        <div className="w-10 h-10 rounded-xl bg-zinc-800/90 border border-zinc-700 flex items-center justify-center font-bold text-xs text-white shrink-0">
-                                            {wallet.currency}
-                                        </div>
-                                        <div className="space-y-0.5">
-                                            <div className="flex items-center gap-2">
-                                                <h3 className="text-xs font-bold text-white">
-                                                    Dompet {wallet.currency === 'IDR' ? 'Rupiah' : wallet.currency === 'USD' ? 'US Dollar' : wallet.currency}
-                                                </h3>
-                                                <Badge
-                                                    variant={
-                                                        wallet.status === 'ACTIVE'
-                                                            ? 'success'
-                                                            : wallet.status === 'FROZEN'
-                                                            ? 'warning'
-                                                            : 'neutral'
-                                                    }
-                                                >
-                                                    {wallet.status === 'ACTIVE' ? 'Aktif' : wallet.status === 'FROZEN' ? 'Dibekukan' : wallet.status}
-                                                </Badge>
-                                            </div>
-
-                                            <button
-                                                onClick={(e) => handleCopyId(wallet.id, e)}
-                                                className="inline-flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-                                                title="Salin Nomor Rekening"
-                                            >
-                                                <span>Rek: •••• {wallet.id.slice(-4)}</span>
-                                                {copiedId === wallet.id ? (
-                                                    <Check className="w-3 h-3 text-emerald-400" />
-                                                ) : (
-                                                    <Copy className="w-3 h-3 text-zinc-500 group-hover:text-zinc-400" />
-                                                )}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Balance & Action */}
-                                    <div className="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-800/60">
-                                        <div className="sm:text-right">
-                                            <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 block">
-                                                Saldo
-                                            </span>
-                                            <span className="text-base font-bold font-mono text-white">
-                                                {formatCurrency(wallet.balance, wallet.currency)}
-                                            </span>
-                                        </div>
-
-                                        <Link
-                                            to={`/app/wallets/${wallet.id}`}
-                                            className="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-white hover:text-emerald-400 inline-flex items-center gap-1 transition-colors"
-                                        >
-                                            Rincian <ArrowRight className="w-3 h-3" />
-                                        </Link>
-                                    </div>
-                                </div>
-                            ))}
-
-                            {/* Quick Add Wallet Button */}
-                            <button
-                                onClick={() => setIsCreateModalOpen(true)}
-                                className="w-full rounded-xl border border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-900/20 hover:bg-zinc-900/40 p-3.5 flex items-center justify-center gap-2 text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                            >
-                                <Plus className="w-4 h-4" />
-                                <span>Tambah Dompet Valas Lainnya (IDR / USD / SGD)</span>
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Right Column (5 cols): KARTU VIRTUAL & FX CALCULATOR */}
-                <div className="lg:col-span-5 space-y-6">
-                    {/* Visual 3D Virtual Debit Card */}
-                    <div className="space-y-2 text-left">
-                        <div className="flex items-center justify-between px-1">
-                            <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                                <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>Kartu Virtual Bisnis</span>
-                            </span>
-                            <span className="text-[10px] text-zinc-500 font-mono">
-                                Klik kartu untuk membalik
-                            </span>
-                        </div>
-
-                        <VirtualDebitCard
-                            currency={primaryWallet.currency}
-                            balance={Number(primaryWallet.balance) || 0}
-                            walletId={primaryWallet.id}
-                            holderName={displayName.toUpperCase()}
-                            status={primaryWallet.status}
-                        />
-                    </div>
-
-                    {/* FX Currency Converter Widget */}
-                    <CurrencyConverter />
                 </div>
             </div>
 

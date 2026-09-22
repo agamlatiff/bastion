@@ -1,5 +1,6 @@
 import React from 'react';
-import { LogOut, User as UserIcon, Search } from 'lucide-react';
+import { useLocation, Link } from 'react-router-dom';
+import { LogOut, User as UserIcon, Search, ChevronRight } from 'lucide-react';
 import { BastionLogo } from '../../components/common/BastionLogo';
 import { useAuth } from '../../features/auth/useAuth';
 import { useCustomerProfile } from '../../features/customer/hooks';
@@ -15,9 +16,55 @@ export interface TopbarProps {
 export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileNav, onOpenCommandPalette }) => {
     const { user, logout, isAdmin } = useAuth();
     const { data: profile } = useCustomerProfile();
+    const location = useLocation();
 
     const displayName = profile?.fullName || profile?.full_name || user?.email || 'User';
     const primaryRole = isAdmin ? 'ADMIN' : (user?.roles?.[0] || 'CUSTOMER');
+
+    // Dynamic Breadcrumbs Path Mapping
+    const getBreadcrumbs = (pathname: string) => {
+        if (pathname.startsWith('/app/wallets/') && pathname !== '/app/wallets') {
+            return [
+                { label: 'Aplikasi', href: '/app/dashboard' },
+                { label: 'Dompet & Rekening', href: '/app/wallets' },
+                { label: 'Rincian Rekening', href: undefined },
+            ];
+        }
+        switch (pathname) {
+            case '/app/dashboard':
+                return [
+                    { label: 'Aplikasi', href: '/app/dashboard' },
+                    { label: 'Dasbor Finansial', href: undefined },
+                ];
+            case '/app/wallets':
+                return [
+                    { label: 'Aplikasi', href: '/app/dashboard' },
+                    { label: 'Dompet & Rekening', href: undefined },
+                ];
+            case '/app/activity':
+                return [
+                    { label: 'Aplikasi', href: '/app/dashboard' },
+                    { label: 'Riwayat Mutasi', href: undefined },
+                ];
+            case '/app/profile':
+                return [
+                    { label: 'Aplikasi', href: '/app/dashboard' },
+                    { label: 'Profil Pengguna', href: undefined },
+                ];
+            case '/app/admin/users':
+                return [
+                    { label: 'Administrasi', href: '/app/admin/users' },
+                    { label: 'Manajemen Pengguna', href: undefined },
+                ];
+            default:
+                return [
+                    { label: 'Aplikasi', href: '/app/dashboard' },
+                    { label: 'Dasbor', href: undefined },
+                ];
+        }
+    };
+
+    const breadcrumbs = getBreadcrumbs(location.pathname);
 
     return (
         <header className="h-14 border-b border-zinc-800/80 bg-[#09090b]/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30">
@@ -38,13 +85,28 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileNav, onOpenCommandPa
                 </div>
             </div>
 
-            {/* Desktop breadcrumb / Search Bar */}
-            <div className="hidden md:flex items-center gap-3">
-                <div className="flex items-center gap-2 text-xs font-mono text-zinc-500">
-                    <span>bastion</span>
-                    <span>/</span>
-                    <span className="text-zinc-300">dasbor</span>
-                </div>
+            {/* Desktop Dynamic Breadcrumbs & Search Bar */}
+            <div className="hidden md:flex items-center gap-4">
+                {/* Dynamic Breadcrumbs */}
+                <nav aria-label="Breadcrumb Navigation" className="flex items-center gap-1.5 text-xs select-none">
+                    {breadcrumbs.map((crumb, idx) => (
+                        <React.Fragment key={crumb.label}>
+                            {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-zinc-600 shrink-0" />}
+                            {crumb.href ? (
+                                <Link
+                                    to={crumb.href}
+                                    className="text-zinc-500 hover:text-zinc-300 transition-colors font-medium font-sans"
+                                >
+                                    {crumb.label}
+                                </Link>
+                            ) : (
+                                <span className="text-zinc-200 font-semibold font-sans">{crumb.label}</span>
+                            )}
+                        </React.Fragment>
+                    ))}
+                </nav>
+
+                <div className="h-4 w-px bg-zinc-800/80" />
 
                 {/* Command Palette Trigger Button */}
                 <button
@@ -53,7 +115,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileNav, onOpenCommandPa
                     title="Cari perintah (Ctrl + K)"
                 >
                     <Search className="w-3.5 h-3.5" />
-                    <span className="text-[11px]">Cari menu atau perintah...</span>
+                    <span className="text-[11px]">Cari menu...</span>
                     <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-800 border border-zinc-700 text-zinc-400">
                         Ctrl K
                     </kbd>
