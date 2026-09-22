@@ -157,9 +157,9 @@ export const LandingPage: React.FC = () => {
                     <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
                 </div>
 
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
+                <div className="w-full space-y-12">
                     {/* Section Heading */}
-                    <div className="text-center max-w-3xl mx-auto space-y-3.5 sm:space-y-4">
+                    <div className="text-center max-w-3xl mx-auto px-4 sm:px-6 space-y-3.5 sm:space-y-4">
                         <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight font-heading leading-tight">
                             Statistik Finansial Nyata dalam Genggaman.
                         </h2>
@@ -168,8 +168,10 @@ export const LandingPage: React.FC = () => {
                         </p>
                     </div>
 
-                    {/* Visualisasi Statistik Dasbor Finansial Bastion (Sesuai Referensi & Design System Bastion) */}
-                    <DashboardStatisticsPreview />
+                    {/* Visualisasi Statistik Dasbor Finansial Bastion - Full-width Panoramic Stage */}
+                    <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20">
+                        <DashboardStatisticsPreview />
+                    </div>
                 </div>
             </section>
 
