@@ -95,33 +95,33 @@ export const ConcentricVault: React.FC = () => {
             {/* ========================================================================= */}
             {/* FULL-WIDTH SCHEMATIC STAGE: CALLOUTS WITH ANGLED ARROWS TO VAULT          */}
             {/* ========================================================================= */}
-            <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-12 items-center">
+            <div className="relative grid grid-cols-12 gap-2 sm:gap-4 md:gap-6 lg:gap-8 xl:gap-12 items-center">
                 {/* Dynamic Ambient Background Aura */}
                 <div
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] sm:w-[650px] lg:w-[800px] h-[450px] sm:h-[650px] lg:h-[800px] rounded-full blur-[160px] pointer-events-none transition-all duration-700 opacity-20"
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-[500px] md:w-[650px] lg:w-[800px] h-[320px] sm:h-[500px] md:h-[650px] lg:h-[800px] rounded-full blur-[160px] pointer-events-none transition-all duration-700 opacity-20"
                     style={{ backgroundColor: activeData.accentColor.ringStroke }}
                 />
 
                 {/* ===================================================================== */}
                 {/* LEFT FLANK: SCHEMATIC CALLOUT (LAPISAN 1)                             */}
                 {/* ===================================================================== */}
-                <div className="hidden lg:flex lg:col-span-3 xl:col-span-3 flex-col justify-center items-end text-right z-10">
+                <div className="col-span-3 flex flex-col justify-center items-end text-right z-10">
                     <div
                         onClick={() => setActiveLayer(1)}
                         onMouseEnter={() => setActiveLayer(1)}
-                        className={`group cursor-pointer transition-all duration-300 space-y-3.5 max-w-sm ${
+                        className={`group cursor-pointer transition-all duration-300 space-y-1.5 xs:space-y-2 sm:space-y-3 lg:space-y-3.5 max-w-sm ${
                             activeLayer === 1
                                 ? 'opacity-100 scale-[1.02]'
                                 : 'opacity-55 hover:opacity-90'
                         }`}
                     >
                         {/* Number & Location Badge */}
-                        <div className="flex items-center justify-end gap-2">
-                            <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">
+                        <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+                            <span className="text-[7.5px] xs:text-[9px] sm:text-[10px] md:text-[11px] font-mono text-zinc-500 uppercase tracking-wider line-clamp-1">
                                 {LAYERS[1].location}
                             </span>
                             <span
-                                className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold transition-all ${
+                                className={`px-1.5 sm:px-2.5 py-0.5 rounded-full text-[8px] xs:text-[9px] sm:text-xs font-mono font-bold transition-all shrink-0 ${
                                     activeLayer === 1
                                         ? `${LAYERS[1].accentColor.bg} ${LAYERS[1].accentColor.text} border border-sky-500/40 shadow-sm`
                                         : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
@@ -133,7 +133,7 @@ export const ConcentricVault: React.FC = () => {
 
                         {/* Heading Title */}
                         <h3
-                            className={`text-xl xl:text-2xl font-bold tracking-tight transition-colors leading-snug ${
+                            className={`text-[11px] xs:text-xs sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold tracking-tight transition-colors leading-tight sm:leading-snug ${
                                 activeLayer === 1 ? 'text-white' : 'text-zinc-300'
                             }`}
                         >
@@ -141,12 +141,12 @@ export const ConcentricVault: React.FC = () => {
                         </h3>
 
                         {/* Punchy Plain-Human Description */}
-                        <p className="text-xs xl:text-sm text-zinc-400 leading-relaxed">
+                        <p className="text-[8px] xs:text-[9px] sm:text-xs md:text-xs lg:text-sm text-zinc-400 leading-tight sm:leading-relaxed">
                             {LAYERS[1].description}
                         </p>
 
                         {/* Guarantee Metric Tag */}
-                        <div className="pt-1 flex items-center justify-end gap-2 text-xs">
+                        <div className="pt-0.5 sm:pt-1 flex items-center justify-end gap-1 sm:gap-2 text-[8px] xs:text-[9px] sm:text-[10px] md:text-xs">
                             <span className="text-zinc-500">Jaminan:</span>
                             <span className="font-mono font-bold text-sky-400">
                                 {LAYERS[1].guarantee}
@@ -158,8 +158,8 @@ export const ConcentricVault: React.FC = () => {
                 {/* ===================================================================== */}
                 {/* CENTERPIECE: THE GRAND VAULT DIAL WITH ANGLED ARROWS (COL-SPAN 6)     */}
                 {/* ===================================================================== */}
-                <div className="lg:col-span-6 xl:col-span-6 flex flex-col items-center justify-center z-10">
-                    <div className="relative w-full max-w-[290px] xs:max-w-[330px] sm:max-w-[420px] md:max-w-[460px] lg:max-w-[540px] xl:max-w-[580px] aspect-square mx-auto flex items-center justify-center select-none">
+                <div className="col-span-6 flex flex-col items-center justify-center z-10">
+                    <div className="relative w-full aspect-square mx-auto flex items-center justify-center select-none">
                         <svg viewBox="0 0 600 600" className="w-full h-full overflow-visible">
                             <defs>
                                 <filter id="vault-glow-intense" x="-30%" y="-30%" width="160%" height="160%">
@@ -424,7 +424,7 @@ export const ConcentricVault: React.FC = () => {
                             {/* ======================================================== */}
                             {/* DIAGONAL ANGLED SCHEMATIC ARROWS (MIRING KE SETIAP RING) */}
                             {/* ======================================================== */}
-                            <g className="hidden lg:block">
+                            <g className="block">
                                 {/* ARROW 1: Dari Kiri membelok miring ke Cincin Luar (R=225) */}
                                 <g
                                     className="cursor-pointer"
@@ -543,7 +543,7 @@ export const ConcentricVault: React.FC = () => {
 
                         {/* Centered Pure Bastion Logo */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
-                            <BastionLogo className="w-12 h-12 sm:w-16 sm:h-16 text-white drop-shadow-[0_0_40px_rgba(0,229,255,0.75)]" />
+                            <BastionLogo className="w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 text-white drop-shadow-[0_0_40px_rgba(0,229,255,0.75)]" />
                         </div>
                     </div>
                 </div>
@@ -551,21 +551,21 @@ export const ConcentricVault: React.FC = () => {
                 {/* ===================================================================== */}
                 {/* RIGHT FLANK: SCHEMATIC CALLOUTS (LAPISAN 2 & 3)                       */}
                 {/* ===================================================================== */}
-                <div className="hidden lg:flex lg:col-span-3 xl:col-span-3 flex-col justify-center items-start text-left z-10 space-y-10">
+                <div className="col-span-3 flex flex-col justify-center items-start text-left z-10 space-y-3 sm:space-y-6 lg:space-y-10">
                     {/* CALLOUT 2: ANTI-MINUS */}
                     <div
                         onClick={() => setActiveLayer(2)}
                         onMouseEnter={() => setActiveLayer(2)}
-                        className={`group cursor-pointer transition-all duration-300 space-y-3 max-w-sm ${
+                        className={`group cursor-pointer transition-all duration-300 space-y-1.5 sm:space-y-2.5 lg:space-y-3 max-w-sm ${
                             activeLayer === 2
                                 ? 'opacity-100 scale-[1.02]'
                                 : 'opacity-55 hover:opacity-90'
                         }`}
                     >
                         {/* Number & Location Badge */}
-                        <div className="flex items-center justify-start gap-2">
+                        <div className="flex items-center justify-start gap-1.5 sm:gap-2">
                             <span
-                                className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold transition-all ${
+                                className={`px-1.5 sm:px-2.5 py-0.5 rounded-full text-[8px] xs:text-[9px] sm:text-xs font-mono font-bold transition-all shrink-0 ${
                                     activeLayer === 2
                                         ? `${LAYERS[2].accentColor.bg} ${LAYERS[2].accentColor.text} border border-emerald-500/40 shadow-sm`
                                         : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
@@ -573,14 +573,14 @@ export const ConcentricVault: React.FC = () => {
                             >
                                 {LAYERS[2].numberTag}
                             </span>
-                            <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">
+                            <span className="text-[7.5px] xs:text-[9px] sm:text-[10px] md:text-[11px] font-mono text-zinc-500 uppercase tracking-wider line-clamp-1">
                                 {LAYERS[2].location}
                             </span>
                         </div>
 
                         {/* Heading Title */}
                         <h3
-                            className={`text-xl xl:text-2xl font-bold tracking-tight transition-colors leading-snug ${
+                            className={`text-[11px] xs:text-xs sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold tracking-tight transition-colors leading-tight sm:leading-snug ${
                                 activeLayer === 2 ? 'text-white' : 'text-zinc-300'
                             }`}
                         >
@@ -588,12 +588,12 @@ export const ConcentricVault: React.FC = () => {
                         </h3>
 
                         {/* Punchy Plain-Human Description */}
-                        <p className="text-xs xl:text-sm text-zinc-400 leading-relaxed">
+                        <p className="text-[8px] xs:text-[9px] sm:text-xs md:text-xs lg:text-sm text-zinc-400 leading-tight sm:leading-relaxed">
                             {LAYERS[2].description}
                         </p>
 
                         {/* Guarantee Metric Tag */}
-                        <div className="pt-1 flex items-center justify-start gap-2 text-xs">
+                        <div className="pt-0.5 sm:pt-1 flex items-center justify-start gap-1 sm:gap-2 text-[8px] xs:text-[9px] sm:text-[10px] md:text-xs">
                             <span className="text-zinc-500">Jaminan:</span>
                             <span className="font-mono font-bold text-emerald-400">
                                 {LAYERS[2].guarantee}
@@ -605,16 +605,16 @@ export const ConcentricVault: React.FC = () => {
                     <div
                         onClick={() => setActiveLayer(3)}
                         onMouseEnter={() => setActiveLayer(3)}
-                        className={`group cursor-pointer transition-all duration-300 space-y-3 max-w-sm pt-8 border-t border-zinc-800/40 ${
+                        className={`group cursor-pointer transition-all duration-300 space-y-1.5 sm:space-y-2.5 lg:space-y-3 max-w-sm pt-2.5 sm:pt-4 lg:pt-8 border-t border-zinc-800/40 ${
                             activeLayer === 3
                                 ? 'opacity-100 scale-[1.02]'
                                 : 'opacity-55 hover:opacity-90'
                         }`}
                     >
                         {/* Number & Location Badge */}
-                        <div className="flex items-center justify-start gap-2">
+                        <div className="flex items-center justify-start gap-1.5 sm:gap-2">
                             <span
-                                className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold transition-all ${
+                                className={`px-1.5 sm:px-2.5 py-0.5 rounded-full text-[8px] xs:text-[9px] sm:text-xs font-mono font-bold transition-all shrink-0 ${
                                     activeLayer === 3
                                         ? `${LAYERS[3].accentColor.bg} ${LAYERS[3].accentColor.text} border border-indigo-500/40 shadow-sm`
                                         : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
@@ -622,14 +622,14 @@ export const ConcentricVault: React.FC = () => {
                             >
                                 {LAYERS[3].numberTag}
                             </span>
-                            <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">
+                            <span className="text-[7.5px] xs:text-[9px] sm:text-[10px] md:text-[11px] font-mono text-zinc-500 uppercase tracking-wider line-clamp-1">
                                 {LAYERS[3].location}
                             </span>
                         </div>
 
                         {/* Heading Title */}
                         <h3
-                            className={`text-xl xl:text-2xl font-bold tracking-tight transition-colors leading-snug ${
+                            className={`text-[11px] xs:text-xs sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold tracking-tight transition-colors leading-tight sm:leading-snug ${
                                 activeLayer === 3 ? 'text-white' : 'text-zinc-300'
                             }`}
                         >
@@ -637,83 +637,18 @@ export const ConcentricVault: React.FC = () => {
                         </h3>
 
                         {/* Punchy Plain-Human Description */}
-                        <p className="text-xs xl:text-sm text-zinc-400 leading-relaxed">
+                        <p className="text-[8px] xs:text-[9px] sm:text-xs md:text-xs lg:text-sm text-zinc-400 leading-tight sm:leading-relaxed">
                             {LAYERS[3].description}
                         </p>
 
                         {/* Guarantee Metric Tag */}
-                        <div className="pt-1 flex items-center justify-start gap-2 text-xs">
+                        <div className="pt-0.5 sm:pt-1 flex items-center justify-start gap-1 sm:gap-2 text-[8px] xs:text-[9px] sm:text-[10px] md:text-xs">
                             <span className="text-zinc-500">Jaminan:</span>
                             <span className="font-mono font-bold text-indigo-400">
                                 {LAYERS[3].guarantee}
                             </span>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* RESPONSIVE TABLET & MOBILE VIEW (SCREENS < LG)                            */}
-            {/* Pure schematic typography callouts (Cardless, matching desktop design)    */}
-            {/* ========================================================================= */}
-            <div className="lg:hidden pt-8 sm:pt-10">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 xl:gap-8 divide-y divide-zinc-800/50 md:divide-y-0 text-left">
-                    {([1, 2, 3] as LayerId[]).map((id, index) => {
-                        const item = LAYERS[id];
-                        const isSelected = activeLayer === id;
-                        return (
-                            <div
-                                key={id}
-                                onClick={() => setActiveLayer(id)}
-                                onMouseEnter={() => setActiveLayer(id)}
-                                className={`group cursor-pointer transition-all duration-300 space-y-3.5 ${
-                                    index > 0 ? 'pt-6 md:pt-0' : ''
-                                } ${
-                                    isSelected
-                                        ? 'opacity-100 scale-[1.02]'
-                                        : 'opacity-55 hover:opacity-90'
-                                }`}
-                            >
-                                {/* Number & Location Badge */}
-                                <div className="flex items-center gap-2">
-                                    <span
-                                        className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold transition-all ${
-                                            isSelected
-                                                ? `${item.accentColor.bg} ${item.accentColor.text} border ${item.accentColor.border} shadow-sm`
-                                                : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
-                                        }`}
-                                    >
-                                        {item.numberTag}
-                                    </span>
-                                    <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">
-                                        {item.location}
-                                    </span>
-                                </div>
-
-                                {/* Heading Title */}
-                                <h3
-                                    className={`text-xl sm:text-2xl font-bold tracking-tight transition-colors leading-snug ${
-                                        isSelected ? 'text-white' : 'text-zinc-300'
-                                    }`}
-                                >
-                                    {item.title}
-                                </h3>
-
-                                {/* Punchy Plain-Human Description */}
-                                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                                    {item.description}
-                                </p>
-
-                                {/* Guarantee Metric Tag */}
-                                <div className="pt-1 flex items-center gap-2 text-xs">
-                                    <span className="text-zinc-500">Jaminan:</span>
-                                    <span className={`font-mono font-bold ${item.accentColor.text}`}>
-                                        {item.guarantee}
-                                    </span>
-                                </div>
-                            </div>
-                        );
-                    })}
                 </div>
             </div>
 
