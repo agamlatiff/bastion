@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useAuth } from '../features/auth/useAuth';
-import { Button } from '../components/ui/Button';
 import { Navbar } from '../components/landing/Navbar';
 import { BastionLogo } from '../components/common/BastionLogo';
 import { ConcentricVault } from '../components/landing/ConcentricVault';

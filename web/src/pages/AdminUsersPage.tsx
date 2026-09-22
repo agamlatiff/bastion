@@ -172,24 +172,27 @@ export const AdminUsersPage: React.FC = () => {
                 <Alert
                     variant="success"
                     title="Otorisasi Berhasil Diperbarui"
-                    message={actionSuccess}
                     className="animate-in fade-in duration-200"
-                />
+                >
+                    {actionSuccess}
+                </Alert>
             )}
             {actionError && (
                 <Alert
-                    variant="danger"
+                    variant="error"
                     title="Gagal Memperbarui Akses"
-                    message={actionError}
                     className="animate-in fade-in duration-200"
-                />
+                >
+                    {actionError}
+                </Alert>
             )}
             {error && (
                 <Alert
-                    variant="danger"
+                    variant="error"
                     title="Gagal Memuat Pengguna"
-                    message={error.message || 'Terjadi kesalahan saat memuat daftar pengguna dari server.'}
-                />
+                >
+                    {error.message || 'Terjadi kesalahan saat memuat daftar pengguna dari server.'}
+                </Alert>
             )}
 
             {/* Metrics Overview Cards */}
@@ -418,7 +421,7 @@ export const AdminUsersPage: React.FC = () => {
                                             <td className="py-3.5 px-4 text-right">
                                                 <Button
                                                     variant="outline"
-                                                    size="xs"
+                                                    size="sm"
                                                     onClick={() => handleOpenAssignModal(u)}
                                                     leftIcon={<UserPlus className="w-3 h-3" />}
                                                     className="border-zinc-700 hover:border-zinc-500"

@@ -5,28 +5,15 @@ import {
     ChevronDown,
     ArrowUpRight,
     ArrowDownRight,
-    TrendingUp,
     Store,
     CheckCircle2,
-    ArrowRight,
-    Activity,
-    Layers,
-    SlidersHorizontal,
-    Maximize2,
-    Filter,
-    LayoutGrid,
-    ShieldCheck,
-    Settings,
-    Clock,
     Sparkles,
-    Check,
     BarChart3,
     LineChart,
 } from 'lucide-react';
 import { BastionLogo } from '../common/BastionLogo';
 
 type PeriodType = 'feb26' | 'jan26' | 'q1_26';
-type ChannelType = 'all' | 'qris' | 'bank' | 'edc';
 type ChartViewMode = 'curve' | 'bars';
 type FlowCategory = 'all' | 'inflow' | 'outflow';
 
@@ -522,13 +509,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                         {/* ====================================================== */}
                         {/* WIDGET 2: AREA CURVE CHART (FOTO KEDUA) & EMOTIONAL TOGGLE */}
                         {/* ====================================================== */}
-                        <div
-                            className={`rounded-2xl border bg-[#111116] p-5 sm:p-7 space-y-4 shadow-xl relative overflow-hidden transition-all ${
-                                activeRailTab === 'analytics'
-                                    ? 'border-emerald-500/40 ring-1 ring-emerald-500/20 shadow-[0_0_25px_rgba(16,185,129,0.15)]'
-                                    : 'border-white/10'
-                            }`}
-                        >
+                        <div className="rounded-2xl border border-white/10 bg-[#111116] p-5 sm:p-7 space-y-4 shadow-xl relative overflow-hidden transition-all">
                             {/* Header Widget 2: Tab Kategori Sesuai Foto 2 + Saklar Mode */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-white/5">
                                 <div>
@@ -883,13 +864,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                     {/* ========================================================== */}
                     <div className="lg:col-span-5 space-y-6">
                         {/* WIDGET KANAN ATAS: ALOKASI KAS & TARGET REALISASI (Unified Compact Card) */}
-                        <div
-                            className={`rounded-2xl border bg-[#111116] p-5 space-y-4 shadow-xl transition-all ${
-                                activeRailTab === 'wallets'
-                                    ? 'border-emerald-500/40 ring-1 ring-emerald-500/20 shadow-[0_0_25px_rgba(16,185,129,0.15)]'
-                                    : 'border-white/10'
-                            }`}
-                        >
+                        <div className="rounded-2xl border border-white/10 bg-[#111116] p-5 space-y-4 shadow-xl transition-all">
                             <div className="flex items-center justify-between border-b border-white/5 pb-3">
                                 <div>
                                     <h3 className="text-sm font-bold text-white tracking-tight font-heading">
@@ -1023,13 +998,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                         </div>
 
                         {/* WIDGET 5: DISTRIBUSI SALURAN TRANSAKSI (Interactive Donut Breakdown - Chart Burger) */}
-                        <div
-                            className={`rounded-2xl border bg-[#111116] p-6 space-y-5 shadow-xl transition-all ${
-                                activeRailTab === 'analytics'
-                                    ? 'border-emerald-500/40 ring-1 ring-emerald-500/20 shadow-[0_0_25px_rgba(16,185,129,0.15)]'
-                                    : 'border-white/10'
-                            }`}
-                        >
+                        <div className="rounded-2xl border border-white/10 bg-[#111116] p-6 space-y-5 shadow-xl transition-all">
                             <div className="flex items-center justify-between border-b border-white/5 pb-3">
                                 <div>
                                     <h3 className="text-sm sm:text-base font-bold text-white tracking-tight font-heading">
@@ -1150,7 +1119,6 @@ export const DashboardStatisticsPreview: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </div>
 
             {/* 3. Conversion Callout Bar (Todo 4) */}
             <div className="px-4 sm:px-6 py-3 bg-gradient-to-r from-emerald-950/25 via-zinc-900/70 to-emerald-950/25 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
