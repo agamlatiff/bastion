@@ -355,6 +355,67 @@ export const DashboardPage: React.FC = () => {
 
                     {/* FX Currency Converter Widget */}
                     <CurrencyConverter />
+
+                    {/* Saluran Penerimaan Kasir Widget (Sinkronisasi Analitik Dasbor) */}
+                    <div className="rounded-xl border border-zinc-800 bg-[#111114] p-4 sm:p-5 space-y-3.5 text-left shadow-lg">
+                        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2.5">
+                            <div>
+                                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                                    Penerimaan Kanal Kasir
+                                </h3>
+                                <p className="text-[11px] text-zinc-400 pt-0.5">
+                                    Distribusi omzet masuk bulan berjalan
+                                </p>
+                            </div>
+                            <span className="text-[10px] text-emerald-400 font-mono font-medium px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-800/40">
+                                431 tx ✓
+                            </span>
+                        </div>
+
+                        <div className="flex items-center gap-5 pt-1">
+                            {/* Mini Donut Ring */}
+                            <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
+                                <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                                    <circle cx="50" cy="50" r="38" fill="transparent" stroke="#27272a" strokeWidth="10" />
+                                    {/* QRIS 55% */}
+                                    <circle cx="50" cy="50" r="38" fill="transparent" stroke="#10b981" strokeWidth="10.5" strokeDasharray="238.76" strokeDashoffset={238.76 * (1 - 0.55)} strokeLinecap="round" />
+                                    {/* Bank 30% */}
+                                    <circle cx="50" cy="50" r="38" fill="transparent" stroke="#818cf8" strokeWidth="10.5" strokeDasharray="238.76" strokeDashoffset={238.76 * (1 - 0.3)} transform="rotate(198 50 50)" />
+                                    {/* EDC 15% */}
+                                    <circle cx="50" cy="50" r="38" fill="transparent" stroke="#f59e0b" strokeWidth="10.5" strokeDasharray="238.76" strokeDashoffset={238.76 * (1 - 0.15)} transform="rotate(306 50 50)" />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                                    <span className="text-[9px] text-zinc-400 font-medium">QRIS</span>
+                                    <span className="text-xs font-bold font-mono text-white">55%</span>
+                                </div>
+                            </div>
+
+                            {/* Minimalist List (Persis Foto 2) */}
+                            <div className="space-y-2 flex-1 min-w-0">
+                                <div className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-1.5 min-w-0 truncate">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                                        <span className="text-zinc-200 font-medium truncate">QRIS Dinamis</span>
+                                    </div>
+                                    <span className="font-mono text-zinc-400 text-[11px] shrink-0">55.2%</span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-1.5 min-w-0 truncate">
+                                        <span className="w-2 h-2 rounded-full bg-indigo-400 shrink-0" />
+                                        <span className="text-zinc-200 font-medium truncate">Transfer Bank</span>
+                                    </div>
+                                    <span className="font-mono text-zinc-400 text-[11px] shrink-0">29.8%</span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-1.5 min-w-0 truncate">
+                                        <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                                        <span className="text-zinc-200 font-medium truncate">Mesin EDC</span>
+                                    </div>
+                                    <span className="font-mono text-zinc-400 text-[11px] shrink-0">15.0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
