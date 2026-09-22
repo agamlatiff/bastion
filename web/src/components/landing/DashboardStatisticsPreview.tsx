@@ -69,6 +69,8 @@ const PERIOD_METRICS: Record<
         volumeGrowth: string;
         peakMonth: string;
         peakNominal: string;
+        yAxisInflow: string[];
+        yAxisOutflow: string[];
     }
 > = {
     feb26: {
@@ -81,6 +83,8 @@ const PERIOD_METRICS: Record<
         volumeGrowth: '+32% volume kasir',
         peakMonth: 'Agu',
         peakNominal: 'Rp 864 Jt',
+        yAxisInflow: ['1 M', '750 Jt', '500 Jt', '250 Jt', '0 Jt'],
+        yAxisOutflow: ['600 Jt', '450 Jt', '300 Jt', '150 Jt', '0 Jt'],
     },
     jan26: {
         label: 'Jan 2026',
@@ -92,6 +96,8 @@ const PERIOD_METRICS: Record<
         volumeGrowth: '+18% volume kasir',
         peakMonth: 'Jul',
         peakNominal: 'Rp 768 Jt',
+        yAxisInflow: ['900 Jt', '675 Jt', '450 Jt', '225 Jt', '0 Jt'],
+        yAxisOutflow: ['500 Jt', '375 Jt', '250 Jt', '125 Jt', '0 Jt'],
     },
     q1_26: {
         label: 'Kuartal 1 (Q1)',
@@ -103,7 +109,129 @@ const PERIOD_METRICS: Record<
         volumeGrowth: '+41% volume kasir',
         peakMonth: 'Agu',
         peakNominal: 'Rp 2.45 M',
+        yAxisInflow: ['3.0 M', '2.25 M', '1.5 M', '750 Jt', '0 M'],
+        yAxisOutflow: ['1.8 M', '1.35 M', '900 Jt', '450 Jt', '0 M'],
     },
+};
+
+interface ChannelDetail {
+    id: 'qris' | 'bank' | 'edc';
+    name: string;
+    nominal: string;
+    txCount: string;
+    share: number;
+    dotColor: string;
+    barColor: string;
+    borderColor: string;
+    glowColor: string;
+}
+
+const CHANNELS_DATA: Record<PeriodType, ChannelDetail[]> = {
+    feb26: [
+        {
+            id: 'qris',
+            name: 'QRIS Dinamis',
+            nominal: 'Rp 475.300.000',
+            txCount: '237 tx',
+            share: 55,
+            dotColor: 'bg-emerald-400 shadow-[0_0_8px_#10b981]',
+            barColor: 'bg-gradient-to-r from-emerald-600 to-emerald-400',
+            borderColor: 'border-emerald-500/40',
+            glowColor: 'shadow-[0_0_18px_rgba(16,185,129,0.15)]',
+        },
+        {
+            id: 'bank',
+            name: 'Transfer Bank',
+            nominal: 'Rp 259.250.000',
+            txCount: '129 tx',
+            share: 30,
+            dotColor: 'bg-indigo-400 shadow-[0_0_8px_#818cf8]',
+            barColor: 'bg-gradient-to-r from-indigo-600 to-indigo-400',
+            borderColor: 'border-indigo-500/40',
+            glowColor: 'shadow-[0_0_18px_rgba(129,140,248,0.15)]',
+        },
+        {
+            id: 'edc',
+            name: 'Mesin EDC',
+            nominal: 'Rp 129.700.000',
+            txCount: '65 tx',
+            share: 15,
+            dotColor: 'bg-amber-400 shadow-[0_0_8px_#f59e0b]',
+            barColor: 'bg-gradient-to-r from-amber-600 to-amber-400',
+            borderColor: 'border-amber-500/40',
+            glowColor: 'shadow-[0_0_18px_rgba(245,158,11,0.15)]',
+        },
+    ],
+    jan26: [
+        {
+            id: 'qris',
+            name: 'QRIS Dinamis',
+            nominal: 'Rp 399.700.000',
+            txCount: '202 tx',
+            share: 52,
+            dotColor: 'bg-emerald-400 shadow-[0_0_8px_#10b981]',
+            barColor: 'bg-gradient-to-r from-emerald-600 to-emerald-400',
+            borderColor: 'border-emerald-500/40',
+            glowColor: 'shadow-[0_0_18px_rgba(16,185,129,0.15)]',
+        },
+        {
+            id: 'bank',
+            name: 'Transfer Bank',
+            nominal: 'Rp 253.700.000',
+            txCount: '131 tx',
+            share: 33,
+            dotColor: 'bg-indigo-400 shadow-[0_0_8px_#818cf8]',
+            barColor: 'bg-gradient-to-r from-indigo-600 to-indigo-400',
+            borderColor: 'border-indigo-500/40',
+            glowColor: 'shadow-[0_0_18px_rgba(129,140,248,0.15)]',
+        },
+        {
+            id: 'edc',
+            name: 'Mesin EDC',
+            nominal: 'Rp 115.400.000',
+            txCount: '58 tx',
+            share: 15,
+            dotColor: 'bg-amber-400 shadow-[0_0_8px_#f59e0b]',
+            barColor: 'bg-gradient-to-r from-amber-600 to-amber-400',
+            borderColor: 'border-amber-500/40',
+            glowColor: 'shadow-[0_0_18px_rgba(245,158,11,0.15)]',
+        },
+    ],
+    q1_26: [
+        {
+            id: 'qris',
+            name: 'QRIS Dinamis',
+            nominal: 'Rp 1.347.500.000',
+            txCount: '685 tx',
+            share: 55,
+            dotColor: 'bg-emerald-400 shadow-[0_0_8px_#10b981]',
+            barColor: 'bg-gradient-to-r from-emerald-600 to-emerald-400',
+            borderColor: 'border-emerald-500/40',
+            glowColor: 'shadow-[0_0_18px_rgba(16,185,129,0.15)]',
+        },
+        {
+            id: 'bank',
+            name: 'Transfer Bank',
+            nominal: 'Rp 735.000.000',
+            txCount: '372 tx',
+            share: 30,
+            dotColor: 'bg-indigo-400 shadow-[0_0_8px_#818cf8]',
+            barColor: 'bg-gradient-to-r from-indigo-600 to-indigo-400',
+            borderColor: 'border-indigo-500/40',
+            glowColor: 'shadow-[0_0_18px_rgba(129,140,248,0.15)]',
+        },
+        {
+            id: 'edc',
+            name: 'Mesin EDC',
+            nominal: 'Rp 367.500.000',
+            txCount: '185 tx',
+            share: 15,
+            dotColor: 'bg-amber-400 shadow-[0_0_8px_#f59e0b]',
+            barColor: 'bg-gradient-to-r from-amber-600 to-amber-400',
+            borderColor: 'border-amber-500/40',
+            glowColor: 'shadow-[0_0_18px_rgba(245,158,11,0.14)]',
+        },
+    ],
 };
 
 const LIVE_EVENTS = [
@@ -126,6 +254,8 @@ export const DashboardStatisticsPreview: React.FC = () => {
     const [liveEventIndex, setLiveEventIndex] = useState<number>(0);
 
     const currentPeriod = PERIOD_METRICS[selectedPeriod];
+    const currentChannels = CHANNELS_DATA[selectedPeriod];
+    const currentSelectedChannel = currentChannels.find((c) => c.id === activeChannel);
 
     // Cycle simulated real-time ledger ticker events smoothly
     useEffect(() => {
@@ -544,11 +674,11 @@ export const DashboardStatisticsPreview: React.FC = () => {
                             {/* ============================================================== */}
                             {chartMode === 'curve' ? (
                                 <div className="relative pt-6 pb-2">
-                                    {/* Sumbu Y Angka Monospace Elegan (05k, 10k, 20k, 30k, 40k persis Foto 2) */}
+                                    {/* Sumbu Y Dinamis Sesuai Periode & Kategori Arus Kas (Menyesuaikan Otomatis) */}
                                     <div className="relative h-60 sm:h-72 flex flex-col justify-between pointer-events-none">
-                                        {['40k', '30k', '20k', '10k', '05k'].map((val) => (
+                                        {(isInflowView ? currentPeriod.yAxisInflow : currentPeriod.yAxisOutflow).map((val) => (
                                             <div key={val} className="w-full flex items-center gap-2">
-                                                <span className="text-[10px] font-mono text-zinc-500 w-8 text-right shrink-0">
+                                                <span className="text-[10px] font-mono text-zinc-500 w-11 text-right shrink-0">
                                                     {val}
                                                 </span>
                                                 <div className="h-px w-full bg-white/[0.04]" />
@@ -556,7 +686,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                         ))}
 
                                         {/* SVG Curve Canvas dengan Full-Width Dynamic Polyline & Spotlight Beam (Foto 2) */}
-                                        <div className="absolute inset-0 left-10 right-0 pointer-events-auto">
+                                        <div className="absolute inset-0 left-13 right-0 pointer-events-auto">
                                             {/* Floating Apex Tooltip Pill (Persis Desain Tooltip Foto 2) */}
                                             <div
                                                 style={{
@@ -679,7 +809,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                     </div>
 
                                     {/* Sumbu X Label Bulan Interaktif (Jan, Feb, Mar, Apr...) */}
-                                    <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-3 pl-10 pr-2">
+                                    <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-3 pl-13 pr-2">
                                         {MONTH_DATA_POINTS.map((pt) => {
                                             const isActive = activeHoverPoint.month === pt.month;
                                             return (
@@ -952,13 +1082,15 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                         3 Saluran Kasir Terbesar
                                     </h3>
                                     <p className="text-[11px] text-zinc-400 pt-0.5">
-                                        Porsi penerimaan dana riil per kanal kasir hari ini.
+                                        Porsi penerimaan dana riil per kanal kasir periode {currentPeriod.label}.
                                     </p>
                                 </div>
-                                <span className="text-[10px] text-zinc-400 font-mono px-2 py-0.5 rounded-full bg-zinc-900 border border-white/5">Hari Ini</span>
+                                <span className="text-[10px] text-zinc-300 font-mono px-2.5 py-1 rounded-full bg-zinc-900 border border-white/10">
+                                    {currentPeriod.label}
+                                </span>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row items-center justify-around gap-6 sm:gap-8 pt-2">
+                            <div className="flex flex-col lg:flex-row items-center justify-around gap-8 pt-2">
                                 {/* Interactive Radial Donut Chart SVG (Diperbesar & Tegas) */}
                                 <div className="relative w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center shrink-0">
                                     <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90 filter drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)]">
@@ -979,7 +1111,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             stroke="#10b981"
                                             strokeWidth={activeChannel === 'qris' ? '14' : '11'}
                                             strokeDasharray="238.7"
-                                            strokeDashoffset={238.7 * (1 - 0.55)}
+                                            strokeDashoffset={238.7 * (1 - (currentChannels[0]?.share || 55) / 100)}
                                             strokeLinecap="round"
                                             className="transition-all duration-300 cursor-pointer"
                                             onClick={() => setActiveChannel(activeChannel === 'qris' ? 'all' : 'qris')}
@@ -993,7 +1125,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             stroke="#818cf8"
                                             strokeWidth={activeChannel === 'bank' ? '14' : '11'}
                                             strokeDasharray="238.7"
-                                            strokeDashoffset={238.7 * (1 - 0.3)}
+                                            strokeDashoffset={238.7 * (1 - (currentChannels[1]?.share || 30) / 100)}
                                             transform="rotate(198 50 50)"
                                             strokeLinecap="round"
                                             className="transition-all duration-300 cursor-pointer"
@@ -1008,7 +1140,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             stroke="#f59e0b"
                                             strokeWidth={activeChannel === 'edc' ? '14' : '11'}
                                             strokeDasharray="238.7"
-                                            strokeDashoffset={238.7 * (1 - 0.15)}
+                                            strokeDashoffset={238.7 * (1 - (currentChannels[2]?.share || 15) / 100)}
                                             transform="rotate(306 50 50)"
                                             strokeLinecap="round"
                                             className="transition-all duration-300 cursor-pointer"
@@ -1017,87 +1149,82 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                     </svg>
 
                                     {/* Dynamic Center Donut Metrics */}
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                                        <span className="text-xs text-zinc-400 font-medium">
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none px-4">
+                                        <span className="text-[11px] text-zinc-400 font-medium whitespace-nowrap">
                                             {activeChannel === 'all'
-                                                ? 'Total'
-                                                : activeChannel === 'qris'
-                                                ? 'QRIS'
-                                                : activeChannel === 'bank'
-                                                ? 'Bank'
-                                                : 'EDC'}
+                                                ? 'Total Kasir'
+                                                : currentSelectedChannel?.name || 'Kanal'}
                                         </span>
-                                        <span className="text-3xl sm:text-4xl font-extrabold font-mono text-white leading-none tracking-tight py-0.5">
+                                        <span className="text-2xl sm:text-3xl font-extrabold font-mono text-white leading-none tracking-tight py-1 whitespace-nowrap">
                                             {activeChannel === 'all'
-                                                ? '431'
-                                                : activeChannel === 'qris'
-                                                ? '237'
-                                                : activeChannel === 'bank'
-                                                ? '129'
-                                                : '65'}
+                                                ? `${currentChannels.reduce((acc, c) => acc + parseInt(c.txCount), 0)} tx`
+                                                : currentSelectedChannel?.txCount || ''}
                                         </span>
-                                        <span className="text-[10px] text-zinc-500 font-mono pt-0.5">Transaksi</span>
+                                        <span className="text-[10px] font-mono text-emerald-400 font-semibold truncate max-w-full">
+                                            {activeChannel === 'all'
+                                                ? currentPeriod.peakNominal
+                                                : currentSelectedChannel?.nominal}
+                                        </span>
                                     </div>
                                 </div>
 
-                                {/* Donut Legend with Interactive Channel Selectors */}
-                                <div className="space-y-3 text-xs w-full sm:w-60">
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveChannel(activeChannel === 'qris' ? 'all' : 'qris')}
-                                        className={`w-full flex items-center justify-between gap-4 p-2.5 rounded-xl transition-all cursor-pointer ${
-                                            activeChannel === 'qris'
-                                                ? 'bg-emerald-500/15 border border-emerald-500/35 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
-                                                : 'bg-zinc-900/60 border border-white/5 hover:border-white/10 hover:bg-zinc-900'
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-2.5">
-                                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
-                                            <span className="text-zinc-200 font-medium text-xs sm:text-sm">QRIS Dinamis</span>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="font-mono font-bold text-white text-xs sm:text-sm">237 tx</span>
-                                            <span className="block text-[10px] text-zinc-400 font-mono">55%</span>
-                                        </div>
-                                    </button>
+                                {/* Modern Financial Channel Breakdown List (UI/UX Friendly, Anti-Wrap, Real Nominals) */}
+                                <div className="space-y-3 w-full sm:flex-1 max-w-sm">
+                                    {currentChannels.map((ch) => {
+                                        const isSelected = activeChannel === ch.id;
+                                        return (
+                                            <div
+                                                key={ch.id}
+                                                onClick={() => setActiveChannel(activeChannel === ch.id ? 'all' : ch.id)}
+                                                className={`p-3 sm:p-3.5 rounded-xl transition-all cursor-pointer border ${
+                                                    isSelected
+                                                        ? `bg-white/[0.06] ${ch.borderColor} ${ch.glowColor}`
+                                                        : 'bg-zinc-900/40 border-white/5 hover:border-white/10 hover:bg-zinc-900/70'
+                                                }`}
+                                            >
+                                                <div className="flex items-center justify-between gap-3 pb-2">
+                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${ch.dotColor}`} />
+                                                        <span className="font-semibold text-xs sm:text-sm text-zinc-200 whitespace-nowrap">
+                                                            {ch.name}
+                                                        </span>
+                                                        <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 shrink-0">
+                                                            {ch.share}%
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-right shrink-0">
+                                                        <span className="font-mono font-bold text-xs sm:text-sm text-white">
+                                                            {ch.nominal}
+                                                        </span>
+                                                    </div>
+                                                </div>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveChannel(activeChannel === 'bank' ? 'all' : 'bank')}
-                                        className={`w-full flex items-center justify-between gap-4 p-2.5 rounded-xl transition-all cursor-pointer ${
-                                            activeChannel === 'bank'
-                                                ? 'bg-indigo-500/15 border border-indigo-500/35 shadow-[0_0_15px_rgba(129,140,248,0.15)]'
-                                                : 'bg-zinc-900/60 border border-white/5 hover:border-white/10 hover:bg-zinc-900'
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-2.5">
-                                            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 shadow-[0_0_8px_#818cf8]" />
-                                            <span className="text-zinc-200 font-medium text-xs sm:text-sm">Transfer Bank</span>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="font-mono font-bold text-white text-xs sm:text-sm">129 tx</span>
-                                            <span className="block text-[10px] text-zinc-400 font-mono">30%</span>
-                                        </div>
-                                    </button>
+                                                {/* Slim Proportional Progress Bar */}
+                                                <div className="w-full h-1.5 bg-zinc-800/80 rounded-full overflow-hidden">
+                                                    <div
+                                                        style={{ width: `${ch.share}%` }}
+                                                        className={`h-full rounded-full transition-all duration-500 ${ch.barColor}`}
+                                                    />
+                                                </div>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveChannel(activeChannel === 'edc' ? 'all' : 'edc')}
-                                        className={`w-full flex items-center justify-between gap-4 p-2.5 rounded-xl transition-all cursor-pointer ${
-                                            activeChannel === 'edc'
-                                                ? 'bg-amber-500/15 border border-amber-500/35 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
-                                                : 'bg-zinc-900/60 border border-white/5 hover:border-white/10 hover:bg-zinc-900'
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-2.5">
-                                            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b]" />
-                                            <span className="text-zinc-200 font-medium text-xs sm:text-sm">Mesin EDC</span>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="font-mono font-bold text-white text-xs sm:text-sm">65 tx</span>
-                                            <span className="block text-[10px] text-zinc-400 font-mono">15%</span>
-                                        </div>
-                                    </button>
+                                                <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 font-mono">
+                                                    <span>{ch.txCount} tervalidasi</span>
+                                                    <span className="text-zinc-500">Rekonsiliasi Otomatis ✓</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
+                                    {/* Reset / All Channels Indicator */}
+                                    {activeChannel !== 'all' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveChannel('all')}
+                                            className="w-full text-center text-[11px] font-mono text-zinc-400 hover:text-white transition-colors pt-1 cursor-pointer"
+                                        >
+                                            ← Tampilkan Semua Kanal Kasir
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
