@@ -100,19 +100,7 @@ export const ConcentricVault: React.FC = () => {
     const activeData = LAYERS[activeLayer];
 
     return (
-        <div className="w-full max-w-[1600px] mx-auto space-y-12 select-none">
-            {/* Context Pill Indicator */}
-            <div className="flex flex-col items-center text-center">
-                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-300 shadow-md">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>Cetak Biru Brankas Bastion</span>
-                    <span className="text-zinc-600">•</span>
-                    <span className="text-emerald-400 font-semibold tracking-wide">
-                        3 Proteksi Otomatis Terkoneksi
-                    </span>
-                </div>
-            </div>
-
+        <div className="w-full max-w-[1600px] mx-auto space-y-8 lg:space-y-12 select-none">
             {/* ========================================================================= */}
             {/* FULL-WIDTH SCHEMATIC STAGE: CALLOUTS WITH ARROWS CONNECTING TO VAULT      */}
             {/* ========================================================================= */}
@@ -430,17 +418,52 @@ export const ConcentricVault: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Active Layer Status Capsule */}
-                    <div className="mt-5 inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-zinc-950/80 border border-zinc-800 text-xs text-zinc-300 shadow-md">
-                        <span
-                            className="w-2.5 h-2.5 rounded-full shrink-0 animate-pulse"
-                            style={{ backgroundColor: activeData.accentColor.ringStroke }}
-                        />
-                        <span className="font-semibold text-white">{activeData.name}</span>
-                        <span className="text-zinc-600">•</span>
-                        <span className={`text-[11px] font-mono font-semibold ${activeData.accentColor.text}`}>
-                            {activeData.guarantee}
-                        </span>
+                    {/* Precision Mechanical Segmented Switcher & Live Telemetry Console */}
+                    <div className="mt-7 sm:mt-8 flex flex-col items-center gap-3 z-20">
+                        {/* Segmented Control Bar */}
+                        <div className="p-1 sm:p-1.5 rounded-2xl bg-[#09090f]/95 border border-zinc-800/80 backdrop-blur-md inline-flex items-center gap-1 sm:gap-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.6)]">
+                            {([1, 2, 3] as LayerId[]).map((id) => {
+                                const item = LAYERS[id];
+                                const isSelected = activeLayer === id;
+                                return (
+                                    <button
+                                        key={id}
+                                        type="button"
+                                        onClick={() => setActiveLayer(id)}
+                                        className={`group relative px-3 sm:px-4 py-2 rounded-xl text-xs font-mono font-semibold transition-all duration-300 flex items-center gap-2 cursor-pointer select-none ${
+                                            isSelected
+                                                ? `${item.accentColor.bg} ${item.accentColor.text} border ${item.accentColor.border} shadow-[0_0_20px_${item.accentColor.glow}]`
+                                                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border border-transparent'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                                                isSelected
+                                                    ? 'scale-125 animate-pulse'
+                                                    : 'opacity-40 group-hover:opacity-80'
+                                            }`}
+                                            style={{ backgroundColor: item.accentColor.ringStroke }}
+                                        />
+                                        <span className="tracking-wide">
+                                            {item.numberTag} {item.shortTag}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Real-Time Telemetry Guarantee Readout */}
+                        <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400 tracking-wider">
+                            <span className="text-zinc-600">[</span>
+                            <span className="text-zinc-500 uppercase">Jaminan Aktif:</span>
+                            <span className={`font-bold ${activeData.accentColor.text}`}>
+                                {activeData.guarantee}
+                            </span>
+                            <span className="text-zinc-600">•</span>
+                            <span className="text-zinc-500">Putaran Dial:</span>
+                            <span className="text-zinc-300 font-bold">{activeData.rotationDeg}°</span>
+                            <span className="text-zinc-600">]</span>
+                        </div>
                     </div>
                 </div>
 
@@ -605,33 +628,7 @@ export const ConcentricVault: React.FC = () => {
             {/* ========================================================================= */}
             {/* MOBILE / TABLET VIEW (SCREENS < LG) - CLEAN UNBOXED SCHEMATIC LIST       */}
             {/* ========================================================================= */}
-            <div className="lg:hidden space-y-4 pt-4">
-                {/* Layer Selector Chips */}
-                <div className="flex gap-2">
-                    {([1, 2, 3] as LayerId[]).map((id) => {
-                        const item = LAYERS[id];
-                        const isSelected = activeLayer === id;
-                        return (
-                            <button
-                                key={id}
-                                type="button"
-                                onClick={() => setActiveLayer(id)}
-                                className={`flex-1 py-2.5 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                                    isSelected
-                                        ? 'bg-zinc-900 text-white border border-zinc-700 shadow-md'
-                                        : 'bg-zinc-950/60 border border-zinc-800/80 text-zinc-400'
-                                }`}
-                            >
-                                <span
-                                    className="w-2 h-2 rounded-full shrink-0"
-                                    style={{ backgroundColor: item.accentColor.ringStroke }}
-                                />
-                                <span>{item.numberTag} {item.shortTag}</span>
-                            </button>
-                        );
-                    })}
-                </div>
-
+            <div className="lg:hidden pt-2">
                 {/* Minimal Active Detail (Unboxed) */}
                 <div className="p-5 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 text-left space-y-2.5">
                     <div className="flex items-center justify-between text-xs">
