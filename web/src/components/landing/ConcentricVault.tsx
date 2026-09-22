@@ -5,8 +5,6 @@ import {
     Zap,
     FileCheck,
     CheckCircle2,
-    ArrowRight,
-    ArrowLeft,
 } from 'lucide-react';
 import { BastionLogo } from '../common/BastionLogo';
 
@@ -102,7 +100,7 @@ export const ConcentricVault: React.FC = () => {
     return (
         <div className="w-full max-w-[1600px] mx-auto space-y-8 lg:space-y-12 select-none">
             {/* ========================================================================= */}
-            {/* FULL-WIDTH SCHEMATIC STAGE: CALLOUTS WITH ARROWS CONNECTING TO VAULT      */}
+            {/* FULL-WIDTH SCHEMATIC STAGE: CALLOUTS WITH ANGLED ARROWS TO VAULT          */}
             {/* ========================================================================= */}
             <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-12 items-center">
                 {/* Dynamic Ambient Background Aura */}
@@ -112,7 +110,7 @@ export const ConcentricVault: React.FC = () => {
                 />
 
                 {/* ===================================================================== */}
-                {/* LEFT FLANK: SCHEMATIC CALLOUT (LAPISAN 1) WITH RIGHTWARD ARROW        */}
+                {/* LEFT FLANK: SCHEMATIC CALLOUT (LAPISAN 1)                             */}
                 {/* ===================================================================== */}
                 <div className="hidden lg:flex lg:col-span-3 xl:col-span-3 flex-col justify-center items-end text-right z-10">
                     <div
@@ -161,38 +159,11 @@ export const ConcentricVault: React.FC = () => {
                                 {LAYERS[1].guarantee}
                             </span>
                         </div>
-
-                        {/* Dynamic Leader Line & Directional Arrow (Pointing to Vault Outer Ring) */}
-                        <div className="pt-2 flex items-center justify-end gap-3 text-xs font-mono">
-                            <span
-                                className={`transition-colors ${
-                                    activeLayer === 1 ? 'text-sky-400 font-semibold' : 'text-zinc-500'
-                                }`}
-                            >
-                                Cincin Luar
-                            </span>
-                            <div className="flex items-center">
-                                <div
-                                    className={`h-0.5 transition-all duration-300 ${
-                                        activeLayer === 1
-                                            ? 'w-16 xl:w-24 bg-gradient-to-r from-transparent via-sky-500 to-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.8)]'
-                                            : 'w-10 xl:w-16 bg-zinc-800'
-                                    }`}
-                                />
-                                <ArrowRight
-                                    className={`w-4 h-4 transition-all duration-300 -ml-1 ${
-                                        activeLayer === 1
-                                            ? 'text-sky-400 translate-x-1 drop-shadow-[0_0_8px_rgba(56,189,248,0.9)]'
-                                            : 'text-zinc-600'
-                                    }`}
-                                />
-                            </div>
-                        </div>
                     </div>
                 </div>
 
                 {/* ===================================================================== */}
-                {/* CENTERPIECE: THE GRAND VAULT DIAL (COL-SPAN 6)                        */}
+                {/* CENTERPIECE: THE GRAND VAULT DIAL WITH ANGLED ARROWS (COL-SPAN 6)     */}
                 {/* ===================================================================== */}
                 <div className="lg:col-span-6 xl:col-span-6 flex flex-col items-center justify-center z-10">
                     <div className="relative w-full max-w-[340px] sm:max-w-[440px] lg:max-w-[540px] xl:max-w-[580px] aspect-square mx-auto flex items-center justify-center select-none">
@@ -207,6 +178,52 @@ export const ConcentricVault: React.FC = () => {
                                     <stop offset="50%" stopColor="#1d4ed8" stopOpacity="0.15" />
                                     <stop offset="100%" stopColor="#000000" stopOpacity="0" />
                                 </radialGradient>
+
+                                {/* Precision Architectural Arrowhead Markers */}
+                                <marker
+                                    id="arrowhead-sky"
+                                    viewBox="0 0 10 10"
+                                    refX="7"
+                                    refY="5"
+                                    markerWidth="7"
+                                    markerHeight="7"
+                                    orient="auto-start-reverse"
+                                >
+                                    <path d="M 0 1.5 L 9 5 L 0 8.5 L 2 5 z" fill="#38bdf8" />
+                                </marker>
+                                <marker
+                                    id="arrowhead-emerald"
+                                    viewBox="0 0 10 10"
+                                    refX="7"
+                                    refY="5"
+                                    markerWidth="7"
+                                    markerHeight="7"
+                                    orient="auto-start-reverse"
+                                >
+                                    <path d="M 0 1.5 L 9 5 L 0 8.5 L 2 5 z" fill="#10b981" />
+                                </marker>
+                                <marker
+                                    id="arrowhead-indigo"
+                                    viewBox="0 0 10 10"
+                                    refX="7"
+                                    refY="5"
+                                    markerWidth="7"
+                                    markerHeight="7"
+                                    orient="auto-start-reverse"
+                                >
+                                    <path d="M 0 1.5 L 9 5 L 0 8.5 L 2 5 z" fill="#818cf8" />
+                                </marker>
+                                <marker
+                                    id="arrowhead-muted"
+                                    viewBox="0 0 10 10"
+                                    refX="7"
+                                    refY="5"
+                                    markerWidth="6"
+                                    markerHeight="6"
+                                    orient="auto-start-reverse"
+                                >
+                                    <path d="M 0 1.5 L 9 5 L 0 8.5 L 2 5 z" fill="#71717a" opacity="0.6" />
+                                </marker>
                             </defs>
 
                             {/* Ambient Core Light */}
@@ -410,6 +427,125 @@ export const ConcentricVault: React.FC = () => {
                                     strokeOpacity="0.5"
                                 />
                             </g>
+
+                            {/* ======================================================== */}
+                            {/* DIAGONAL ANGLED SCHEMATIC ARROWS (MIRING KE SETIAP RING) */}
+                            {/* ======================================================== */}
+                            <g className="hidden lg:block">
+                                {/* ARROW 1: Dari Kiri membelok miring ke Cincin Luar (R=225) */}
+                                <g
+                                    className="cursor-pointer"
+                                    onClick={() => setActiveLayer(1)}
+                                    onMouseEnter={() => setActiveLayer(1)}
+                                >
+                                    <path
+                                        d="M -60 135 L 20 135 L 98 181"
+                                        fill="none"
+                                        stroke={activeLayer === 1 ? '#38bdf8' : 'rgba(255,255,255,0.18)'}
+                                        strokeWidth={activeLayer === 1 ? '2.5' : '1.2'}
+                                        strokeDasharray={activeLayer === 1 ? 'none' : '4 4'}
+                                        markerEnd={activeLayer === 1 ? 'url(#arrowhead-sky)' : 'url(#arrowhead-muted)'}
+                                        className="transition-all duration-300"
+                                        filter={activeLayer === 1 ? 'url(#vault-glow-intense)' : undefined}
+                                    />
+                                    {/* Target Node di Perimeter Cincin 1 */}
+                                    <circle
+                                        cx="105"
+                                        cy="187"
+                                        r={activeLayer === 1 ? '5' : '3'}
+                                        fill={activeLayer === 1 ? '#38bdf8' : '#71717a'}
+                                        className="transition-all duration-300"
+                                    />
+                                    {activeLayer === 1 && (
+                                        <circle
+                                            cx="105"
+                                            cy="187"
+                                            r="10"
+                                            fill="none"
+                                            stroke="#38bdf8"
+                                            strokeWidth="1.5"
+                                            className="animate-ping"
+                                            opacity="0.6"
+                                        />
+                                    )}
+                                </g>
+
+                                {/* ARROW 2: Dari Kanan Atas membelok miring ke Cincin Tengah (R=165) */}
+                                <g
+                                    className="cursor-pointer"
+                                    onClick={() => setActiveLayer(2)}
+                                    onMouseEnter={() => setActiveLayer(2)}
+                                >
+                                    <path
+                                        d="M 660 145 L 560 145 L 450 212"
+                                        fill="none"
+                                        stroke={activeLayer === 2 ? '#10b981' : 'rgba(255,255,255,0.18)'}
+                                        strokeWidth={activeLayer === 2 ? '2.5' : '1.2'}
+                                        strokeDasharray={activeLayer === 2 ? 'none' : '4 4'}
+                                        markerEnd={activeLayer === 2 ? 'url(#arrowhead-emerald)' : 'url(#arrowhead-muted)'}
+                                        className="transition-all duration-300"
+                                        filter={activeLayer === 2 ? 'url(#vault-glow-intense)' : undefined}
+                                    />
+                                    {/* Target Node di Perimeter Cincin 2 */}
+                                    <circle
+                                        cx="443"
+                                        cy="217"
+                                        r={activeLayer === 2 ? '5' : '3'}
+                                        fill={activeLayer === 2 ? '#10b981' : '#71717a'}
+                                        className="transition-all duration-300"
+                                    />
+                                    {activeLayer === 2 && (
+                                        <circle
+                                            cx="443"
+                                            cy="217"
+                                            r="10"
+                                            fill="none"
+                                            stroke="#10b981"
+                                            strokeWidth="1.5"
+                                            className="animate-ping"
+                                            opacity="0.6"
+                                        />
+                                    )}
+                                </g>
+
+                                {/* ARROW 3: Dari Kanan Bawah membelok miring ke Cincin Inti (R=105) */}
+                                <g
+                                    className="cursor-pointer"
+                                    onClick={() => setActiveLayer(3)}
+                                    onMouseEnter={() => setActiveLayer(3)}
+                                >
+                                    <path
+                                        d="M 660 475 L 540 475 L 394 366"
+                                        fill="none"
+                                        stroke={activeLayer === 3 ? '#818cf8' : 'rgba(255,255,255,0.18)'}
+                                        strokeWidth={activeLayer === 3 ? '2.5' : '1.2'}
+                                        strokeDasharray={activeLayer === 3 ? 'none' : '4 4'}
+                                        markerEnd={activeLayer === 3 ? 'url(#arrowhead-indigo)' : 'url(#arrowhead-muted)'}
+                                        className="transition-all duration-300"
+                                        filter={activeLayer === 3 ? 'url(#vault-glow-intense)' : undefined}
+                                    />
+                                    {/* Target Node di Perimeter Cincin 3 */}
+                                    <circle
+                                        cx="386"
+                                        cy="360"
+                                        r={activeLayer === 3 ? '5' : '3'}
+                                        fill={activeLayer === 3 ? '#818cf8' : '#71717a'}
+                                        className="transition-all duration-300"
+                                    />
+                                    {activeLayer === 3 && (
+                                        <circle
+                                            cx="386"
+                                            cy="360"
+                                            r="10"
+                                            fill="none"
+                                            stroke="#818cf8"
+                                            strokeWidth="1.5"
+                                            className="animate-ping"
+                                            opacity="0.6"
+                                        />
+                                    )}
+                                </g>
+                            </g>
                         </svg>
 
                         {/* Centered Pure Bastion Logo */}
@@ -417,58 +553,10 @@ export const ConcentricVault: React.FC = () => {
                             <BastionLogo className="w-12 h-12 sm:w-16 sm:h-16 text-white drop-shadow-[0_0_40px_rgba(0,229,255,0.75)]" />
                         </div>
                     </div>
-
-                    {/* Precision Mechanical Segmented Switcher & Live Telemetry Console */}
-                    <div className="mt-7 sm:mt-8 flex flex-col items-center gap-3 z-20">
-                        {/* Segmented Control Bar */}
-                        <div className="p-1 sm:p-1.5 rounded-2xl bg-[#09090f]/95 border border-zinc-800/80 backdrop-blur-md inline-flex items-center gap-1 sm:gap-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.6)]">
-                            {([1, 2, 3] as LayerId[]).map((id) => {
-                                const item = LAYERS[id];
-                                const isSelected = activeLayer === id;
-                                return (
-                                    <button
-                                        key={id}
-                                        type="button"
-                                        onClick={() => setActiveLayer(id)}
-                                        className={`group relative px-3 sm:px-4 py-2 rounded-xl text-xs font-mono font-semibold transition-all duration-300 flex items-center gap-2 cursor-pointer select-none ${
-                                            isSelected
-                                                ? `${item.accentColor.bg} ${item.accentColor.text} border ${item.accentColor.border} shadow-[0_0_20px_${item.accentColor.glow}]`
-                                                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border border-transparent'
-                                        }`}
-                                    >
-                                        <span
-                                            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                                                isSelected
-                                                    ? 'scale-125 animate-pulse'
-                                                    : 'opacity-40 group-hover:opacity-80'
-                                            }`}
-                                            style={{ backgroundColor: item.accentColor.ringStroke }}
-                                        />
-                                        <span className="tracking-wide">
-                                            {item.numberTag} {item.shortTag}
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {/* Real-Time Telemetry Guarantee Readout */}
-                        <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400 tracking-wider">
-                            <span className="text-zinc-600">[</span>
-                            <span className="text-zinc-500 uppercase">Jaminan Aktif:</span>
-                            <span className={`font-bold ${activeData.accentColor.text}`}>
-                                {activeData.guarantee}
-                            </span>
-                            <span className="text-zinc-600">•</span>
-                            <span className="text-zinc-500">Putaran Dial:</span>
-                            <span className="text-zinc-300 font-bold">{activeData.rotationDeg}°</span>
-                            <span className="text-zinc-600">]</span>
-                        </div>
-                    </div>
                 </div>
 
                 {/* ===================================================================== */}
-                {/* RIGHT FLANK: SCHEMATIC CALLOUTS (LAPISAN 2 & 3) WITH LEFTWARD ARROWS  */}
+                {/* RIGHT FLANK: SCHEMATIC CALLOUTS (LAPISAN 2 & 3)                       */}
                 {/* ===================================================================== */}
                 <div className="hidden lg:flex lg:col-span-3 xl:col-span-3 flex-col justify-center items-start text-left z-10 space-y-10">
                     {/* CALLOUT 2: ANTI-MINUS */}
@@ -481,33 +569,6 @@ export const ConcentricVault: React.FC = () => {
                                 : 'opacity-55 hover:opacity-90'
                         }`}
                     >
-                        {/* Dynamic Leader Line & Directional Arrow (Pointing from Vault to Callout) */}
-                        <div className="flex items-center justify-start gap-3 text-xs font-mono">
-                            <div className="flex items-center">
-                                <ArrowLeft
-                                    className={`w-4 h-4 transition-all duration-300 -mr-1 ${
-                                        activeLayer === 2
-                                            ? 'text-emerald-400 -translate-x-1 drop-shadow-[0_0_8px_rgba(16,185,129,0.9)]'
-                                            : 'text-zinc-600'
-                                    }`}
-                                />
-                                <div
-                                    className={`h-0.5 transition-all duration-300 ${
-                                        activeLayer === 2
-                                            ? 'w-16 xl:w-24 bg-gradient-to-l from-transparent via-emerald-500 to-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]'
-                                            : 'w-10 xl:w-16 bg-zinc-800'
-                                    }`}
-                                />
-                            </div>
-                            <span
-                                className={`transition-colors ${
-                                    activeLayer === 2 ? 'text-emerald-400 font-semibold' : 'text-zinc-500'
-                                }`}
-                            >
-                                Cincin Tengah
-                            </span>
-                        </div>
-
                         {/* Number & Location Badge */}
                         <div className="flex items-center justify-start gap-2">
                             <span
@@ -557,33 +618,6 @@ export const ConcentricVault: React.FC = () => {
                                 : 'opacity-55 hover:opacity-90'
                         }`}
                     >
-                        {/* Dynamic Leader Line & Directional Arrow (Pointing from Vault to Callout) */}
-                        <div className="flex items-center justify-start gap-3 text-xs font-mono">
-                            <div className="flex items-center">
-                                <ArrowLeft
-                                    className={`w-4 h-4 transition-all duration-300 -mr-1 ${
-                                        activeLayer === 3
-                                            ? 'text-indigo-400 -translate-x-1 drop-shadow-[0_0_8px_rgba(129,140,248,0.9)]'
-                                            : 'text-zinc-600'
-                                    }`}
-                                />
-                                <div
-                                    className={`h-0.5 transition-all duration-300 ${
-                                        activeLayer === 3
-                                            ? 'w-16 xl:w-24 bg-gradient-to-l from-transparent via-indigo-500 to-indigo-400 shadow-[0_0_12px_rgba(129,140,248,0.8)]'
-                                            : 'w-10 xl:w-16 bg-zinc-800'
-                                    }`}
-                                />
-                            </div>
-                            <span
-                                className={`transition-colors ${
-                                    activeLayer === 3 ? 'text-indigo-400 font-semibold' : 'text-zinc-500'
-                                }`}
-                            >
-                                Cincin Inti
-                            </span>
-                        </div>
-
                         {/* Number & Location Badge */}
                         <div className="flex items-center justify-start gap-2">
                             <span
@@ -626,10 +660,35 @@ export const ConcentricVault: React.FC = () => {
             </div>
 
             {/* ========================================================================= */}
-            {/* MOBILE / TABLET VIEW (SCREENS < LG) - CLEAN UNBOXED SCHEMATIC LIST       */}
+            {/* MOBILE / TABLET VIEW (SCREENS < LG) - ACTIVE LAYER DETAIL CALLOUT         */}
             {/* ========================================================================= */}
             <div className="lg:hidden pt-2">
-                {/* Minimal Active Detail (Unboxed) */}
+                {/* Mobile Layer Selector Tabs */}
+                <div className="flex gap-2 mb-3">
+                    {([1, 2, 3] as LayerId[]).map((id) => {
+                        const item = LAYERS[id];
+                        const isSelected = activeLayer === id;
+                        return (
+                            <button
+                                key={id}
+                                type="button"
+                                onClick={() => setActiveLayer(id)}
+                                className={`flex-1 py-2 px-2 rounded-xl text-xs font-mono font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                                    isSelected
+                                        ? `${item.accentColor.bg} ${item.accentColor.text} border ${item.accentColor.border}`
+                                        : 'bg-zinc-950/60 border border-zinc-800/80 text-zinc-400'
+                                }`}
+                            >
+                                <span
+                                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                                    style={{ backgroundColor: item.accentColor.ringStroke }}
+                                />
+                                <span>{item.numberTag} {item.shortTag}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+
                 <div className="p-5 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 text-left space-y-2.5">
                     <div className="flex items-center justify-between text-xs">
                         <span className="text-zinc-500 font-mono uppercase">{activeData.location}</span>
