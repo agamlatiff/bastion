@@ -38,18 +38,19 @@ interface MonthDataPoint {
     isSurplus: boolean;
     change: string;
     coordX: number;
-    coordY: number;
+    coordY: number; // for inflow / all
+    outflowY: number; // for outflow
 }
 
 const MONTH_DATA_POINTS: MonthDataPoint[] = [
-    { month: 'Jan', label: 'Januari', percentage: 46, nominal: 'Rp 395 Jt', volume: '6.940 tx', isSurplus: true, change: '+14%', coordX: 30, coordY: 135 },
-    { month: 'Feb', label: 'Februari', percentage: 34, nominal: 'Rp 312 Jt', volume: '5.420 tx', isSurplus: false, change: '-8%', coordX: 110, coordY: 155 },
-    { month: 'Mar', label: 'Maret', percentage: 26, nominal: 'Rp 240 Jt', volume: '4.110 tx', isSurplus: false, change: '-12%', coordX: 190, coordY: 175 },
-    { month: 'Apr', label: 'April', percentage: 52, nominal: 'Rp 458 Jt', volume: '7.820 tx', isSurplus: true, change: '+22%', coordX: 270, coordY: 120 },
-    { month: 'Mei', label: 'Mei', percentage: 58, nominal: 'Rp 490 Jt', volume: '8.210 tx', isSurplus: true, change: '+18%', coordX: 350, coordY: 105 },
-    { month: 'Jun', label: 'Juni', percentage: 40, nominal: 'Rp 380 Jt', volume: '6.450 tx', isSurplus: false, change: '-9%', coordX: 430, coordY: 145 },
-    { month: 'Jul', label: 'Juli', percentage: 72, nominal: 'Rp 620 Jt', volume: '10.510 tx', isSurplus: true, change: '+35%', coordX: 510, coordY: 70 },
-    { month: 'Agu', label: 'Agustus (Puncak)', percentage: 92, nominal: 'Rp 864 Jt', volume: '15.140 tx', isSurplus: true, change: '+42%', coordX: 580, coordY: 28 },
+    { month: 'Jan', label: 'Januari', percentage: 46, nominal: 'Rp 395 Jt', volume: '6.940 tx', isSurplus: true, change: '+14%', coordX: 40, coordY: 140, outflowY: 165 },
+    { month: 'Feb', label: 'Februari', percentage: 34, nominal: 'Rp 312 Jt', volume: '5.420 tx', isSurplus: false, change: '-8%', coordX: 115, coordY: 155, outflowY: 135 },
+    { month: 'Mar', label: 'Maret', percentage: 28, nominal: 'Rp 240 Jt', volume: '4.110 tx', isSurplus: false, change: '-12%', coordX: 190, coordY: 165, outflowY: 120 },
+    { month: 'Apr', label: 'April', percentage: 54, nominal: 'Rp 458 Jt', volume: '7.820 tx', isSurplus: true, change: '+22%', coordX: 265, coordY: 125, outflowY: 150 },
+    { month: 'Mei', label: 'Mei', percentage: 62, nominal: 'Rp 490 Jt', volume: '8.210 tx', isSurplus: true, change: '+18%', coordX: 340, coordY: 105, outflowY: 155 },
+    { month: 'Jun', label: 'Juni', percentage: 44, nominal: 'Rp 380 Jt', volume: '6.450 tx', isSurplus: false, change: '-9%', coordX: 415, coordY: 120, outflowY: 130 },
+    { month: 'Jul', label: 'Juli', percentage: 76, nominal: 'Rp 620 Jt', volume: '10.510 tx', isSurplus: true, change: '+35%', coordX: 490, coordY: 70, outflowY: 160 },
+    { month: 'Agu', label: 'Agustus (Puncak)', percentage: 94, nominal: 'Rp 864 Jt', volume: '15.140 tx', isSurplus: true, change: '+42%', coordX: 565, coordY: 32, outflowY: 170 },
 ];
 
 const PERIOD_METRICS: Record<
@@ -130,13 +131,28 @@ export const DashboardStatisticsPreview: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // SVG Spline Path Formulas for Photo 2 Smooth Area Curve
-    const splineAreaPath = 'M 30,135 C 70,145 70,155 110,155 C 150,155 150,175 190,175 C 230,175 230,120 270,120 C 310,120 310,105 350,105 C 390,105 390,145 430,145 C 470,145 470,70 510,70 C 550,70 550,28 580,28 L 580,220 L 30,220 Z';
-    const splineStrokePath = 'M 30,135 C 70,145 70,155 110,155 C 150,155 150,175 190,175 C 230,175 230,120 270,120 C 310,120 310,105 350,105 C 390,105 390,145 430,145 C 470,145 470,70 510,70 C 550,70 550,28 580,28';
+    // Full-Width Organic Spline Curves (Starts at x=0, ends at x=600 with NO vertical cut-off)
+    const isInflowView = flowCategory !== 'outflow';
+
+    const splineAreaPathInflow =
+        'M 0,145 C 20,145 25,140 40,140 C 65,140 85,155 115,155 C 145,155 165,165 190,165 C 220,165 235,125 265,125 C 295,125 315,105 340,105 C 370,105 385,120 415,120 C 445,120 465,70 490,70 C 520,70 540,32 565,32 C 580,32 590,30 600,30 L 600,220 L 0,220 Z';
+
+    const splineStrokePathInflow =
+        'M 0,145 C 20,145 25,140 40,140 C 65,140 85,155 115,155 C 145,155 165,165 190,165 C 220,165 235,125 265,125 C 295,125 315,105 340,105 C 370,105 385,120 415,120 C 445,120 465,70 490,70 C 520,70 540,32 565,32 C 580,32 590,30 600,30';
+
+    const splineAreaPathOutflow =
+        'M 0,170 C 20,170 25,165 40,165 C 65,165 85,135 115,135 C 145,135 165,120 190,120 C 220,120 235,150 265,150 C 295,150 315,155 340,155 C 370,155 385,130 415,130 C 445,130 465,160 490,160 C 520,160 540,170 565,170 C 580,170 590,172 600,172 L 600,220 L 0,220 Z';
+
+    const splineStrokePathOutflow =
+        'M 0,170 C 20,170 25,165 40,165 C 65,165 85,135 115,135 C 145,135 165,120 190,120 C 220,120 235,150 265,150 C 295,150 315,155 340,155 C 370,155 385,130 415,130 C 445,130 465,160 490,160 C 520,160 540,170 565,170 C 580,170 590,172 600,172';
+
+    const activeAreaPath = isInflowView ? splineAreaPathInflow : splineAreaPathOutflow;
+    const activeStrokePath = isInflowView ? splineStrokePathInflow : splineStrokePathOutflow;
+    const activeCurrentY = isInflowView ? activeHoverPoint.coordY : activeHoverPoint.outflowY;
 
     return (
         <div className="w-full rounded-2xl sm:rounded-3xl border border-white/10 bg-[#0c0c10]/95 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,0.85)] ring-1 ring-white/5 overflow-hidden text-left flex flex-col">
-            {/* SVG Global Pattern Definitions for Emotional Colors & Texture */}
+            {/* SVG Global Pattern Definitions for Emotional Colors & Texture (Pure Green & Red) */}
             <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden="true">
                 <defs>
                     {/* Diagonal Hatched Stripe - Rose/Crimson (Beban Kas / Koreksi) */}
@@ -150,29 +166,18 @@ export const DashboardStatisticsPreview: React.FC = () => {
                         <line x1="0" y1="0" x2="0" y2="8" stroke="#f43f5e" strokeWidth="2.5" opacity="0.85" />
                     </pattern>
 
-                    {/* Diagonal Hatched Stripe - Emerald (Surplus / Kas Masuk) */}
-                    <pattern
-                        id="hatch-emerald"
-                        width="8"
-                        height="8"
-                        patternTransform="rotate(45 0 0)"
-                        patternUnits="userSpaceOnUse"
-                    >
-                        <line x1="0" y1="0" x2="0" y2="8" stroke="#10b981" strokeWidth="2.5" opacity="0.85" />
-                    </pattern>
-
-                    {/* Gradient Area Spline (Foto 2 Style: Translucent Glow to Dark Obsidian) */}
-                    <linearGradient id="spline-flow-glow" x1="0" y1="0" x2="0" y2="1">
+                    {/* Gradient Area Spline - Emerald Green (Surplus Kas) */}
+                    <linearGradient id="spline-emerald-glow" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
-                        <stop offset="50%" stopColor="#00E5FF" stopOpacity="0.10" />
+                        <stop offset="65%" stopColor="#10b981" stopOpacity="0.06" />
                         <stop offset="100%" stopColor="#09090b" stopOpacity="0.0" />
                     </linearGradient>
 
-                    {/* Stroke Gradient Kurva Garis Foto 2 (Emerald -> Cyan Neon) */}
-                    <linearGradient id="spline-line-grad" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#10b981" />
-                        <stop offset="60%" stopColor="#00E5FF" />
-                        <stop offset="100%" stopColor="#38bdf8" />
+                    {/* Gradient Area Spline - Rose Crimson (Beban Kas) */}
+                    <linearGradient id="spline-rose-glow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.25" />
+                        <stop offset="65%" stopColor="#f43f5e" stopOpacity="0.06" />
+                        <stop offset="100%" stopColor="#09090b" stopOpacity="0.0" />
                     </linearGradient>
                 </defs>
             </svg>
@@ -189,7 +194,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                         </div>
                         <div className="h-4 w-px bg-white/10" />
 
-                        {/* Logo Resmi Bastion dengan Kubah Cyan Bersinar */}
+                        {/* Logo Resmi Bastion */}
                         <div className="flex items-center gap-2">
                             <BastionLogo className="w-5 h-5 text-white shrink-0" />
                             <span className="font-bold text-xs text-white tracking-tight font-heading">
@@ -234,15 +239,15 @@ export const DashboardStatisticsPreview: React.FC = () => {
             {/* 2. Main Workbench Shell (Left Rail Navigation + Broad Center/Right Analytics) */}
             <div className="flex flex-1 min-h-0">
                 {/* ============================================================== */}
-                {/* LEFT MINI-RAIL NAVIGATION (Sesuai Referensi Kotak Biru + Ikon Vertikal) */}
+                {/* LEFT MINI-RAIL NAVIGATION (Sesuai Referensi Ikon Vertikal)      */}
                 {/* ============================================================== */}
                 <div className="hidden md:flex flex-col items-center justify-between w-14 lg:w-16 py-5 border-r border-white/5 bg-[#09090d]/80 shrink-0">
                     <div className="flex flex-col items-center gap-4 w-full px-2">
-                        {/* Top Active App Icon (Kotak Cyan/Blue Bastion dengan Pendar Logo) */}
+                        {/* Top Active App Icon */}
                         <button
                             type="button"
                             onClick={() => setActiveRailTab('overview')}
-                            className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(0,229,255,0.35)] cursor-pointer hover:scale-105 transition-transform"
+                            className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white shadow-[0_0_15px_rgba(16,185,129,0.35)] cursor-pointer hover:scale-105 transition-transform"
                             title="Ringkasan Eksekutif"
                         >
                             <LayoutGrid className="w-4 h-4 text-white" />
@@ -255,7 +260,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                             onClick={() => setActiveRailTab('analytics')}
                             className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
                                 activeRailTab === 'analytics'
-                                    ? 'bg-zinc-800 text-cyan-300 border border-cyan-500/30 shadow-sm'
+                                    ? 'bg-zinc-800 text-emerald-300 border border-emerald-500/30 shadow-sm'
                                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
                             }`}
                             title="Grafik & Tren"
@@ -316,7 +321,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                     {/* KOLOM KIRI (7 Kolom): STATISTIK TARGET & KURVA GARIS FOTO 2 */}
                     {/* ========================================================== */}
                     <div className="lg:col-span-7 space-y-6">
-                        {/* WIDGET 1: TARGET PERTUMBUHAN ARUS KAS (Dengan Komparasi Emosional Hijau/Merah) */}
+                        {/* WIDGET 1: TARGET PERTUMBUHAN ARUS KAS (Komparasi Murni Hijau & Merah) */}
                         <div className="rounded-2xl border border-white/10 bg-[#111116] p-5 sm:p-7 relative overflow-hidden shadow-xl">
                             {/* Ambient Glow Psikologis: Hijau Emerald untuk Surplus Kas */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -365,7 +370,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Sub-Visual Kanan: Komparasi Emosional Kas Masuk (Hijau) vs Beban (Merah) */}
+                                {/* Sub-Visual Kanan: Komparasi Murni Kas Masuk (Hijau) vs Beban (Merah) vs Bersih */}
                                 <div className="bg-[#14141c] rounded-xl border border-white/5 p-4 sm:w-60 shrink-0 relative">
                                     <div className="text-[11px] font-semibold text-zinc-400 mb-2 flex items-center justify-between">
                                         <span>Rasio Kas Nyata</span>
@@ -381,11 +386,11 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* 3 Mini Bars: Hijau (Kas Masuk) vs Merah (Beban) vs Cyan (Saldo Aman) */}
+                                    {/* 3 Mini Bars: Hijau (Kas Masuk) vs Merah (Beban) vs Bersih (Hijau Mint) */}
                                     <div className="h-28 flex items-end justify-center gap-3.5 pt-4 px-2">
                                         {/* Bar 1: Hijau Emerald (Uang Masuk) */}
                                         <div className="flex-1 flex flex-col items-center gap-1.5" title="Kas Masuk Kotor: Rp 1.42 M">
-                                            <div className="w-full h-22 rounded-t-md bg-gradient-to-t from-emerald-600/50 to-emerald-400/90 border-t-2 border-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+                                            <div className="w-full h-22 rounded-t-md bg-gradient-to-t from-emerald-700/50 to-emerald-400/90 border-t-2 border-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
                                             <span className="text-[9px] font-mono text-emerald-400 font-bold">Masuk</span>
                                         </div>
 
@@ -395,10 +400,10 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             <span className="text-[9px] font-mono text-rose-400 font-semibold">Beban</span>
                                         </div>
 
-                                        {/* Bar 3: Electric Cyan (Saldo Tersisa Bersih) */}
+                                        {/* Bar 3: Bersih (Hijau Terang) */}
                                         <div className="flex-1 flex flex-col items-center gap-1.5" title="Saldo Bersih: Rp 864 Jt">
-                                            <div className="w-full h-18 rounded-t-md bg-gradient-to-t from-cyan-600/50 to-cyan-400/90 border-t-2 border-cyan-300 shadow-[0_0_10px_rgba(0,229,255,0.3)]" />
-                                            <span className="text-[9px] font-mono text-cyan-300 font-bold">Bersih</span>
+                                            <div className="w-full h-18 rounded-t-md bg-gradient-to-t from-emerald-600/40 to-emerald-300/80 border-t-2 border-emerald-200 shadow-[0_0_10px_rgba(16,185,129,0.2)]" />
+                                            <span className="text-[9px] font-mono text-emerald-300 font-bold">Bersih</span>
                                         </div>
                                     </div>
                                 </div>
@@ -409,7 +414,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                         {/* WIDGET 2: AREA CURVE CHART (FOTO KEDUA) & EMOTIONAL TOGGLE */}
                         {/* ====================================================== */}
                         <div className="rounded-2xl border border-white/10 bg-[#111116] p-5 sm:p-7 space-y-4 shadow-xl relative overflow-hidden">
-                            {/* Header Widget 2: Tab Kategori Sesuai Foto 2 (Sales Funnel tabs style) + Saklar Mode */}
+                            {/* Header Widget 2: Tab Kategori Sesuai Foto 2 + Saklar Mode */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-white/5">
                                 <div>
                                     <h3 className="text-sm sm:text-base font-bold text-white tracking-tight font-heading flex items-center gap-2">
@@ -421,7 +426,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                    {/* Category Filter Tabs (Sesuai Foto 2: Product View, Add to Cart, dll) */}
+                                    {/* Category Filter Tabs (Sesuai Foto 2) */}
                                     <div className="flex items-center gap-1 p-0.5 rounded-lg bg-zinc-900 border border-white/5 text-xs">
                                         <button
                                             type="button"
@@ -467,7 +472,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             onClick={() => setChartViewMode('curve')}
                                             className={`p-1.5 rounded-md transition-all cursor-pointer ${
                                                 chartMode === 'curve'
-                                                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow-sm'
+                                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
                                                     : 'text-zinc-500 hover:text-zinc-300'
                                             }`}
                                             title="Tampilan Kurva Garis (Foto 2)"
@@ -508,7 +513,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                         <ArrowDownRight className="w-3.5 h-3.5" />
                                     )}
                                     <span>
-                                        {activeHoverPoint.change} ({activeHoverPoint.isSurplus ? 'Surplus' : 'Beban Bebas'})
+                                        {activeHoverPoint.change} ({activeHoverPoint.isSurplus ? 'Surplus' : 'Beban Terkendali'})
                                     </span>
                                 </span>
                                 <span className="text-xs text-zinc-500 font-mono">
@@ -532,30 +537,32 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             </div>
                                         ))}
 
-                                        {/* SVG Curve Canvas dengan Area Gradient & Apex Pointer */}
-                                        <div className="absolute inset-0 left-10 right-2 pointer-events-auto">
-                                            {/* Floating Apex Tooltip Pill (Persis Kotak '$4,345' di Foto 2) */}
+                                        {/* SVG Curve Canvas dengan Full-Width Smooth Curve (No Cutoff) */}
+                                        <div className="absolute inset-0 left-10 right-0 pointer-events-auto">
+                                            {/* Floating Apex Tooltip Pill (Instant snap, no sluggish animation) */}
                                             <div
                                                 style={{
                                                     left: `${(activeHoverPoint.coordX / 600) * 100}%`,
-                                                    top: `${(activeHoverPoint.coordY / 220) * 100}%`,
+                                                    top: `${(activeCurrentY / 220) * 100}%`,
                                                 }}
-                                                className="absolute -translate-x-1/2 -translate-y-[135%] z-20 pointer-events-none transition-all duration-200"
+                                                className="absolute -translate-x-1/2 -translate-y-[130%] z-20 pointer-events-none"
                                             >
-                                                <div className="px-3 py-1.5 rounded-lg bg-zinc-900/95 border border-white/20 text-xs text-white shadow-[0_10px_25px_rgba(0,0,0,0.8)] flex flex-col items-center relative backdrop-blur-md">
+                                                <div className="px-3 py-1.5 rounded-lg bg-[#14141a] border border-white/20 text-xs text-white shadow-[0_12px_30px_rgba(0,0,0,0.9)] flex flex-col items-center relative backdrop-blur-md">
                                                     <span className="font-mono font-extrabold text-sm text-white">
                                                         {activeHoverPoint.nominal}
                                                     </span>
                                                     <span
                                                         className={`text-[9px] font-semibold font-mono ${
-                                                            activeHoverPoint.isSurplus ? 'text-emerald-400' : 'text-rose-400'
+                                                            isInflowView
+                                                                ? 'text-emerald-400'
+                                                                : 'text-rose-400'
                                                         }`}
                                                     >
-                                                        {activeHoverPoint.isSurplus ? 'Surplus Kas' : 'Pengeluaran'} ({activeHoverPoint.change})
+                                                        {isInflowView ? 'Surplus Kas' : 'Pengeluaran'} ({activeHoverPoint.change})
                                                     </span>
 
                                                     {/* Triangle pointer downward */}
-                                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-zinc-900 border-r border-b border-white/20 rotate-45" />
+                                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#14141a] border-r border-b border-white/20 rotate-45" />
                                                 </div>
                                             </div>
 
@@ -564,39 +571,40 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                                 className="w-full h-full overflow-visible"
                                                 preserveAspectRatio="none"
                                             >
-                                                {/* Vertical Indicator Line (Garis putus-putus abu-abu persis Foto 2) */}
+                                                {/* Vertical Indicator Line (Garis putus-putus presisi, no lag) */}
                                                 <line
                                                     x1={activeHoverPoint.coordX}
-                                                    y1={activeHoverPoint.coordY}
+                                                    y1={activeCurrentY}
                                                     x2={activeHoverPoint.coordX}
                                                     y2="220"
-                                                    stroke="rgba(255,255,255,0.25)"
+                                                    stroke="rgba(255,255,255,0.22)"
                                                     strokeDasharray="3 3"
                                                     strokeWidth="1.5"
-                                                    className="transition-all duration-200"
                                                 />
 
-                                                {/* Area Spline Gradient Fill */}
+                                                {/* Area Spline Gradient Fill (Edge to edge x=0 to x=600) */}
                                                 <path
-                                                    d={splineAreaPath}
-                                                    fill="url(#spline-flow-glow)"
-                                                    className="transition-all duration-500"
+                                                    d={activeAreaPath}
+                                                    fill={isInflowView ? 'url(#spline-emerald-glow)' : 'url(#spline-rose-glow)'}
+                                                    className="transition-all duration-300"
                                                 />
 
-                                                {/* Smooth Spline Stroke Line */}
+                                                {/* Smooth Spline Stroke Line (Murni Hijau Emerald atau Merah Rose) */}
                                                 <path
-                                                    d={splineStrokePath}
+                                                    d={activeStrokePath}
                                                     fill="none"
-                                                    stroke="url(#spline-line-grad)"
+                                                    stroke={isInflowView ? '#10b981' : '#f43f5e'}
                                                     strokeWidth="2.8"
                                                     strokeLinecap="round"
                                                     strokeLinejoin="round"
-                                                    className="transition-all duration-500"
+                                                    className="transition-all duration-300"
                                                 />
 
-                                                {/* Interactive Point Nodes on the curve */}
+                                                {/* Interactive Point Nodes on the curve (Fixed: No scale-125 jitter bug, No ping flicker) */}
                                                 {MONTH_DATA_POINTS.map((pt) => {
                                                     const isActive = activeHoverPoint.month === pt.month;
+                                                    const pointY = isInflowView ? pt.coordY : pt.outflowY;
+
                                                     return (
                                                         <g
                                                             key={pt.month}
@@ -604,28 +612,34 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                                             onMouseEnter={() => setActiveHoverPoint(pt)}
                                                             className="cursor-pointer"
                                                         >
-                                                            {/* Outer glow ring when active */}
+                                                            {/* Invisible broad vertical hover hit target for seamless mouseover */}
+                                                            <rect
+                                                                x={pt.coordX - 35}
+                                                                y="0"
+                                                                width="70"
+                                                                height="220"
+                                                                fill="transparent"
+                                                            />
+
+                                                            {/* Active subtle static halo ring (No jitter, No ping) */}
                                                             {isActive && (
                                                                 <circle
                                                                     cx={pt.coordX}
-                                                                    cy={pt.coordY}
-                                                                    r="9"
-                                                                    fill="none"
-                                                                    stroke="#00E5FF"
-                                                                    strokeWidth="2"
-                                                                    opacity="0.6"
-                                                                    className="animate-ping"
+                                                                    cy={pointY}
+                                                                    r="8"
+                                                                    fill={isInflowView ? '#10b981' : '#f43f5e'}
+                                                                    opacity="0.3"
                                                                 />
                                                             )}
-                                                            {/* Point Dot */}
+
+                                                            {/* Point Dot: Stable, sharp and clean */}
                                                             <circle
                                                                 cx={pt.coordX}
-                                                                cy={pt.coordY}
-                                                                r={isActive ? '6' : '3.5'}
-                                                                fill={isActive ? '#00E5FF' : '#18181b'}
-                                                                stroke={isActive ? '#ffffff' : 'rgba(255,255,255,0.5)'}
-                                                                strokeWidth={isActive ? '2.5' : '1.5'}
-                                                                className="transition-all duration-200 hover:scale-125"
+                                                                cy={pointY}
+                                                                r={isActive ? '5' : '3.5'}
+                                                                fill={isActive ? '#ffffff' : '#18181b'}
+                                                                stroke={isActive ? (isInflowView ? '#10b981' : '#f43f5e') : 'rgba(255,255,255,0.45)'}
+                                                                strokeWidth="2"
                                                             />
                                                         </g>
                                                     );
@@ -686,16 +700,12 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                                         <div
                                                             style={{ height: `${bar.percentage}%` }}
                                                             className={`w-full max-w-[54px] rounded-t-md transition-all duration-300 relative ${
-                                                                isHovered ? 'brightness-125 scale-y-[1.03]' : ''
+                                                                isHovered ? 'brightness-125' : ''
                                                             }`}
                                                         >
                                                             {/* Batang Hijau Emerald: Bulan Surplus Omzet */}
                                                             {bar.isSurplus ? (
-                                                                <div className="w-full h-full rounded-t-md bg-gradient-to-t from-emerald-950/40 via-emerald-600/70 to-emerald-400 border-t-2 border-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)] relative">
-                                                                    {bar.percentage > 85 && (
-                                                                        <div className="absolute -top-1 inset-x-0 h-1.5 rounded-full bg-cyan-300 shadow-[0_0_8px_#00E5FF]" />
-                                                                    )}
-                                                                </div>
+                                                                <div className="w-full h-full rounded-t-md bg-gradient-to-t from-emerald-950/40 via-emerald-600/70 to-emerald-400 border-t-2 border-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)] relative" />
                                                             ) : (
                                                                 /* Batang Merah Rose/Crimson: Bulan Beban / Koreksi Kas */
                                                                 <div className="w-full h-full rounded-t-md border border-rose-500/50 relative overflow-hidden bg-rose-950/25">
@@ -769,12 +779,12 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                     </span>
                                 </div>
 
-                                {/* Stepped Track Line with Interactive Markers */}
+                                {/* Stepped Track Line with Interactive Markers (Emerald Surplus Progress) */}
                                 <div className="relative pt-1 pb-3">
                                     <div className="h-2.5 w-full rounded-full bg-zinc-900 border border-white/5 overflow-hidden">
                                         <div
                                             style={{ width: `${selectedMilestone}%` }}
-                                            className="h-full rounded-full bg-gradient-to-r from-blue-600 via-cyan-400 to-emerald-400 transition-all duration-500 shadow-[0_0_12px_rgba(52,211,153,0.3)]"
+                                            className="h-full rounded-full bg-gradient-to-r from-emerald-700 via-emerald-500 to-emerald-400 transition-all duration-300 shadow-[0_0_12px_rgba(16,185,129,0.35)]"
                                         />
                                     </div>
 
@@ -801,7 +811,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                 <div className="grid grid-cols-3 gap-2 pt-1">
                                     <div className="p-2.5 rounded-xl bg-zinc-900/70 border border-white/5 space-y-1 text-center hover:border-white/10 transition-colors">
                                         <div className="text-[10px] text-zinc-400 font-medium truncate flex items-center justify-center gap-1">
-                                            <Store className="w-3 h-3 text-cyan-400" />
+                                            <Store className="w-3 h-3 text-emerald-400" />
                                             <span>Kasir Siaga</span>
                                         </div>
                                         <div className="font-mono text-xs sm:text-sm font-bold text-white">
@@ -857,8 +867,8 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             title="50% Operasional Kasir (Amber)"
                                         />
                                         <div
-                                            className="h-full bg-indigo-500 w-[30%]"
-                                            title="30% Cadangan Pajak (Violet)"
+                                            className="h-full bg-zinc-600 w-[30%]"
+                                            title="30% Cadangan Pajak (Abu-abu / Slate)"
                                         />
                                         <div
                                             className="h-full rounded-r-full bg-emerald-400 w-[20%]"
@@ -872,7 +882,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             <span>50% Operasional</span>
                                         </span>
                                         <span className="flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
                                             <span>30% Cadangan</span>
                                         </span>
                                         <span className="flex items-center gap-1">
@@ -899,7 +909,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                 </div>
                                 <div className="flex items-center justify-between text-zinc-400 pt-1 border-t border-white/5">
                                     <span className="font-semibold text-zinc-200">Saldo Cadangan Bersih</span>
-                                    <span className="font-mono font-bold text-cyan-300">Rp 864.250.000</span>
+                                    <span className="font-mono font-bold text-emerald-300">Rp 864.250.000</span>
                                 </div>
                             </div>
                         </div>
@@ -925,13 +935,13 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             stroke="#18181b"
                                             strokeWidth="10"
                                         />
-                                        {/* Segment 1: QRIS (55%) - Cyan */}
+                                        {/* Segment 1: QRIS (55%) - Hijau Emerald */}
                                         <circle
                                             cx="50"
                                             cy="50"
                                             r="38"
                                             fill="transparent"
-                                            stroke="#00E5FF"
+                                            stroke="#10b981"
                                             strokeWidth={activeChannel === 'qris' ? '13' : '10'}
                                             strokeDasharray="238.7"
                                             strokeDashoffset={238.7 * (1 - 0.55)}
@@ -954,13 +964,13 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             className="transition-all duration-300 cursor-pointer"
                                             onClick={() => setActiveChannel(activeChannel === 'bank' ? 'all' : 'bank')}
                                         />
-                                        {/* Segment 3: EDC Kasir (15%) - Emerald */}
+                                        {/* Segment 3: EDC Kasir (15%) - Amber */}
                                         <circle
                                             cx="50"
                                             cy="50"
                                             r="38"
                                             fill="transparent"
-                                            stroke="#34d399"
+                                            stroke="#f59e0b"
                                             strokeWidth={activeChannel === 'edc' ? '13' : '10'}
                                             strokeDasharray="238.7"
                                             strokeDashoffset={238.7 * (1 - 0.15)}
@@ -1002,12 +1012,12 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                         onClick={() => setActiveChannel(activeChannel === 'qris' ? 'all' : 'qris')}
                                         className={`w-full flex items-center justify-between sm:justify-start gap-3 p-1.5 rounded-lg transition-all cursor-pointer ${
                                             activeChannel === 'qris'
-                                                ? 'bg-cyan-500/10 border border-cyan-500/30'
+                                                ? 'bg-emerald-500/10 border border-emerald-500/30'
                                                 : 'hover:bg-zinc-900'
                                         }`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#00E5FF]" />
+                                            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981]" />
                                             <span className="text-zinc-300">QRIS Dinamis</span>
                                         </div>
                                         <span className="font-mono font-semibold text-white">237 tx</span>
@@ -1034,12 +1044,12 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                         onClick={() => setActiveChannel(activeChannel === 'edc' ? 'all' : 'edc')}
                                         className={`w-full flex items-center justify-between sm:justify-start gap-3 p-1.5 rounded-lg transition-all cursor-pointer ${
                                             activeChannel === 'edc'
-                                                ? 'bg-emerald-500/10 border border-emerald-500/30'
+                                                ? 'bg-amber-500/10 border border-amber-500/30'
                                                 : 'hover:bg-zinc-900'
                                         }`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+                                            <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_#f59e0b]" />
                                             <span className="text-zinc-300">Mesin EDC</span>
                                         </div>
                                         <span className="font-mono font-semibold text-white">65 tx</span>
@@ -1067,7 +1077,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-3 font-mono text-[11px] text-zinc-500 shrink-0">
-                    <span className="text-cyan-400 font-medium">Latensi: 0.04s</span>
+                    <span className="text-zinc-400 font-medium">Latensi: 0.04s</span>
                     <span>•</span>
                     <span className="text-emerald-400 font-medium">Integritas 100%</span>
                 </div>
