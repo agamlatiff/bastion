@@ -654,103 +654,64 @@ export const ConcentricVault: React.FC = () => {
 
             {/* ========================================================================= */}
             {/* RESPONSIVE TABLET & MOBILE VIEW (SCREENS < LG)                            */}
-            {/* All 3 layers presented with full rich cards, synced to vault dial         */}
+            {/* Pure schematic typography callouts (Cardless, matching desktop design)    */}
             {/* ========================================================================= */}
-            <div className="lg:hidden pt-4 space-y-4">
-                {/* Interactive Status Bar / Dial Quick Jumper */}
-                <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-                        <span
-                            className="w-2 h-2 rounded-full animate-ping"
-                            style={{ backgroundColor: activeData.accentColor.ringStroke }}
-                        />
-                        <span className="text-zinc-500 hidden sm:inline">Proteksi Terpilih:</span>
-                        <span className={`font-semibold ${activeData.accentColor.text}`}>
-                            {activeData.shortTag} ({activeData.numberTag})
-                        </span>
-                    </div>
-                    <span className="text-[11px] font-mono text-zinc-500">
-                        Ketuk kartu untuk mengunci dial
-                    </span>
-                </div>
-
-                {/* 3-Card Grid: 3 columns on tablet (md:grid-cols-3), stacked cards on mobile (grid-cols-1) */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
-                    {([1, 2, 3] as LayerId[]).map((id) => {
+            <div className="lg:hidden pt-8 sm:pt-10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 xl:gap-8 divide-y divide-zinc-800/50 md:divide-y-0 text-left">
+                    {([1, 2, 3] as LayerId[]).map((id, index) => {
                         const item = LAYERS[id];
                         const isSelected = activeLayer === id;
                         return (
-                            <button
+                            <div
                                 key={id}
-                                type="button"
                                 onClick={() => setActiveLayer(id)}
-                                className={`text-left p-5 rounded-2xl transition-all duration-300 relative flex flex-col justify-between overflow-hidden cursor-pointer ${
+                                onMouseEnter={() => setActiveLayer(id)}
+                                className={`group cursor-pointer transition-all duration-300 space-y-3.5 ${
+                                    index > 0 ? 'pt-6 md:pt-0' : ''
+                                } ${
                                     isSelected
-                                        ? `${item.accentColor.bg} border-2 ${item.accentColor.border} scale-[1.02] shadow-xl`
-                                        : 'bg-[#111116]/85 border border-white/10 hover:border-white/20 hover:bg-[#15151c] opacity-75 hover:opacity-95'
+                                        ? 'opacity-100 scale-[1.02]'
+                                        : 'opacity-55 hover:opacity-90'
                                 }`}
-                                style={
-                                    isSelected
-                                        ? {
-                                              boxShadow: `0 0 25px -5px ${item.accentColor.glow}`,
-                                          }
-                                        : undefined
-                                }
                             >
-                                {/* Top Accent Bar for Active Card */}
-                                {isSelected && (
-                                    <div
-                                        className="absolute top-0 left-0 right-0 h-1"
-                                        style={{ backgroundColor: item.accentColor.ringStroke }}
-                                    />
-                                )}
-
-                                <div className="space-y-3 mb-3">
-                                    {/* Number & Location Badge */}
-                                    <div className="flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-2">
-                                            <span
-                                                className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold transition-all ${
-                                                    isSelected
-                                                        ? `${item.accentColor.bg} ${item.accentColor.text} border ${item.accentColor.border} shadow-sm`
-                                                        : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
-                                                }`}
-                                            >
-                                                {item.numberTag}
-                                            </span>
-                                            <span
-                                                className="w-1.5 h-1.5 rounded-full"
-                                                style={{ backgroundColor: item.accentColor.ringStroke }}
-                                            />
-                                        </div>
-                                        <span className="text-[10px] sm:text-[11px] font-mono text-zinc-500 uppercase tracking-wider text-right line-clamp-1">
-                                            {item.location}
-                                        </span>
-                                    </div>
-
-                                    {/* Title */}
-                                    <h4
-                                        className={`text-base sm:text-lg font-bold tracking-tight leading-snug transition-colors ${
-                                            isSelected ? 'text-white' : 'text-zinc-200'
+                                {/* Number & Location Badge */}
+                                <div className="flex items-center gap-2">
+                                    <span
+                                        className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold transition-all ${
+                                            isSelected
+                                                ? `${item.accentColor.bg} ${item.accentColor.text} border ${item.accentColor.border} shadow-sm`
+                                                : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
                                         }`}
                                     >
-                                        {item.title}
-                                    </h4>
-
-                                    {/* Human Description */}
-                                    <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                                        {item.description}
-                                    </p>
+                                        {item.numberTag}
+                                    </span>
+                                    <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">
+                                        {item.location}
+                                    </span>
                                 </div>
 
+                                {/* Heading Title */}
+                                <h3
+                                    className={`text-xl sm:text-2xl font-bold tracking-tight transition-colors leading-snug ${
+                                        isSelected ? 'text-white' : 'text-zinc-300'
+                                    }`}
+                                >
+                                    {item.title}
+                                </h3>
+
+                                {/* Punchy Plain-Human Description */}
+                                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                                    {item.description}
+                                </p>
+
                                 {/* Guarantee Metric Tag */}
-                                <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs font-mono">
-                                    <span className="text-zinc-500 text-[11px]">Jaminan:</span>
-                                    <span className={`font-bold ${item.accentColor.text}`}>
+                                <div className="pt-1 flex items-center gap-2 text-xs">
+                                    <span className="text-zinc-500">Jaminan:</span>
+                                    <span className={`font-mono font-bold ${item.accentColor.text}`}>
                                         {item.guarantee}
                                     </span>
                                 </div>
-                            </button>
+                            </div>
                         );
                     })}
                 </div>
