@@ -250,12 +250,10 @@ export const DashboardStatisticsPreview: React.FC = () => {
     const [activeRailTab, setActiveRailTab] = useState<'overview' | 'analytics' | 'wallets' | 'security' | 'settings'>('overview');
     const [activeHoverPoint, setActiveHoverPoint] = useState<MonthDataPoint>(MONTH_DATA_POINTS[7]);
     const [selectedMilestone, setSelectedMilestone] = useState<number>(82);
-    const [activeChannel, setActiveChannel] = useState<ChannelType>('all');
     const [liveEventIndex, setLiveEventIndex] = useState<number>(0);
 
     const currentPeriod = PERIOD_METRICS[selectedPeriod];
     const currentChannels = CHANNELS_DATA[selectedPeriod];
-    const currentSelectedChannel = currentChannels.find((c) => c.id === activeChannel);
 
     // Cycle simulated real-time ledger ticker events smoothly
     useEffect(() => {
@@ -1090,141 +1088,107 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                 </span>
                             </div>
 
-                            <div className="flex flex-col lg:flex-row items-center justify-around gap-8 pt-2">
-                                {/* Interactive Radial Donut Chart SVG (Diperbesar & Tegas) */}
-                                <div className="relative w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center shrink-0">
-                                    <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90 filter drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)]">
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-10 sm:gap-16 py-4">
+                                {/* 1. Clean Static Donut Chart (Persis Desain Foto 2) */}
+                                <div className="relative w-44 h-44 sm:w-52 sm:h-52 flex items-center justify-center shrink-0">
+                                    <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                                        {/* Subtle Outer Enclosing Ring (Aesthetic touch from Photo 2) */}
+                                        <circle
+                                            cx="50"
+                                            cy="50"
+                                            r="47"
+                                            fill="transparent"
+                                            stroke="rgba(255, 255, 255, 0.08)"
+                                            strokeWidth="1"
+                                        />
+                                        {/* Background Track Circle */}
                                         <circle
                                             cx="50"
                                             cy="50"
                                             r="38"
                                             fill="transparent"
-                                            stroke="#18181b"
-                                            strokeWidth="11"
+                                            stroke="#27272a"
+                                            strokeWidth="9"
                                         />
-                                        {/* Segment 1: QRIS (55%) - Hijau Emerald */}
+                                        {/* Segment 1: QRIS - Hijau Emerald */}
                                         <circle
                                             cx="50"
                                             cy="50"
                                             r="38"
                                             fill="transparent"
                                             stroke="#10b981"
-                                            strokeWidth={activeChannel === 'qris' ? '14' : '11'}
-                                            strokeDasharray="238.7"
-                                            strokeDashoffset={238.7 * (1 - (currentChannels[0]?.share || 55) / 100)}
+                                            strokeWidth="9.5"
+                                            strokeDasharray="238.76"
+                                            strokeDashoffset={238.76 * (1 - (currentChannels[0]?.share ?? 55) / 100)}
                                             strokeLinecap="round"
-                                            className="transition-all duration-300 cursor-pointer"
-                                            onClick={() => setActiveChannel(activeChannel === 'qris' ? 'all' : 'qris')}
                                         />
-                                        {/* Segment 2: Transfer Bank (30%) - Indigo */}
+                                        {/* Segment 2: Transfer Bank - Indigo */}
                                         <circle
                                             cx="50"
                                             cy="50"
                                             r="38"
                                             fill="transparent"
                                             stroke="#818cf8"
-                                            strokeWidth={activeChannel === 'bank' ? '14' : '11'}
-                                            strokeDasharray="238.7"
-                                            strokeDashoffset={238.7 * (1 - (currentChannels[1]?.share || 30) / 100)}
-                                            transform="rotate(198 50 50)"
-                                            strokeLinecap="round"
-                                            className="transition-all duration-300 cursor-pointer"
-                                            onClick={() => setActiveChannel(activeChannel === 'bank' ? 'all' : 'bank')}
+                                            strokeWidth="9.5"
+                                            strokeDasharray="238.76"
+                                            strokeDashoffset={238.76 * (1 - (currentChannels[1]?.share ?? 30) / 100)}
+                                            transform={`rotate(${((currentChannels[0]?.share ?? 55) / 100) * 360} 50 50)`}
                                         />
-                                        {/* Segment 3: EDC Kasir (15%) - Amber */}
+                                        {/* Segment 3: EDC Kasir - Amber */}
                                         <circle
                                             cx="50"
                                             cy="50"
                                             r="38"
                                             fill="transparent"
                                             stroke="#f59e0b"
-                                            strokeWidth={activeChannel === 'edc' ? '14' : '11'}
-                                            strokeDasharray="238.7"
-                                            strokeDashoffset={238.7 * (1 - (currentChannels[2]?.share || 15) / 100)}
-                                            transform="rotate(306 50 50)"
-                                            strokeLinecap="round"
-                                            className="transition-all duration-300 cursor-pointer"
-                                            onClick={() => setActiveChannel(activeChannel === 'edc' ? 'all' : 'edc')}
+                                            strokeWidth="9.5"
+                                            strokeDasharray="238.76"
+                                            strokeDashoffset={238.76 * (1 - (currentChannels[2]?.share ?? 15) / 100)}
+                                            transform={`rotate(${(((currentChannels[0]?.share ?? 55) + (currentChannels[1]?.share ?? 30)) / 100) * 360} 50 50)`}
                                         />
                                     </svg>
 
-                                    {/* Dynamic Center Donut Metrics */}
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none px-4">
-                                        <span className="text-[11px] text-zinc-400 font-medium whitespace-nowrap">
-                                            {activeChannel === 'all'
-                                                ? 'Total Kasir'
-                                                : currentSelectedChannel?.name || 'Kanal'}
+                                    {/* Static Center Text (Persis Foto 2: Label / Nilai Besar / Panah Pertumbuhan) */}
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                                        <span className="text-xs text-zinc-400 font-medium">
+                                            Transaksi Kasir
                                         </span>
-                                        <span className="text-2xl sm:text-3xl font-extrabold font-mono text-white leading-none tracking-tight py-1 whitespace-nowrap">
-                                            {activeChannel === 'all'
-                                                ? `${currentChannels.reduce((acc, c) => acc + parseInt(c.txCount), 0)} tx`
-                                                : currentSelectedChannel?.txCount || ''}
+                                        <span className="text-3xl sm:text-4xl font-extrabold font-mono text-white tracking-tight py-0.5">
+                                            {selectedPeriod === 'feb26' ? '431' : selectedPeriod === 'jan26' ? '391' : '1.242'}
                                         </span>
-                                        <span className="text-[10px] font-mono text-emerald-400 font-semibold truncate max-w-full">
-                                            {activeChannel === 'all'
-                                                ? currentPeriod.peakNominal
-                                                : currentSelectedChannel?.nominal}
+                                        <span className="text-xs font-semibold text-emerald-400 flex items-center gap-0.5">
+                                            <span>↑</span>
+                                            <span>{currentPeriod.growthBadge}</span>
                                         </span>
                                     </div>
                                 </div>
 
-                                {/* Modern Financial Channel Breakdown List (UI/UX Friendly, Anti-Wrap, Real Nominals) */}
-                                <div className="space-y-3 w-full sm:flex-1 max-w-sm">
+                                {/* 2. Clean Minimalist Channel List (Persis Foto 2: Dot Bulat + Judul & Subtitle) */}
+                                <div className="space-y-4 sm:space-y-5 text-left">
                                     {currentChannels.map((ch) => {
-                                        const isSelected = activeChannel === ch.id;
+                                        const rawNum = parseInt(ch.nominal.replace(/[^0-9]/g, ''), 10);
+                                        const displayNominal =
+                                            rawNum >= 1000000000
+                                                ? `Rp ${(rawNum / 1000000000).toFixed(2).replace('.', ',')} M`
+                                                : `Rp ${(rawNum / 1000000).toFixed(0)} Jt`;
+
                                         return (
-                                            <div
-                                                key={ch.id}
-                                                onClick={() => setActiveChannel(activeChannel === ch.id ? 'all' : ch.id)}
-                                                className={`p-3 sm:p-3.5 rounded-xl transition-all cursor-pointer border ${
-                                                    isSelected
-                                                        ? `bg-white/[0.06] ${ch.borderColor} ${ch.glowColor}`
-                                                        : 'bg-zinc-900/40 border-white/5 hover:border-white/10 hover:bg-zinc-900/70'
-                                                }`}
-                                            >
-                                                <div className="flex items-center justify-between gap-3 pb-2">
-                                                    <div className="flex items-center gap-2.5 min-w-0">
-                                                        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${ch.dotColor}`} />
-                                                        <span className="font-semibold text-xs sm:text-sm text-zinc-200 whitespace-nowrap">
-                                                            {ch.name}
-                                                        </span>
-                                                        <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 shrink-0">
-                                                            {ch.share}%
+                                            <div key={ch.id} className="flex items-start gap-3.5">
+                                                <span className={`w-3 h-3 rounded-full ${ch.dotColor} mt-1 shrink-0`} />
+                                                <div className="space-y-0.5">
+                                                    <div className="text-sm sm:text-base font-semibold text-white tracking-tight">
+                                                        {ch.name}
+                                                    </div>
+                                                    <div className="text-xs sm:text-sm text-zinc-400 font-mono">
+                                                        {ch.share.toFixed(1)}%{' '}
+                                                        <span className="text-zinc-500">
+                                                            ({displayNominal} • {ch.txCount})
                                                         </span>
                                                     </div>
-                                                    <div className="text-right shrink-0">
-                                                        <span className="font-mono font-bold text-xs sm:text-sm text-white">
-                                                            {ch.nominal}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Slim Proportional Progress Bar */}
-                                                <div className="w-full h-1.5 bg-zinc-800/80 rounded-full overflow-hidden">
-                                                    <div
-                                                        style={{ width: `${ch.share}%` }}
-                                                        className={`h-full rounded-full transition-all duration-500 ${ch.barColor}`}
-                                                    />
-                                                </div>
-
-                                                <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 font-mono">
-                                                    <span>{ch.txCount} tervalidasi</span>
-                                                    <span className="text-zinc-500">Rekonsiliasi Otomatis ✓</span>
                                                 </div>
                                             </div>
                                         );
                                     })}
-
-                                    {/* Reset / All Channels Indicator */}
-                                    {activeChannel !== 'all' && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveChannel('all')}
-                                            className="w-full text-center text-[11px] font-mono text-zinc-400 hover:text-white transition-colors pt-1 cursor-pointer"
-                                        >
-                                            ← Tampilkan Semua Kanal Kasir
-                                        </button>
-                                    )}
                                 </div>
                             </div>
                         </div>
