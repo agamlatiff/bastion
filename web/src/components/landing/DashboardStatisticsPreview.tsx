@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
     Calendar,
     ChevronDown,
@@ -71,6 +72,13 @@ const PERIOD_METRICS: Record<
         peakNominal: string;
         yAxisInflow: string[];
         yAxisOutflow: string[];
+        grossInflow: string;
+        operatingExpense: string;
+        retentionRate: string;
+        netReserve: string;
+        cashierCount: string;
+        disbursementCount: string;
+        avgTicket: string;
     }
 > = {
     feb26: {
@@ -85,6 +93,13 @@ const PERIOD_METRICS: Record<
         peakNominal: 'Rp 864 Jt',
         yAxisInflow: ['1 M', '750 Jt', '500 Jt', '250 Jt', '0 Jt'],
         yAxisOutflow: ['600 Jt', '450 Jt', '300 Jt', '150 Jt', '0 Jt'],
+        grossInflow: '+Rp 1.420.000.000',
+        operatingExpense: '-Rp 555.750.000',
+        retentionRate: '97.2%',
+        netReserve: 'Rp 864.250.000',
+        cashierCount: '120 / 150',
+        disbursementCount: '45 / 60',
+        avgTicket: 'Rp 1,25 Jt',
     },
     jan26: {
         label: 'Jan 2026',
@@ -98,6 +113,13 @@ const PERIOD_METRICS: Record<
         peakNominal: 'Rp 768 Jt',
         yAxisInflow: ['900 Jt', '675 Jt', '450 Jt', '225 Jt', '0 Jt'],
         yAxisOutflow: ['500 Jt', '375 Jt', '250 Jt', '125 Jt', '0 Jt'],
+        grossInflow: '+Rp 1.280.000.000',
+        operatingExpense: '-Rp 511.200.000',
+        retentionRate: '96.8%',
+        netReserve: 'Rp 768.800.000',
+        cashierCount: '114 / 150',
+        disbursementCount: '42 / 60',
+        avgTicket: 'Rp 1,18 Jt',
     },
     q1_26: {
         label: 'Kuartal 1 (Q1)',
@@ -111,7 +133,25 @@ const PERIOD_METRICS: Record<
         peakNominal: 'Rp 2.45 M',
         yAxisInflow: ['3.0 M', '2.25 M', '1.5 M', '750 Jt', '0 M'],
         yAxisOutflow: ['1.8 M', '1.35 M', '900 Jt', '450 Jt', '0 M'],
+        grossInflow: '+Rp 4.150.000.000',
+        operatingExpense: '-Rp 1.700.000.000',
+        retentionRate: '98.1%',
+        netReserve: 'Rp 2.450.000.000',
+        cashierCount: '148 / 150',
+        disbursementCount: '132 / 140',
+        avgTicket: 'Rp 1,34 Jt',
     },
+};
+
+const RAIL_TAB_INFO: Record<
+    'overview' | 'analytics' | 'wallets' | 'security' | 'settings',
+    { title: string; desc: string }
+> = {
+    overview: { title: 'Tinjauan Finansial', desc: 'Seluruh metrik dan buku besar sinkron.' },
+    analytics: { title: 'Analisis Arus Kas & Kanal', desc: 'Fokus tren kurva 12 bulan dan saluran kasir.' },
+    wallets: { title: 'Alokasi Rekening Kasir', desc: 'Fokus porsi cadangan dan operasional kasir.' },
+    security: { title: 'Audit Kriptografi Buku Kas', desc: 'Integritas buku besar terkunci tanpa selisih.' },
+    settings: { title: 'Aturan Otomatisasi Kasir', desc: 'Proteksi saldo minus dan pencegahan dobel potong.' },
 };
 
 interface ChannelDetail {
@@ -357,10 +397,15 @@ export const DashboardStatisticsPreview: React.FC = () => {
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                             <span>Buku Kas Terkunci</span>
                         </span>
+                        {/* Mode Perspektif Navigasi Aktif (Todo 3) */}
+                        <span className="hidden xl:inline-flex items-center gap-1.5 text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-900 border border-white/10 text-zinc-300">
+                            <span className="w-1 h-1 rounded-full bg-emerald-400" />
+                            <span>{RAIL_TAB_INFO[activeRailTab].title}</span>
+                        </span>
                     </div>
                 </div>
 
-                {/* Top Right: Period Selector Pills (Feb 2026, Jan 2026, Q1) */}
+                {/* Top Right: Period Selector Pills & Quick CTA Action (Todo 4) */}
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
                     <span className="text-[11px] text-zinc-500 font-mono hidden xs:inline">Periode:</span>
                     <div className="p-0.5 rounded-lg bg-zinc-900/90 border border-white/10 flex items-center gap-0.5">
@@ -379,6 +424,17 @@ export const DashboardStatisticsPreview: React.FC = () => {
                             </button>
                         ))}
                     </div>
+
+                    {/* Quick CTA Button (Todo 4) */}
+                    <Link to="/register" className="shrink-0">
+                        <button
+                            type="button"
+                            className="px-3 py-1 rounded-lg text-xs font-bold bg-white text-zinc-950 hover:bg-zinc-200 transition-all flex items-center gap-1 shadow-sm cursor-pointer whitespace-nowrap ml-1"
+                        >
+                            <span>Buka Akun</span>
+                            <ArrowUpRight className="w-3.5 h-3.5" />
+                        </button>
+                    </Link>
                 </div>
             </div>
 
@@ -559,7 +615,13 @@ export const DashboardStatisticsPreview: React.FC = () => {
                         {/* ====================================================== */}
                         {/* WIDGET 2: AREA CURVE CHART (FOTO KEDUA) & EMOTIONAL TOGGLE */}
                         {/* ====================================================== */}
-                        <div className="rounded-2xl border border-white/10 bg-[#111116] p-5 sm:p-7 space-y-4 shadow-xl relative overflow-hidden">
+                        <div
+                            className={`rounded-2xl border bg-[#111116] p-5 sm:p-7 space-y-4 shadow-xl relative overflow-hidden transition-all ${
+                                activeRailTab === 'analytics'
+                                    ? 'border-emerald-500/40 ring-1 ring-emerald-500/20 shadow-[0_0_25px_rgba(16,185,129,0.15)]'
+                                    : 'border-white/10'
+                            }`}
+                        >
                             {/* Header Widget 2: Tab Kategori Sesuai Foto 2 + Saklar Mode */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-white/5">
                                 <div>
@@ -913,23 +975,61 @@ export const DashboardStatisticsPreview: React.FC = () => {
                     {/* KOLOM KANAN (5 Kolom): SLIDER TARGET, RETENSI, & DONUT     */}
                     {/* ========================================================== */}
                     <div className="lg:col-span-5 space-y-6">
-                        {/* WIDGET 3: TARGET REALISASI OPERASIONAL (Interactive Stepped Progress) */}
-                        <div className="rounded-2xl border border-white/10 bg-[#111116] p-5 space-y-4 shadow-xl">
+                        {/* WIDGET KANAN ATAS: ALOKASI KAS & TARGET REALISASI (Unified Compact Card) */}
+                        <div
+                            className={`rounded-2xl border bg-[#111116] p-5 space-y-4 shadow-xl transition-all ${
+                                activeRailTab === 'wallets'
+                                    ? 'border-emerald-500/40 ring-1 ring-emerald-500/20 shadow-[0_0_25px_rgba(16,185,129,0.15)]'
+                                    : 'border-white/10'
+                            }`}
+                        >
                             <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                                <h3 className="text-sm font-bold text-white tracking-tight font-heading">
-                                    Realisasi Target Operasional
-                                </h3>
-
-                                <span className="text-[10px] text-zinc-400 bg-zinc-900 border border-white/5 px-2 py-0.5 rounded-md font-mono">
-                                    Klik titik uji
+                                <div>
+                                    <h3 className="text-sm font-bold text-white tracking-tight font-heading">
+                                        Alokasi Kas & Target Realisasi
+                                    </h3>
+                                    <p className="text-[11px] text-zinc-400 pt-0.5">
+                                        Porsi saldo cadangan dan pemenuhan pagu operasional kasir.
+                                    </p>
+                                </div>
+                                <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-800/40">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                    <span>Real-Time</span>
                                 </span>
                             </div>
 
-                            {/* Interactive Stepped Progress Goal Slider (0% - 25% - 75% - 82% - 100%) */}
-                            <div className="space-y-2.5 pt-1">
+                            {/* Multi-Segmented Meter Bar (Alokasi Dana Usaha) */}
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                                    <span>Porsi Dana Terpetakan</span>
+                                    <span className="font-mono text-zinc-300">100% Terkunci</span>
+                                </div>
+                                <div className="flex h-2.5 rounded-full overflow-hidden gap-1 bg-zinc-900 p-0.5 border border-white/5">
+                                    <div className="h-full rounded-l-full bg-amber-500 w-[50%]" title="50% Operasional Kasir (Amber)" />
+                                    <div className="h-full bg-zinc-600 w-[30%]" title="30% Cadangan Pajak (Abu-abu / Slate)" />
+                                    <div className="h-full rounded-r-full bg-emerald-400 w-[20%]" title="20% Laba Bersih Aman (Emerald)" />
+                                </div>
+                                <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 pt-0.5">
+                                    <span className="flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                        <span>50% Operasional</span>
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+                                        <span>30% Cadangan</span>
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                        <span>20% Surplus</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Interactive Target Milestone Track (0% - 25% - 75% - 82% - 100%) */}
+                            <div className="pt-2 border-t border-white/5 space-y-2">
                                 <div className="flex items-center justify-between text-xs">
-                                    <span className="text-zinc-400 font-medium text-[11px]">
-                                        Pencapaian Target Arus Kas
+                                    <span className="text-zinc-400 text-[11px]">
+                                        Pencapaian Target Kas
                                     </span>
                                     <span className="font-mono text-emerald-400 font-bold text-xs flex items-center gap-1">
                                         <Sparkles className="w-3 h-3 text-emerald-400" />
@@ -937,143 +1037,92 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                     </span>
                                 </div>
 
-                                {/* Stepped Track Line with Interactive Markers (Emerald Surplus Progress) */}
-                                <div className="relative pt-1 pb-3">
-                                    <div className="h-2.5 w-full rounded-full bg-zinc-900 border border-white/5 overflow-hidden">
-                                        <div
-                                            style={{ width: `${selectedMilestone}%` }}
-                                            className="h-full rounded-full bg-gradient-to-r from-emerald-700 via-emerald-500 to-emerald-400 transition-all duration-300 shadow-[0_0_12px_rgba(16,185,129,0.35)]"
-                                        />
-                                    </div>
-
-                                    {/* Clickable Milestones */}
-                                    <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500 pt-2">
-                                        {[0, 25, 75, 82, 100].map((m) => (
-                                            <button
-                                                key={m}
-                                                type="button"
-                                                onClick={() => setSelectedMilestone(m)}
-                                                className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
-                                                    selectedMilestone === m
-                                                        ? 'text-emerald-300 font-bold bg-emerald-500/15 border border-emerald-500/30'
-                                                        : 'hover:text-white'
-                                                }`}
-                                            >
-                                                {m}%
-                                            </button>
-                                        ))}
-                                    </div>
+                                <div className="h-2 w-full rounded-full bg-zinc-900 border border-white/5 overflow-hidden">
+                                    <div
+                                        style={{ width: `${selectedMilestone}%` }}
+                                        className="h-full rounded-full bg-gradient-to-r from-emerald-700 via-emerald-500 to-emerald-400 transition-all duration-300 shadow-[0_0_12px_rgba(16,185,129,0.35)]"
+                                    />
                                 </div>
 
-                                {/* 3 Mini KPI Cards (Kasir Siaga, Pencairan Sah, Rata-rata Nota) */}
+                                <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
+                                    {[0, 25, 75, 82, 100].map((m) => (
+                                        <button
+                                            key={m}
+                                            type="button"
+                                            onClick={() => setSelectedMilestone(m)}
+                                            className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                                                selectedMilestone === m
+                                                    ? 'text-emerald-300 font-bold bg-emerald-500/15 border border-emerald-500/30'
+                                                    : 'hover:text-white'
+                                            }`}
+                                        >
+                                            {m}%
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* 3 Mini KPI Cards (Connected to currentPeriod) */}
                                 <div className="grid grid-cols-3 gap-2 pt-1">
-                                    <div className="p-2.5 rounded-xl bg-zinc-900/70 border border-white/5 space-y-1 text-center hover:border-white/10 transition-colors">
+                                    <div className="p-2 rounded-xl bg-zinc-900/70 border border-white/5 space-y-0.5 text-center">
                                         <div className="text-[10px] text-zinc-400 font-medium truncate flex items-center justify-center gap-1">
                                             <Store className="w-3 h-3 text-emerald-400" />
                                             <span>Kasir Siaga</span>
                                         </div>
-                                        <div className="font-mono text-xs sm:text-sm font-bold text-white">
-                                            120 / 150
+                                        <div className="font-mono text-xs font-bold text-white">
+                                            {currentPeriod.cashierCount}
                                         </div>
                                     </div>
 
-                                    <div className="p-2.5 rounded-xl bg-zinc-900/70 border border-white/5 space-y-1 text-center hover:border-white/10 transition-colors">
+                                    <div className="p-2 rounded-xl bg-zinc-900/70 border border-white/5 space-y-0.5 text-center">
                                         <div className="text-[10px] text-zinc-400 font-medium truncate flex items-center justify-center gap-1">
                                             <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                                             <span>Pencairan Sah</span>
                                         </div>
-                                        <div className="font-mono text-xs sm:text-sm font-bold text-white">
-                                            45 / 60
+                                        <div className="font-mono text-xs font-bold text-white">
+                                            {currentPeriod.disbursementCount}
                                         </div>
                                     </div>
 
-                                    <div className="p-2.5 rounded-xl bg-zinc-900/70 border border-white/5 space-y-1 text-center hover:border-white/10 transition-colors">
+                                    <div className="p-2 rounded-xl bg-zinc-900/70 border border-white/5 space-y-0.5 text-center">
                                         <div className="text-[10px] text-zinc-400 font-medium truncate">
                                             Rata-rata Nota
                                         </div>
-                                        <div className="font-mono text-xs sm:text-sm font-bold text-white truncate">
-                                            Rp 1,25 Jt
+                                        <div className="font-mono text-xs font-bold text-white truncate">
+                                            {currentPeriod.avgTicket}
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* WIDGET 4: KESEHATAN RETENSI & LIKUIDITAS KAS */}
-                        <div className="rounded-2xl border border-white/10 bg-[#111116] p-5 space-y-4 shadow-xl">
-                            <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
-                                <h3 className="text-sm font-bold text-white tracking-tight font-heading">
-                                    Kesehatan Saldo & Alokasi Kas
-                                </h3>
-                                <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                    <span>Real-Time</span>
-                                </span>
-                            </div>
-
-                            {/* Multi-Segmented Meter Bar (Psikologi: Amber Operasional, Violet Cadangan, Emerald Surplus) */}
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                                    <span>Alokasi Dana Usaha</span>
-                                    <span className="font-mono text-zinc-300">100% Terpetakan</span>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <div className="flex h-2.5 rounded-full overflow-hidden gap-1 bg-zinc-900 p-0.5 border border-white/5">
-                                        <div
-                                            className="h-full rounded-l-full bg-amber-500 w-[50%]"
-                                            title="50% Operasional Kasir (Amber)"
-                                        />
-                                        <div
-                                            className="h-full bg-zinc-600 w-[30%]"
-                                            title="30% Cadangan Pajak (Abu-abu / Slate)"
-                                        />
-                                        <div
-                                            className="h-full rounded-r-full bg-emerald-400 w-[20%]"
-                                            title="20% Laba Bersih Aman (Emerald)"
-                                        />
-                                    </div>
-
-                                    <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 pt-0.5">
-                                        <span className="flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                            <span>50% Operasional</span>
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
-                                            <span>30% Cadangan</span>
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                            <span>20% Surplus</span>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Financial Health Summary Table */}
-                            <div className="pt-2 border-t border-white/5 space-y-2 text-xs">
+                            {/* Financial Health Summary Table (Connected to currentPeriod) */}
+                            <div className="pt-2.5 border-t border-white/5 space-y-1.5 text-xs">
                                 <div className="flex items-center justify-between text-zinc-400">
                                     <span>Arus Kas Masuk Kotor</span>
-                                    <span className="font-mono font-medium text-emerald-400">+Rp 1.420.000.000</span>
+                                    <span className="font-mono font-medium text-emerald-400">{currentPeriod.grossInflow}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-zinc-400">
                                     <span>Beban Pokok & Operasional</span>
-                                    <span className="font-mono font-medium text-rose-400">-Rp 555.750.000</span>
+                                    <span className="font-mono font-medium text-rose-400">{currentPeriod.operatingExpense}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-zinc-400">
                                     <span>Tingkat Retensi Dana</span>
-                                    <span className="font-mono font-bold text-emerald-400">97.2%</span>
+                                    <span className="font-mono font-bold text-emerald-400">{currentPeriod.retentionRate}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-zinc-400 pt-1 border-t border-white/5">
                                     <span className="font-semibold text-zinc-200">Saldo Cadangan Bersih</span>
-                                    <span className="font-mono font-bold text-emerald-300">Rp 864.250.000</span>
+                                    <span className="font-mono font-bold text-emerald-300">{currentPeriod.netReserve}</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* WIDGET 5: DISTRIBUSI SALURAN TRANSAKSI (Interactive Donut Breakdown - Chart Burger) */}
-                        <div className="rounded-2xl border border-white/10 bg-[#111116] p-6 space-y-5 shadow-xl">
+                        <div
+                            className={`rounded-2xl border bg-[#111116] p-6 space-y-5 shadow-xl transition-all ${
+                                activeRailTab === 'analytics'
+                                    ? 'border-emerald-500/40 ring-1 ring-emerald-500/20 shadow-[0_0_25px_rgba(16,185,129,0.15)]'
+                                    : 'border-white/10'
+                            }`}
+                        >
                             <div className="flex items-center justify-between border-b border-white/5 pb-3">
                                 <div>
                                     <h3 className="text-sm sm:text-base font-bold text-white tracking-tight font-heading">
@@ -1194,6 +1243,19 @@ export const DashboardStatisticsPreview: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* 3. Conversion Callout Bar (Todo 4) */}
+            <div className="px-4 sm:px-6 py-3 bg-gradient-to-r from-emerald-950/25 via-zinc-900/70 to-emerald-950/25 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-zinc-300 text-center sm:text-left">
+                    <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 hidden sm:inline" />
+                    <span className="text-zinc-200 font-medium">Ingin pembukuan kasir otomatis tanpa selisih seperti ini untuk bisnis Anda?</span>
+                </div>
+                <Link to="/register" className="shrink-0">
+                    <span className="font-bold text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1 font-mono text-[11px] sm:text-xs cursor-pointer">
+                        Mulai Akun Gratis Dalam 2 Menit →
+                    </span>
+                </Link>
             </div>
 
             {/* 3. Footer Bar: Live Stream Ticker & Real-Time Sync Status */}
