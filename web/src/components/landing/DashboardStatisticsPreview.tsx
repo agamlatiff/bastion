@@ -143,17 +143,6 @@ const PERIOD_METRICS: Record<
     },
 };
 
-const RAIL_TAB_INFO: Record<
-    'overview' | 'analytics' | 'wallets' | 'security' | 'settings',
-    { title: string; desc: string }
-> = {
-    overview: { title: 'Tinjauan Finansial', desc: 'Seluruh metrik dan buku besar sinkron.' },
-    analytics: { title: 'Analisis Arus Kas & Kanal', desc: 'Fokus tren kurva 12 bulan dan saluran kasir.' },
-    wallets: { title: 'Alokasi Rekening Kasir', desc: 'Fokus porsi cadangan dan operasional kasir.' },
-    security: { title: 'Audit Kriptografi Buku Kas', desc: 'Integritas buku besar terkunci tanpa selisih.' },
-    settings: { title: 'Aturan Otomatisasi Kasir', desc: 'Proteksi saldo minus dan pencegahan dobel potong.' },
-};
-
 interface ChannelDetail {
     id: 'qris' | 'bank' | 'edc';
     name: string;
@@ -287,7 +276,6 @@ export const DashboardStatisticsPreview: React.FC = () => {
     const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('feb26');
     const [chartMode, setChartViewMode] = useState<ChartViewMode>('curve');
     const [flowCategory, setFlowCategory] = useState<FlowCategory>('all');
-    const [activeRailTab, setActiveRailTab] = useState<'overview' | 'analytics' | 'wallets' | 'security' | 'settings'>('overview');
     const [activeHoverPoint, setActiveHoverPoint] = useState<MonthDataPoint>(MONTH_DATA_POINTS[7]);
     const [selectedMilestone, setSelectedMilestone] = useState<number>(82);
     const [liveEventIndex, setLiveEventIndex] = useState<number>(0);
@@ -397,10 +385,8 @@ export const DashboardStatisticsPreview: React.FC = () => {
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                             <span>Buku Kas Terkunci</span>
                         </span>
-                        {/* Mode Perspektif Navigasi Aktif (Todo 3) */}
-                        <span className="hidden xl:inline-flex items-center gap-1.5 text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-900 border border-white/10 text-zinc-300">
-                            <span className="w-1 h-1 rounded-full bg-emerald-400" />
-                            <span>{RAIL_TAB_INFO[activeRailTab].title}</span>
+                        <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-900 border border-white/10 text-zinc-400">
+                            <span>Nol Selisih ✓</span>
                         </span>
                     </div>
                 </div>
@@ -438,87 +424,8 @@ export const DashboardStatisticsPreview: React.FC = () => {
                 </div>
             </div>
 
-            {/* 2. Main Workbench Shell (Left Rail Navigation + Broad Center/Right Analytics) */}
-            <div className="flex flex-1 min-h-0">
-                {/* ============================================================== */}
-                {/* LEFT MINI-RAIL NAVIGATION (Sesuai Referensi Ikon Vertikal)      */}
-                {/* ============================================================== */}
-                <div className="hidden md:flex flex-col items-center justify-between w-14 lg:w-16 py-5 border-r border-white/5 bg-[#09090d]/80 shrink-0">
-                    <div className="flex flex-col items-center gap-4 w-full px-2">
-                        {/* Top Active App Icon */}
-                        <button
-                            type="button"
-                            onClick={() => setActiveRailTab('overview')}
-                            className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white shadow-[0_0_15px_rgba(16,185,129,0.35)] cursor-pointer hover:scale-105 transition-transform"
-                            title="Ringkasan Eksekutif"
-                        >
-                            <LayoutGrid className="w-4 h-4 text-white" />
-                        </button>
-
-                        <div className="h-px w-6 bg-white/10 my-1" />
-
-                        <button
-                            type="button"
-                            onClick={() => setActiveRailTab('analytics')}
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-                                activeRailTab === 'analytics'
-                                    ? 'bg-zinc-800 text-emerald-300 border border-emerald-500/30 shadow-sm'
-                                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
-                            }`}
-                            title="Grafik & Tren"
-                        >
-                            <TrendingUp className="w-4 h-4" />
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setActiveRailTab('wallets')}
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-                                activeRailTab === 'wallets'
-                                    ? 'bg-zinc-800 text-emerald-300 border border-emerald-500/30 shadow-sm'
-                                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
-                            }`}
-                            title="Rekening Kasir"
-                        >
-                            <Store className="w-4 h-4" />
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setActiveRailTab('security')}
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-                                activeRailTab === 'security'
-                                    ? 'bg-zinc-800 text-purple-300 border border-purple-500/30 shadow-sm'
-                                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
-                            }`}
-                            title="Audit Kriptografi"
-                        >
-                            <ShieldCheck className="w-4 h-4" />
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setActiveRailTab('settings')}
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-                                activeRailTab === 'settings'
-                                    ? 'bg-zinc-800 text-white border border-white/20 shadow-sm'
-                                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
-                            }`}
-                            title="Aturan Buku Kas"
-                        >
-                            <Settings className="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Sistem Aktif" />
-                    </div>
-                </div>
-
-                {/* ============================================================== */}
-                {/* CENTER & RIGHT CONTENT: DUAL COLUMN EXPANSIVE WORKBENCH        */}
-                {/* ============================================================== */}
-                <div className="flex-1 p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* 2. Main Workbench Shell (Broad Center/Right Analytics Full Width) */}
+            <div className="w-full p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     {/* ========================================================== */}
                     {/* KOLOM KIRI (7 Kolom): STATISTIK TARGET & KURVA GARIS FOTO 2 */}
                     {/* ========================================================== */}

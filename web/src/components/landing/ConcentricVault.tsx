@@ -159,7 +159,7 @@ export const ConcentricVault: React.FC = () => {
                 {/* CENTERPIECE: THE GRAND VAULT DIAL WITH ANGLED ARROWS (COL-SPAN 6)     */}
                 {/* ===================================================================== */}
                 <div className="lg:col-span-6 xl:col-span-6 flex flex-col items-center justify-center z-10">
-                    <div className="relative w-full max-w-[340px] sm:max-w-[440px] lg:max-w-[540px] xl:max-w-[580px] aspect-square mx-auto flex items-center justify-center select-none">
+                    <div className="relative w-full max-w-[290px] xs:max-w-[330px] sm:max-w-[420px] md:max-w-[460px] lg:max-w-[540px] xl:max-w-[580px] aspect-square mx-auto flex items-center justify-center select-none">
                         <svg viewBox="0 0 600 600" className="w-full h-full overflow-visible">
                             <defs>
                                 <filter id="vault-glow-intense" x="-30%" y="-30%" width="160%" height="160%">
@@ -653,11 +653,29 @@ export const ConcentricVault: React.FC = () => {
             </div>
 
             {/* ========================================================================= */}
-            {/* MOBILE / TABLET VIEW (SCREENS < LG) - ACTIVE LAYER DETAIL CALLOUT         */}
+            {/* RESPONSIVE TABLET & MOBILE VIEW (SCREENS < LG)                            */}
+            {/* All 3 layers presented with full rich cards, synced to vault dial         */}
             {/* ========================================================================= */}
-            <div className="lg:hidden pt-2">
-                {/* Mobile Layer Selector Tabs */}
-                <div className="flex gap-2 mb-3">
+            <div className="lg:hidden pt-4 space-y-4">
+                {/* Interactive Status Bar / Dial Quick Jumper */}
+                <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
+                        <span
+                            className="w-2 h-2 rounded-full animate-ping"
+                            style={{ backgroundColor: activeData.accentColor.ringStroke }}
+                        />
+                        <span className="text-zinc-500 hidden sm:inline">Proteksi Terpilih:</span>
+                        <span className={`font-semibold ${activeData.accentColor.text}`}>
+                            {activeData.shortTag} ({activeData.numberTag})
+                        </span>
+                    </div>
+                    <span className="text-[11px] font-mono text-zinc-500">
+                        Ketuk kartu untuk mengunci dial
+                    </span>
+                </div>
+
+                {/* 3-Card Grid: 3 columns on tablet (md:grid-cols-3), stacked cards on mobile (grid-cols-1) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
                     {([1, 2, 3] as LayerId[]).map((id) => {
                         const item = LAYERS[id];
                         const isSelected = activeLayer === id;
@@ -666,31 +684,75 @@ export const ConcentricVault: React.FC = () => {
                                 key={id}
                                 type="button"
                                 onClick={() => setActiveLayer(id)}
-                                className={`flex-1 py-2 px-2 rounded-xl text-xs font-mono font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                                className={`text-left p-5 rounded-2xl transition-all duration-300 relative flex flex-col justify-between overflow-hidden cursor-pointer ${
                                     isSelected
-                                        ? `${item.accentColor.bg} ${item.accentColor.text} border ${item.accentColor.border}`
-                                        : 'bg-zinc-950/60 border border-zinc-800/80 text-zinc-400'
+                                        ? `${item.accentColor.bg} border-2 ${item.accentColor.border} scale-[1.02] shadow-xl`
+                                        : 'bg-[#111116]/85 border border-white/10 hover:border-white/20 hover:bg-[#15151c] opacity-75 hover:opacity-95'
                                 }`}
+                                style={
+                                    isSelected
+                                        ? {
+                                              boxShadow: `0 0 25px -5px ${item.accentColor.glow}`,
+                                          }
+                                        : undefined
+                                }
                             >
-                                <span
-                                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                                    style={{ backgroundColor: item.accentColor.ringStroke }}
-                                />
-                                <span>{item.numberTag} {item.shortTag}</span>
+                                {/* Top Accent Bar for Active Card */}
+                                {isSelected && (
+                                    <div
+                                        className="absolute top-0 left-0 right-0 h-1"
+                                        style={{ backgroundColor: item.accentColor.ringStroke }}
+                                    />
+                                )}
+
+                                <div className="space-y-3 mb-3">
+                                    {/* Number & Location Badge */}
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <span
+                                                className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold transition-all ${
+                                                    isSelected
+                                                        ? `${item.accentColor.bg} ${item.accentColor.text} border ${item.accentColor.border} shadow-sm`
+                                                        : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
+                                                }`}
+                                            >
+                                                {item.numberTag}
+                                            </span>
+                                            <span
+                                                className="w-1.5 h-1.5 rounded-full"
+                                                style={{ backgroundColor: item.accentColor.ringStroke }}
+                                            />
+                                        </div>
+                                        <span className="text-[10px] sm:text-[11px] font-mono text-zinc-500 uppercase tracking-wider text-right line-clamp-1">
+                                            {item.location}
+                                        </span>
+                                    </div>
+
+                                    {/* Title */}
+                                    <h4
+                                        className={`text-base sm:text-lg font-bold tracking-tight leading-snug transition-colors ${
+                                            isSelected ? 'text-white' : 'text-zinc-200'
+                                        }`}
+                                    >
+                                        {item.title}
+                                    </h4>
+
+                                    {/* Human Description */}
+                                    <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                                        {item.description}
+                                    </p>
+                                </div>
+
+                                {/* Guarantee Metric Tag */}
+                                <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs font-mono">
+                                    <span className="text-zinc-500 text-[11px]">Jaminan:</span>
+                                    <span className={`font-bold ${item.accentColor.text}`}>
+                                        {item.guarantee}
+                                    </span>
+                                </div>
                             </button>
                         );
                     })}
-                </div>
-
-                <div className="p-5 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 text-left space-y-2.5">
-                    <div className="flex items-center justify-between text-xs">
-                        <span className="text-zinc-500 font-mono uppercase">{activeData.location}</span>
-                        <span className={`font-mono font-semibold ${activeData.accentColor.text}`}>
-                            {activeData.guarantee}
-                        </span>
-                    </div>
-                    <h4 className="text-base font-bold text-white">{activeData.title}</h4>
-                    <p className="text-xs text-zinc-400 leading-relaxed">{activeData.description}</p>
                 </div>
             </div>
 
