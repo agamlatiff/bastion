@@ -43,14 +43,18 @@ interface MonthDataPoint {
 }
 
 const MONTH_DATA_POINTS: MonthDataPoint[] = [
-    { month: 'Jan', label: 'Januari', percentage: 46, nominal: 'Rp 395 Jt', volume: '6.940 tx', isSurplus: true, change: '+14%', coordX: 40, coordY: 140, outflowY: 165 },
-    { month: 'Feb', label: 'Februari', percentage: 34, nominal: 'Rp 312 Jt', volume: '5.420 tx', isSurplus: false, change: '-8%', coordX: 115, coordY: 155, outflowY: 135 },
-    { month: 'Mar', label: 'Maret', percentage: 28, nominal: 'Rp 240 Jt', volume: '4.110 tx', isSurplus: false, change: '-12%', coordX: 190, coordY: 165, outflowY: 120 },
-    { month: 'Apr', label: 'April', percentage: 54, nominal: 'Rp 458 Jt', volume: '7.820 tx', isSurplus: true, change: '+22%', coordX: 265, coordY: 125, outflowY: 150 },
-    { month: 'Mei', label: 'Mei', percentage: 62, nominal: 'Rp 490 Jt', volume: '8.210 tx', isSurplus: true, change: '+18%', coordX: 340, coordY: 105, outflowY: 155 },
-    { month: 'Jun', label: 'Juni', percentage: 44, nominal: 'Rp 380 Jt', volume: '6.450 tx', isSurplus: false, change: '-9%', coordX: 415, coordY: 120, outflowY: 130 },
-    { month: 'Jul', label: 'Juli', percentage: 76, nominal: 'Rp 620 Jt', volume: '10.510 tx', isSurplus: true, change: '+35%', coordX: 490, coordY: 70, outflowY: 160 },
-    { month: 'Agu', label: 'Agustus (Puncak)', percentage: 94, nominal: 'Rp 864 Jt', volume: '15.140 tx', isSurplus: true, change: '+42%', coordX: 565, coordY: 32, outflowY: 170 },
+    { month: 'Jan', label: 'Januari', percentage: 38, nominal: 'Rp 395 Jt', volume: '6.940 tx', isSurplus: true, change: '+14%', coordX: 25, coordY: 165, outflowY: 180 },
+    { month: 'Feb', label: 'Februari', percentage: 28, nominal: 'Rp 312 Jt', volume: '5.420 tx', isSurplus: false, change: '-8%', coordX: 75, coordY: 165, outflowY: 140 },
+    { month: 'Mar', label: 'Maret', percentage: 48, nominal: 'Rp 420 Jt', volume: '7.110 tx', isSurplus: true, change: '+18%', coordX: 125, coordY: 120, outflowY: 130 },
+    { month: 'Apr', label: 'April', percentage: 44, nominal: 'Rp 385 Jt', volume: '6.520 tx', isSurplus: false, change: '-4%', coordX: 175, coordY: 128, outflowY: 150 },
+    { month: 'Mei', label: 'Mei', percentage: 68, nominal: 'Rp 580 Jt', volume: '9.810 tx', isSurplus: true, change: '+28%', coordX: 225, coordY: 80, outflowY: 160 },
+    { month: 'Jun', label: 'Juni', percentage: 20, nominal: 'Rp 220 Jt', volume: '3.950 tx', isSurplus: false, change: '-24%', coordX: 275, coordY: 185, outflowY: 125 },
+    { month: 'Jul', label: 'Juli', percentage: 56, nominal: 'Rp 490 Jt', volume: '8.450 tx', isSurplus: true, change: '+32%', coordX: 325, coordY: 130, outflowY: 145 },
+    { month: 'Agu', label: 'Agustus (Puncak)', percentage: 88, nominal: 'Rp 864 Jt', volume: '15.140 tx', isSurplus: true, change: '+42%', coordX: 375, coordY: 72, outflowY: 170 },
+    { month: 'Sep', label: 'September', percentage: 40, nominal: 'Rp 360 Jt', volume: '6.120 tx', isSurplus: false, change: '-12%', coordX: 425, coordY: 140, outflowY: 135 },
+    { month: 'Okt', label: 'Oktober', percentage: 52, nominal: 'Rp 470 Jt', volume: '8.020 tx', isSurplus: true, change: '+16%', coordX: 475, coordY: 115, outflowY: 145 },
+    { month: 'Nov', label: 'November', percentage: 82, nominal: 'Rp 780 Jt', volume: '13.900 tx', isSurplus: true, change: '+36%', coordX: 525, coordY: 65, outflowY: 155 },
+    { month: 'Des', label: 'Desember', percentage: 60, nominal: 'Rp 540 Jt', volume: '9.450 tx', isSurplus: true, change: '+10%', coordX: 575, coordY: 105, outflowY: 140 },
 ];
 
 const PERIOD_METRICS: Record<
@@ -131,20 +135,20 @@ export const DashboardStatisticsPreview: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // Full-Width Organic Spline Curves (Starts at x=0, ends at x=600 with NO vertical cut-off)
+    // Full-Width Dynamic Polyline Paths (Photo 2 Financial Volatility: High Peaks, Deep Valleys & Apex Needle)
     const isInflowView = flowCategory !== 'outflow';
 
     const splineAreaPathInflow =
-        'M 0,145 C 20,145 25,140 40,140 C 65,140 85,155 115,155 C 145,155 165,165 190,165 C 220,165 235,125 265,125 C 295,125 315,105 340,105 C 370,105 385,120 415,120 C 445,120 465,70 490,70 C 520,70 540,32 565,32 C 580,32 590,30 600,30 L 600,220 L 0,220 Z';
+        'M 0,165 L 25,165 L 50,145 L 75,165 L 125,120 L 175,128 L 225,80 L 275,185 L 325,130 L 355,40 L 375,72 L 395,155 L 425,140 L 475,115 L 500,135 L 525,65 L 575,105 L 600,110 L 600,220 L 0,220 Z';
 
     const splineStrokePathInflow =
-        'M 0,145 C 20,145 25,140 40,140 C 65,140 85,155 115,155 C 145,155 165,165 190,165 C 220,165 235,125 265,125 C 295,125 315,105 340,105 C 370,105 385,120 415,120 C 445,120 465,70 490,70 C 520,70 540,32 565,32 C 580,32 590,30 600,30';
+        'M 0,165 L 25,165 L 50,145 L 75,165 L 125,120 L 175,128 L 225,80 L 275,185 L 325,130 L 355,40 L 375,72 L 395,155 L 425,140 L 475,115 L 500,135 L 525,65 L 575,105 L 600,110';
 
     const splineAreaPathOutflow =
-        'M 0,170 C 20,170 25,165 40,165 C 65,165 85,135 115,135 C 145,135 165,120 190,120 C 220,120 235,150 265,150 C 295,150 315,155 340,155 C 370,155 385,130 415,130 C 445,130 465,160 490,160 C 520,160 540,170 565,170 C 580,170 590,172 600,172 L 600,220 L 0,220 Z';
+        'M 0,185 L 25,180 L 50,175 L 75,140 L 125,130 L 175,150 L 225,160 L 275,125 L 325,145 L 355,165 L 375,170 L 395,160 L 425,135 L 475,145 L 500,130 L 525,155 L 575,140 L 600,140 L 600,220 L 0,220 Z';
 
     const splineStrokePathOutflow =
-        'M 0,170 C 20,170 25,165 40,165 C 65,165 85,135 115,135 C 145,135 165,120 190,120 C 220,120 235,150 265,150 C 295,150 315,155 340,155 C 370,155 385,130 415,130 C 445,130 465,160 490,160 C 520,160 540,170 565,170 C 580,170 590,172 600,172';
+        'M 0,185 L 25,180 L 50,175 L 75,140 L 125,130 L 175,150 L 225,160 L 275,125 L 325,145 L 355,165 L 375,170 L 395,160 L 425,135 L 475,145 L 500,130 L 525,155 L 575,140 L 600,140';
 
     const activeAreaPath = isInflowView ? splineAreaPathInflow : splineAreaPathOutflow;
     const activeStrokePath = isInflowView ? splineStrokePathInflow : splineStrokePathOutflow;
@@ -168,16 +172,30 @@ export const DashboardStatisticsPreview: React.FC = () => {
 
                     {/* Gradient Area Spline - Emerald Green (Surplus Kas) */}
                     <linearGradient id="spline-emerald-glow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
+                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.28" />
                         <stop offset="65%" stopColor="#10b981" stopOpacity="0.06" />
                         <stop offset="100%" stopColor="#09090b" stopOpacity="0.0" />
                     </linearGradient>
 
                     {/* Gradient Area Spline - Rose Crimson (Beban Kas) */}
                     <linearGradient id="spline-rose-glow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.25" />
+                        <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.28" />
                         <stop offset="65%" stopColor="#f43f5e" stopOpacity="0.06" />
                         <stop offset="100%" stopColor="#09090b" stopOpacity="0.0" />
+                    </linearGradient>
+
+                    {/* Vertical Spotlight Beam Gradient - Emerald Green (Foto 2 Pillar Highlight) */}
+                    <linearGradient id="beam-emerald" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.32" />
+                        <stop offset="60%" stopColor="#10b981" stopOpacity="0.08" />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                    </linearGradient>
+
+                    {/* Vertical Spotlight Beam Gradient - Rose Crimson */}
+                    <linearGradient id="beam-rose" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.32" />
+                        <stop offset="60%" stopColor="#f43f5e" stopOpacity="0.08" />
+                        <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.0" />
                     </linearGradient>
                 </defs>
             </svg>
@@ -345,14 +363,14 @@ export const DashboardStatisticsPreview: React.FC = () => {
                             </div>
 
                             <div className="pt-5 flex flex-col sm:flex-row sm:items-end justify-between gap-6 relative z-10">
-                                {/* Giant Nominal & Growth Rate (Psikologi Hijau: Uang Bertambah) */}
-                                <div className="space-y-2.5">
-                                    <div className="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-mono text-white tracking-tight">
+                                {/* Giant Nominal & Growth Rate (Responsif & Padat 1 Baris Utuh) */}
+                                <div className="space-y-2.5 min-w-0 flex-1">
+                                    <div className="text-2xl sm:text-3xl xl:text-4xl font-extrabold font-mono text-white tracking-tight whitespace-nowrap">
                                         {currentPeriod.targetNominal}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
-                                            <ArrowUpRight className="w-3.5 h-3.5" />
+                                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                                            <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
                                             <span>
                                                 {currentPeriod.growthBadge} {currentPeriod.growthSub}
                                             </span>
@@ -537,18 +555,18 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             </div>
                                         ))}
 
-                                        {/* SVG Curve Canvas dengan Full-Width Smooth Curve (No Cutoff) */}
+                                        {/* SVG Curve Canvas dengan Full-Width Dynamic Polyline & Spotlight Beam (Foto 2) */}
                                         <div className="absolute inset-0 left-10 right-0 pointer-events-auto">
-                                            {/* Floating Apex Tooltip Pill (Instant snap, no sluggish animation) */}
+                                            {/* Floating Apex Tooltip Pill (Persis Desain Tooltip Foto 2) */}
                                             <div
                                                 style={{
                                                     left: `${(activeHoverPoint.coordX / 600) * 100}%`,
                                                     top: `${(activeCurrentY / 220) * 100}%`,
                                                 }}
-                                                className="absolute -translate-x-1/2 -translate-y-[130%] z-20 pointer-events-none"
+                                                className="absolute -translate-x-1/2 -translate-y-[135%] z-20 pointer-events-none"
                                             >
-                                                <div className="px-3 py-1.5 rounded-lg bg-[#14141a] border border-white/20 text-xs text-white shadow-[0_12px_30px_rgba(0,0,0,0.9)] flex flex-col items-center relative backdrop-blur-md">
-                                                    <span className="font-mono font-extrabold text-sm text-white">
+                                                <div className="px-3.5 py-1.5 rounded-lg bg-[#16161f] border border-white/20 text-xs text-white shadow-[0_12px_32px_rgba(0,0,0,0.95)] flex flex-col items-center relative backdrop-blur-md">
+                                                    <span className="font-mono font-extrabold text-sm text-white tracking-tight">
                                                         {activeHoverPoint.nominal}
                                                     </span>
                                                     <span
@@ -558,11 +576,11 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                                                 : 'text-rose-400'
                                                         }`}
                                                     >
-                                                        {isInflowView ? 'Surplus Kas' : 'Pengeluaran'} ({activeHoverPoint.change})
+                                                        {activeHoverPoint.label}: {isInflowView ? 'Surplus' : 'Beban'} ({activeHoverPoint.change})
                                                     </span>
 
-                                                    {/* Triangle pointer downward */}
-                                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#14141a] border-r border-b border-white/20 rotate-45" />
+                                                    {/* Triangle pointer downward pointing straight to apex node */}
+                                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#16161f] border-r border-b border-white/20 rotate-45" />
                                                 </div>
                                             </div>
 
@@ -571,25 +589,37 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                                 className="w-full h-full overflow-visible"
                                                 preserveAspectRatio="none"
                                             >
-                                                {/* Vertical Indicator Line (Garis putus-putus presisi, no lag) */}
+                                                {/* Vertical Spotlight Beam Column (Persis Balok Sorot Cahaya di Foto 2) */}
+                                                <rect
+                                                    x={activeHoverPoint.coordX - 10}
+                                                    y={activeCurrentY}
+                                                    width="20"
+                                                    height={220 - activeCurrentY}
+                                                    fill={isInflowView ? 'url(#beam-emerald)' : 'url(#beam-rose)'}
+                                                    rx="3"
+                                                    className="pointer-events-none"
+                                                />
+
+                                                {/* Vertical Indicator Center Line (Garis putus-putus presisi di tengah pilar) */}
                                                 <line
                                                     x1={activeHoverPoint.coordX}
                                                     y1={activeCurrentY}
                                                     x2={activeHoverPoint.coordX}
                                                     y2="220"
-                                                    stroke="rgba(255,255,255,0.22)"
+                                                    stroke={isInflowView ? '#10b981' : '#f43f5e'}
                                                     strokeDasharray="3 3"
                                                     strokeWidth="1.5"
+                                                    opacity="0.65"
                                                 />
 
-                                                {/* Area Spline Gradient Fill (Edge to edge x=0 to x=600) */}
+                                                {/* Area Dynamic Gradient Fill (Edge to edge x=0 to x=600) */}
                                                 <path
                                                     d={activeAreaPath}
                                                     fill={isInflowView ? 'url(#spline-emerald-glow)' : 'url(#spline-rose-glow)'}
                                                     className="transition-all duration-300"
                                                 />
 
-                                                {/* Smooth Spline Stroke Line (Murni Hijau Emerald atau Merah Rose) */}
+                                                {/* Dynamic Financial Stroke Line (Murni Hijau Emerald atau Merah Rose) */}
                                                 <path
                                                     d={activeStrokePath}
                                                     fill="none"
@@ -600,7 +630,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                                     className="transition-all duration-300"
                                                 />
 
-                                                {/* Interactive Point Nodes on the curve (Fixed: No scale-125 jitter bug, No ping flicker) */}
+                                                {/* Interactive Point Nodes across 12 Months (No jitter, seamless tracking) */}
                                                 {MONTH_DATA_POINTS.map((pt) => {
                                                     const isActive = activeHoverPoint.month === pt.month;
                                                     const pointY = isInflowView ? pt.coordY : pt.outflowY;
@@ -612,27 +642,27 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                                             onMouseEnter={() => setActiveHoverPoint(pt)}
                                                             className="cursor-pointer"
                                                         >
-                                                            {/* Invisible broad vertical hover hit target for seamless mouseover */}
+                                                            {/* Broad vertical hover hit target for seamless gapless mouseover */}
                                                             <rect
-                                                                x={pt.coordX - 35}
+                                                                x={pt.coordX - 25}
                                                                 y="0"
-                                                                width="70"
+                                                                width="50"
                                                                 height="220"
                                                                 fill="transparent"
                                                             />
 
-                                                            {/* Active subtle static halo ring (No jitter, No ping) */}
+                                                            {/* Active subtle static halo ring */}
                                                             {isActive && (
                                                                 <circle
                                                                     cx={pt.coordX}
                                                                     cy={pointY}
                                                                     r="8"
                                                                     fill={isInflowView ? '#10b981' : '#f43f5e'}
-                                                                    opacity="0.3"
+                                                                    opacity="0.35"
                                                                 />
                                                             )}
 
-                                                            {/* Point Dot: Stable, sharp and clean */}
+                                                            {/* Point Dot: Crisp, stable white node with active ring */}
                                                             <circle
                                                                 cx={pt.coordX}
                                                                 cy={pointY}
@@ -914,26 +944,31 @@ export const DashboardStatisticsPreview: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* WIDGET 5: DISTRIBUSI SALURAN TRANSAKSI (Interactive Donut Breakdown) */}
-                        <div className="rounded-2xl border border-white/10 bg-[#111116] p-5 space-y-4 shadow-xl">
-                            <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
-                                <h3 className="text-sm font-bold text-white tracking-tight font-heading">
-                                    3 Saluran Kasir Terbesar
-                                </h3>
-                                <span className="text-[10px] text-zinc-500 font-mono">Hari Ini</span>
+                        {/* WIDGET 5: DISTRIBUSI SALURAN TRANSAKSI (Interactive Donut Breakdown - Chart Burger) */}
+                        <div className="rounded-2xl border border-white/10 bg-[#111116] p-6 space-y-5 shadow-xl">
+                            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                                <div>
+                                    <h3 className="text-sm sm:text-base font-bold text-white tracking-tight font-heading">
+                                        3 Saluran Kasir Terbesar
+                                    </h3>
+                                    <p className="text-[11px] text-zinc-400 pt-0.5">
+                                        Porsi penerimaan dana riil per kanal kasir hari ini.
+                                    </p>
+                                </div>
+                                <span className="text-[10px] text-zinc-400 font-mono px-2 py-0.5 rounded-full bg-zinc-900 border border-white/5">Hari Ini</span>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-1">
-                                {/* Interactive Radial Donut Chart SVG */}
-                                <div className="relative w-36 h-36 flex items-center justify-center shrink-0">
-                                    <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                            <div className="flex flex-col sm:flex-row items-center justify-around gap-6 sm:gap-8 pt-2">
+                                {/* Interactive Radial Donut Chart SVG (Diperbesar & Tegas) */}
+                                <div className="relative w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center shrink-0">
+                                    <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90 filter drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)]">
                                         <circle
                                             cx="50"
                                             cy="50"
                                             r="38"
                                             fill="transparent"
                                             stroke="#18181b"
-                                            strokeWidth="10"
+                                            strokeWidth="11"
                                         />
                                         {/* Segment 1: QRIS (55%) - Hijau Emerald */}
                                         <circle
@@ -942,7 +977,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             r="38"
                                             fill="transparent"
                                             stroke="#10b981"
-                                            strokeWidth={activeChannel === 'qris' ? '13' : '10'}
+                                            strokeWidth={activeChannel === 'qris' ? '14' : '11'}
                                             strokeDasharray="238.7"
                                             strokeDashoffset={238.7 * (1 - 0.55)}
                                             strokeLinecap="round"
@@ -956,7 +991,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             r="38"
                                             fill="transparent"
                                             stroke="#818cf8"
-                                            strokeWidth={activeChannel === 'bank' ? '13' : '10'}
+                                            strokeWidth={activeChannel === 'bank' ? '14' : '11'}
                                             strokeDasharray="238.7"
                                             strokeDashoffset={238.7 * (1 - 0.3)}
                                             transform="rotate(198 50 50)"
@@ -971,7 +1006,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                             r="38"
                                             fill="transparent"
                                             stroke="#f59e0b"
-                                            strokeWidth={activeChannel === 'edc' ? '13' : '10'}
+                                            strokeWidth={activeChannel === 'edc' ? '14' : '11'}
                                             strokeDasharray="238.7"
                                             strokeDashoffset={238.7 * (1 - 0.15)}
                                             transform="rotate(306 50 50)"
@@ -983,7 +1018,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
 
                                     {/* Dynamic Center Donut Metrics */}
                                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                                        <span className="text-[10px] text-zinc-400 font-medium">
+                                        <span className="text-xs text-zinc-400 font-medium">
                                             {activeChannel === 'all'
                                                 ? 'Total'
                                                 : activeChannel === 'qris'
@@ -992,7 +1027,7 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                                 ? 'Bank'
                                                 : 'EDC'}
                                         </span>
-                                        <span className="text-xl font-extrabold font-mono text-white leading-none">
+                                        <span className="text-3xl sm:text-4xl font-extrabold font-mono text-white leading-none tracking-tight py-0.5">
                                             {activeChannel === 'all'
                                                 ? '431'
                                                 : activeChannel === 'qris'
@@ -1001,58 +1036,67 @@ export const DashboardStatisticsPreview: React.FC = () => {
                                                 ? '129'
                                                 : '65'}
                                         </span>
-                                        <span className="text-[9px] text-zinc-500 pt-0.5">Transaksi</span>
+                                        <span className="text-[10px] text-zinc-500 font-mono pt-0.5">Transaksi</span>
                                     </div>
                                 </div>
 
                                 {/* Donut Legend with Interactive Channel Selectors */}
-                                <div className="space-y-2 text-xs w-full sm:w-auto">
+                                <div className="space-y-3 text-xs w-full sm:w-60">
                                     <button
                                         type="button"
                                         onClick={() => setActiveChannel(activeChannel === 'qris' ? 'all' : 'qris')}
-                                        className={`w-full flex items-center justify-between sm:justify-start gap-3 p-1.5 rounded-lg transition-all cursor-pointer ${
+                                        className={`w-full flex items-center justify-between gap-4 p-2.5 rounded-xl transition-all cursor-pointer ${
                                             activeChannel === 'qris'
-                                                ? 'bg-emerald-500/10 border border-emerald-500/30'
-                                                : 'hover:bg-zinc-900'
+                                                ? 'bg-emerald-500/15 border border-emerald-500/35 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
+                                                : 'bg-zinc-900/60 border border-white/5 hover:border-white/10 hover:bg-zinc-900'
                                         }`}
                                     >
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981]" />
-                                            <span className="text-zinc-300">QRIS Dinamis</span>
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
+                                            <span className="text-zinc-200 font-medium text-xs sm:text-sm">QRIS Dinamis</span>
                                         </div>
-                                        <span className="font-mono font-semibold text-white">237 tx</span>
+                                        <div className="text-right">
+                                            <span className="font-mono font-bold text-white text-xs sm:text-sm">237 tx</span>
+                                            <span className="block text-[10px] text-zinc-400 font-mono">55%</span>
+                                        </div>
                                     </button>
 
                                     <button
                                         type="button"
                                         onClick={() => setActiveChannel(activeChannel === 'bank' ? 'all' : 'bank')}
-                                        className={`w-full flex items-center justify-between sm:justify-start gap-3 p-1.5 rounded-lg transition-all cursor-pointer ${
+                                        className={`w-full flex items-center justify-between gap-4 p-2.5 rounded-xl transition-all cursor-pointer ${
                                             activeChannel === 'bank'
-                                                ? 'bg-indigo-500/10 border border-indigo-500/30'
-                                                : 'hover:bg-zinc-900'
+                                                ? 'bg-indigo-500/15 border border-indigo-500/35 shadow-[0_0_15px_rgba(129,140,248,0.15)]'
+                                                : 'bg-zinc-900/60 border border-white/5 hover:border-white/10 hover:bg-zinc-900'
                                         }`}
                                     >
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_6px_#818cf8]" />
-                                            <span className="text-zinc-300">Transfer Bank</span>
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 shadow-[0_0_8px_#818cf8]" />
+                                            <span className="text-zinc-200 font-medium text-xs sm:text-sm">Transfer Bank</span>
                                         </div>
-                                        <span className="font-mono font-semibold text-white">129 tx</span>
+                                        <div className="text-right">
+                                            <span className="font-mono font-bold text-white text-xs sm:text-sm">129 tx</span>
+                                            <span className="block text-[10px] text-zinc-400 font-mono">30%</span>
+                                        </div>
                                     </button>
 
                                     <button
                                         type="button"
                                         onClick={() => setActiveChannel(activeChannel === 'edc' ? 'all' : 'edc')}
-                                        className={`w-full flex items-center justify-between sm:justify-start gap-3 p-1.5 rounded-lg transition-all cursor-pointer ${
+                                        className={`w-full flex items-center justify-between gap-4 p-2.5 rounded-xl transition-all cursor-pointer ${
                                             activeChannel === 'edc'
-                                                ? 'bg-amber-500/10 border border-amber-500/30'
-                                                : 'hover:bg-zinc-900'
+                                                ? 'bg-amber-500/15 border border-amber-500/35 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
+                                                : 'bg-zinc-900/60 border border-white/5 hover:border-white/10 hover:bg-zinc-900'
                                         }`}
                                     >
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_#f59e0b]" />
-                                            <span className="text-zinc-300">Mesin EDC</span>
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b]" />
+                                            <span className="text-zinc-200 font-medium text-xs sm:text-sm">Mesin EDC</span>
                                         </div>
-                                        <span className="font-mono font-semibold text-white">65 tx</span>
+                                        <div className="text-right">
+                                            <span className="font-mono font-bold text-white text-xs sm:text-sm">65 tx</span>
+                                            <span className="block text-[10px] text-zinc-400 font-mono">15%</span>
+                                        </div>
                                     </button>
                                 </div>
                             </div>
