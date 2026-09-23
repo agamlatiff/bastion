@@ -18,6 +18,7 @@ import {
 import { useCustomerProfile } from '../features/customer/hooks';
 import { useWallets, useCreateWallet } from '../features/wallet/hooks';
 import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { Alert } from '../components/ui/Alert';
 import { MoneyMovementModal } from '../components/dashboard/MoneyMovementModal';
@@ -146,6 +147,11 @@ const CASH_FLOW_OUTFLOW = [
 
 const CASH_FLOW_NET = CASH_FLOW_INFLOW.map((inflow, i) => inflow - CASH_FLOW_OUTFLOW[i]);
 
+const FX_RATES_TO_IDR: Record<string, number> = {
+    USD: 16250,
+    SGD: 12100,
+};
+
 interface RecentActivityItem {
     id: string;
     title: string;
@@ -174,6 +180,8 @@ export const DashboardPage: React.FC = () => {
     const [simulatedOffset, setSimulatedOffset] = useState<number>(0);
     const [copiedWalletId, setCopiedWalletId] = useState<string | null>(null);
     const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('feb26');
+    const [chartFilter, setChartFilter] = useState<'all' | 'inflow' | 'outflow' | 'net'>('all');
+    const [activityFilter, setActivityFilter] = useState<'all' | 'in' | 'out'>('all');
 
     // Riwayat Mutasi Terkini
     const [recentActivities, setRecentActivities] = useState<RecentActivityItem[]>([
@@ -218,6 +226,72 @@ export const DashboardPage: React.FC = () => {
             .reduce((sum, w) => sum + (Number(w.balance) || 0), 0) + simulatedOffset;
 
     const currentPeriod = PERIOD_METRICS[selectedPeriod];
+
+    const filteredActivities = recentActivities.filter((act) => {
+        if (activityFilter === 'in') return act.type === 'IN';
+        if (activityFilter === 'out') return act.type === 'OUT';
+        return true;
+    });
+
+    const allDatasets = [
+        {
+            id: 'inflow',
+            label: 'Uang Masuk (Omzet)',
+            data: CASH_FLOW_INFLOW,
+            borderColor: '#10b981',
+            backgroundColor: (context: ScriptableContext<'line'>) => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, 'rgba(16, 185, 129, 0.28)');
+                gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+                return gradient;
+            },
+            fill: true,
+            tension: 0.4,
+            borderWidth: 2.5,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#10b981',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 1.5,
+        },
+        {
+            id: 'outflow',
+            label: 'Pengeluaran',
+            data: CASH_FLOW_OUTFLOW,
+            borderColor: '#f43f5e',
+            backgroundColor: 'transparent',
+            fill: false,
+            tension: 0.4,
+            borderWidth: 2,
+            borderDash: [4, 4],
+            pointRadius: 2.5,
+            pointHoverRadius: 5,
+            pointBackgroundColor: '#f43f5e',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 1,
+        },
+        {
+            id: 'net',
+            label: 'Saldo Bersih',
+            data: CASH_FLOW_NET,
+            borderColor: '#38bdf8',
+            backgroundColor: 'transparent',
+            fill: false,
+            tension: 0.4,
+            borderWidth: 2.2,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#38bdf8',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 1.5,
+        },
+    ];
+
+    const activeDatasets =
+        chartFilter === 'all'
+            ? allDatasets
+            : allDatasets.filter((ds) => ds.id === chartFilter);
 
     const handleCopyWalletId = (id: string, e: React.MouseEvent) => {
         e.preventDefault();
@@ -301,11 +375,10 @@ export const DashboardPage: React.FC = () => {
                 {/* Kontrol Aksi Cepat Finansial */}
                 <div className="flex flex-wrap items-center gap-2">
                     <Button
-                        variant="secondary"
                         size="sm"
                         onClick={() => setMoneyModalState({ isOpen: true, mode: 'topup' })}
-                        leftIcon={<ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />}
-                        className="text-xs font-semibold"
+                        leftIcon={<ArrowDownLeft className="w-3.5 h-3.5" />}
+                        className="text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold shadow-md shadow-emerald-950/20"
                     >
                         Isi Saldo
                     </Button>
@@ -314,34 +387,33 @@ export const DashboardPage: React.FC = () => {
                         size="sm"
                         onClick={() => setMoneyModalState({ isOpen: true, mode: 'transfer' })}
                         leftIcon={<ArrowUpRight className="w-3.5 h-3.5 text-blue-400" />}
-                        className="text-xs font-semibold"
+                        className="text-xs font-semibold hover:border-blue-500/40"
                     >
                         Kirim Uang
                     </Button>
                     <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => setIsCreateModalOpen(true)}
                         leftIcon={<Plus className="w-3.5 h-3.5" />}
-                        className="text-xs font-semibold"
+                        className="text-xs font-medium text-zinc-300 hover:text-white"
                     >
                         Buka Dompet
                     </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
+                    <button
+                        type="button"
                         onClick={() => refetchWallets()}
-                        leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} />}
                         disabled={isRefetching}
-                        className="text-zinc-400 hover:text-white"
+                        className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
                         title="Segarkan Saldo"
                     >
-                        Segarkan
-                    </Button>
+                        <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin text-emerald-400' : ''}`} />
+                    </button>
                 </div>
             </div>
 
             {/* ========================================================================= */}
-            {/* 2. REKENING & DOMPET RIIL PENGGUNA (FOKUS UTAMA BISNIS)                   */}
+            {/* 2. REKENING & DOMPET RIIL PENGGUNA (HERO TOTAL SALDO KAS)                 */}
             {/* ========================================================================= */}
             <div className="space-y-4">
                 {/* Kartu Hero: Total Saldo Kas Tersedia */}
@@ -401,9 +473,192 @@ export const DashboardPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Grid Rekening Dompet Riil Pengguna */}
-                <div className="space-y-3">
+            {/* ========================================================================= */}
+            {/* 3. ANALITIK ARUS KAS MEMANJANG (FULL-WIDTH FIRST IMPRESSION)              */}
+            {/* ========================================================================= */}
+            <div className="rounded-2xl border border-zinc-800/90 bg-[#111116] p-6 space-y-6 shadow-xl">
+                {/* Header Analitik: Judul & Filter Kurva Alami */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-zinc-800/80">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-emerald-400" />
+                            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight font-heading">
+                                Analitik Arus Kas & Pertumbuhan Omzet
+                            </h2>
+                        </div>
+                        <p className="text-xs text-zinc-400 pt-0.5">
+                            Pergerakan pasang surut uang masuk, pengeluaran operasional, dan kepastian saldo bersih usaha Anda.
+                        </p>
+                    </div>
+
+                    {/* Filter Kurva Natural & Tombol Rincian */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="p-1 rounded-xl bg-zinc-900/90 border border-zinc-800 flex items-center gap-1">
+                            {[
+                                { id: 'all', label: 'Semua' },
+                                { id: 'inflow', label: 'Uang Masuk' },
+                                { id: 'outflow', label: 'Pengeluaran' },
+                                { id: 'net', label: 'Saldo Bersih' },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() => setChartFilter(tab.id as 'all' | 'inflow' | 'outflow' | 'net')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                                        chartFilter === tab.id
+                                            ? 'bg-zinc-800 text-white font-semibold shadow-xs'
+                                            : 'text-zinc-400 hover:text-zinc-200'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <Link
+                            to="/app/dashboard/analytics"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-emerald-500/10 border border-zinc-800 hover:border-emerald-500/30 text-xs font-semibold text-zinc-300 hover:text-emerald-300 transition-all shadow-xs"
+                        >
+                            <span>Rincian Lengkap</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                    </div>
+                </div>
+
+                {/* 4 Kartu Metrik Ringkas: Uang Masuk, Pengeluaran, Saldo Bersih, Margin Efisiensi */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
+                        <span className="text-xs text-zinc-400 font-medium block truncate">
+                            Uang Masuk (Omzet)
+                        </span>
+                        <span className="text-base sm:text-lg xl:text-xl font-mono font-bold text-emerald-400 block truncate">
+                            {currentPeriod.grossInflow}
+                        </span>
+                        <span className="text-[10px] text-emerald-400/80 font-mono block">Omzet kasir riil</span>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
+                        <span className="text-xs text-zinc-400 font-medium block truncate">
+                            Pengeluaran Operasional
+                        </span>
+                        <span className="text-base sm:text-lg xl:text-xl font-mono font-bold text-rose-400 block truncate">
+                            {currentPeriod.operatingExpense}
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-mono block">Biaya & stok kasir</span>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-zinc-900/60 border border-emerald-500/20 space-y-1 bg-emerald-500/5">
+                        <span className="text-xs text-emerald-300 font-medium block truncate">
+                            Saldo Bersih (Surplus)
+                        </span>
+                        <span className="text-base sm:text-lg xl:text-xl font-mono font-bold text-emerald-300 block truncate">
+                            {currentPeriod.netReserve}
+                        </span>
+                        <span className="text-[10px] text-emerald-400 font-mono block">Surplus kas aman</span>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-zinc-900/60 border border-sky-500/20 space-y-1 bg-sky-500/5">
+                        <span className="text-xs text-sky-300 font-medium block truncate">
+                            Efisiensi Margin Bersih
+                        </span>
+                        <span className="text-base sm:text-lg xl:text-xl font-mono font-bold text-sky-300 block truncate">
+                            60.8%
+                        </span>
+                        <span className="text-[10px] text-sky-400 font-mono block">Rasio surplus sehat ✓</span>
+                    </div>
+                </div>
+
+                {/* Grafik Kurva Chart.js Memanjang Full-Width */}
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-zinc-400">
+                        <span>Kurva Fluktuasi Arus Kas 12 Bulan Pembukuan</span>
+                        <span className="font-mono text-emerald-400 font-medium">Buku Kas Terkunci • Nol Selisih ✓</span>
+                    </div>
+                    <div className="h-72 sm:h-80 w-full bg-zinc-900/30 rounded-xl p-3 border border-zinc-800/70">
+                        <Line
+                            data={{
+                                labels: CASH_FLOW_LABELS,
+                                datasets: activeDatasets,
+                            }}
+                            options={{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: {
+                                    mode: 'index',
+                                    intersect: false,
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'top',
+                                        align: 'end',
+                                        labels: {
+                                            boxWidth: 10,
+                                            boxHeight: 10,
+                                            color: '#a1a1aa',
+                                            font: { size: 11 },
+                                            usePointStyle: true,
+                                            pointStyle: 'circle',
+                                        },
+                                    },
+                                    tooltip: {
+                                        backgroundColor: '#18181b',
+                                        titleColor: '#ffffff',
+                                        bodyColor: '#e4e4e7',
+                                        borderColor: '#27272a',
+                                        borderWidth: 1,
+                                        padding: 10,
+                                        boxPadding: 4,
+                                        usePointStyle: true,
+                                        callbacks: {
+                                            label: (ctx) => {
+                                                const val = ctx.parsed.y ?? 0;
+                                                const formatted = new Intl.NumberFormat('id-ID', {
+                                                    style: 'currency',
+                                                    currency: 'IDR',
+                                                    maximumFractionDigits: 0,
+                                                }).format(val);
+                                                return ` ${ctx.dataset.label}: ${formatted}`;
+                                            },
+                                        },
+                                    },
+                                },
+                                scales: {
+                                    x: {
+                                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                                        ticks: {
+                                            color: '#71717a',
+                                            font: { size: 10, family: 'monospace' },
+                                        },
+                                    },
+                                    y: {
+                                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                                        ticks: {
+                                            color: '#71717a',
+                                            font: { size: 10, family: 'monospace' },
+                                            callback: (val) => {
+                                                const num = Number(val);
+                                                if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)} M`;
+                                                if (num >= 1_000_000) return `${Math.round(num / 1_000_000)} Jt`;
+                                                return `${num}`;
+                                            },
+                                        },
+                                    },
+                                },
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* ========================================================================= */}
+            {/* 4. DUA KOLOM: REKENING DOMPET (7 KOL) + PENERIMAAN KANAL KASIR (5 KOL)     */}
+            {/* ========================================================================= */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* KOLOM KIRI (7 Kolom): REKENING DOMPET AKTIF */}
+                <div className="lg:col-span-7 space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <CreditCard className="w-4 h-4 text-emerald-400" />
@@ -423,10 +678,9 @@ export const DashboardPage: React.FC = () => {
                         </Link>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {isWalletsLoading ? (
                             <>
-                                <Skeleton className="h-36 rounded-2xl" />
                                 <Skeleton className="h-36 rounded-2xl" />
                                 <Skeleton className="h-36 rounded-2xl" />
                             </>
@@ -456,11 +710,18 @@ export const DashboardPage: React.FC = () => {
                                                     {w.currency}
                                                 </span>
                                                 <div>
-                                                    <h3 className="text-xs font-bold text-white truncate">
-                                                        {idx === 0
-                                                            ? `Rekening Utama (${w.currency})`
-                                                            : `Dompet ${w.currency} #${idx + 1}`}
-                                                    </h3>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <h3 className="text-xs font-bold text-white truncate">
+                                                            {idx === 0
+                                                                ? `Rekening Utama (${w.currency})`
+                                                                : `Dompet ${w.currency} #${idx + 1}`}
+                                                        </h3>
+                                                        {idx === 0 && (
+                                                            <Badge variant="success" className="text-[9px] py-0 px-1.5">
+                                                                Utama
+                                                            </Badge>
+                                                        )}
+                                                    </div>
                                                     <span className="text-[10px] text-zinc-400 font-medium">
                                                         {w.status === 'ACTIVE' ? 'Aktif • Bebas Biaya' : w.status}
                                                     </span>
@@ -489,11 +750,16 @@ export const DashboardPage: React.FC = () => {
                                         </div>
 
                                         {/* Saldo Dompet */}
-                                        <div className="pt-1">
+                                        <div className="pt-1 space-y-0.5">
                                             <div className="text-[11px] text-zinc-400">Saldo Tersedia</div>
                                             <div className="text-xl sm:text-2xl font-bold font-mono text-white tracking-tight">
                                                 {formatCurrency(w.balance, w.currency)}
                                             </div>
+                                            {w.currency !== 'IDR' && (
+                                                <div className="text-[11px] text-zinc-500 font-mono">
+                                                    ≈ Rp {(Number(w.balance) * (FX_RATES_TO_IDR[w.currency] || 1)).toLocaleString('id-ID')} (Estimasi Kurs)
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Pintasan Aksi Rekening */}
@@ -542,227 +808,8 @@ export const DashboardPage: React.FC = () => {
                         )}
                     </div>
                 </div>
-            </div>
 
-            {/* ========================================================================= */}
-            {/* 3. DUA KOLOM PERFORMA FINANSIAL (RINGKAS & TIDAK SESAK)                    */}
-            {/* ========================================================================= */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* KOLOM KIRI (7 Kolom): ARUS KAS BULANAN RINGKAS */}
-                <div className="lg:col-span-7 space-y-4">
-                    <div className="rounded-2xl border border-zinc-800/90 bg-[#111116] p-6 space-y-5 shadow-xl">
-                        {/* Header Widget */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <TrendingUp className="w-4 h-4 text-emerald-400" />
-                                    <h2 className="text-sm sm:text-base font-bold text-white tracking-tight font-heading">
-                                        Arus Kas Bulanan
-                                    </h2>
-                                </div>
-                                <p className="text-[11px] text-zinc-400 pt-0.5">
-                                    Ringkasan pasang surut uang masuk dan pengeluaran operasional usaha.
-                                </p>
-                            </div>
-                            <span className="text-[10px] text-zinc-300 font-mono px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 self-start sm:self-auto">
-                                {currentPeriod.label}
-                            </span>
-                        </div>
-
-                        {/* 3 Metrik Inti Arus Kas */}
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
-                                <span className="text-[11px] text-zinc-400 font-medium block truncate">
-                                    Uang Masuk
-                                </span>
-                                <span className="text-xs sm:text-sm xl:text-base font-mono font-bold text-emerald-400 block truncate">
-                                    {currentPeriod.grossInflow}
-                                </span>
-                                <span className="text-[9px] text-emerald-400/80 font-mono block">Omzet kasir riil</span>
-                            </div>
-
-                            <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
-                                <span className="text-[11px] text-zinc-400 font-medium block truncate">
-                                    Beban Keluar
-                                </span>
-                                <span className="text-xs sm:text-sm xl:text-base font-mono font-bold text-rose-400 block truncate">
-                                    {currentPeriod.operatingExpense}
-                                </span>
-                                <span className="text-[9px] text-zinc-500 font-mono block">Biaya & stok</span>
-                            </div>
-
-                            <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-emerald-500/20 space-y-1 bg-emerald-500/5">
-                                <span className="text-[11px] text-emerald-300 font-medium block truncate">
-                                    Saldo Bersih
-                                </span>
-                                <span className="text-xs sm:text-sm xl:text-base font-mono font-bold text-emerald-300 block truncate">
-                                    {currentPeriod.netReserve}
-                                </span>
-                                <span className="text-[9px] text-emerald-400 font-mono block">Surplus aman</span>
-                            </div>
-                        </div>
-
-                        {/* Grafik Kurva Arus Kas Chart.js */}
-                        <div className="pt-2 space-y-2">
-                            <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                                <span>Kurva Tren Arus Kas & Saldo Bersih Sepanjang Tahun</span>
-                                <span className="font-mono text-emerald-400 font-medium">Surplus Bertumbuh</span>
-                            </div>
-                            <div className="h-64 sm:h-72 w-full bg-zinc-900/30 rounded-xl p-3 border border-zinc-800/70">
-                                <Line
-                                    data={{
-                                        labels: CASH_FLOW_LABELS,
-                                        datasets: [
-                                            {
-                                                label: 'Uang Masuk (Omzet)',
-                                                data: CASH_FLOW_INFLOW,
-                                                borderColor: '#10b981',
-                                                backgroundColor: (context: ScriptableContext<'line'>) => {
-                                                    const ctx = context.chart.ctx;
-                                                    const gradient = ctx.createLinearGradient(0, 0, 0, 260);
-                                                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.28)');
-                                                    gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
-                                                    return gradient;
-                                                },
-                                                fill: true,
-                                                tension: 0.4,
-                                                borderWidth: 2.5,
-                                                pointRadius: 3,
-                                                pointHoverRadius: 6,
-                                                pointBackgroundColor: '#10b981',
-                                                pointBorderColor: '#ffffff',
-                                                pointBorderWidth: 1.5,
-                                            },
-                                            {
-                                                label: 'Beban Keluar',
-                                                data: CASH_FLOW_OUTFLOW,
-                                                borderColor: '#f43f5e',
-                                                backgroundColor: 'transparent',
-                                                fill: false,
-                                                tension: 0.4,
-                                                borderWidth: 1.8,
-                                                borderDash: [4, 4],
-                                                pointRadius: 2.5,
-                                                pointHoverRadius: 5,
-                                                pointBackgroundColor: '#f43f5e',
-                                                pointBorderColor: '#ffffff',
-                                                pointBorderWidth: 1,
-                                            },
-                                            {
-                                                label: 'Saldo Bersih (Surplus)',
-                                                data: CASH_FLOW_NET,
-                                                borderColor: '#38bdf8',
-                                                backgroundColor: 'transparent',
-                                                fill: false,
-                                                tension: 0.4,
-                                                borderWidth: 2,
-                                                pointRadius: 3,
-                                                pointHoverRadius: 6,
-                                                pointBackgroundColor: '#38bdf8',
-                                                pointBorderColor: '#ffffff',
-                                                pointBorderWidth: 1.5,
-                                            },
-                                        ],
-                                    }}
-                                    options={{
-                                        responsive: true,
-                                        maintainAspectRatio: false,
-                                        interaction: {
-                                            mode: 'index',
-                                            intersect: false,
-                                        },
-                                        plugins: {
-                                            legend: {
-                                                display: true,
-                                                position: 'top',
-                                                align: 'end',
-                                                labels: {
-                                                    boxWidth: 10,
-                                                    boxHeight: 10,
-                                                    color: '#a1a1aa',
-                                                    font: {
-                                                        size: 11,
-                                                    },
-                                                    usePointStyle: true,
-                                                    pointStyle: 'circle',
-                                                },
-                                            },
-                                            tooltip: {
-                                                backgroundColor: '#18181b',
-                                                titleColor: '#ffffff',
-                                                bodyColor: '#e4e4e7',
-                                                borderColor: '#27272a',
-                                                borderWidth: 1,
-                                                padding: 10,
-                                                boxPadding: 4,
-                                                usePointStyle: true,
-                                                callbacks: {
-                                                    label: (ctx) => {
-                                                        const val = ctx.parsed.y ?? 0;
-                                                        const formatted = new Intl.NumberFormat('id-ID', {
-                                                            style: 'currency',
-                                                            currency: 'IDR',
-                                                            maximumFractionDigits: 0,
-                                                        }).format(val);
-                                                        return ` ${ctx.dataset.label}: ${formatted}`;
-                                                    },
-                                                },
-                                            },
-                                        },
-                                        scales: {
-                                            x: {
-                                                grid: {
-                                                    color: 'rgba(255, 255, 255, 0.04)',
-                                                },
-                                                ticks: {
-                                                    color: '#71717a',
-                                                    font: {
-                                                        size: 10,
-                                                        family: 'monospace',
-                                                    },
-                                                },
-                                            },
-                                            y: {
-                                                grid: {
-                                                    color: 'rgba(255, 255, 255, 0.04)',
-                                                },
-                                                ticks: {
-                                                    color: '#71717a',
-                                                    font: {
-                                                        size: 10,
-                                                        family: 'monospace',
-                                                    },
-                                                    callback: (val) => {
-                                                        const num = Number(val);
-                                                        if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)} M`;
-                                                        if (num >= 1_000_000) return `${Math.round(num / 1_000_000)} Jt`;
-                                                        return `${num}`;
-                                                    },
-                                                },
-                                            },
-                                        },
-                                    }}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Tombol Buka Analitik Lengkap */}
-                        <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between">
-                            <span className="text-xs text-zinc-400">
-                                Pembukuan 12 bulan & riwayat komprehensif
-                            </span>
-                            <Link
-                                to="/app/dashboard/analytics"
-                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-emerald-500/10 border border-zinc-800 hover:border-emerald-500/30 text-xs font-semibold text-zinc-300 hover:text-emerald-300 transition-all shadow-sm"
-                            >
-                                <span>Lihat Rincian Analitik Lengkap</span>
-                                <ArrowRight className="w-3.5 h-3.5" />
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-
-                {/* KOLOM KANAN (5 Kolom): PENERIMAAN SALURAN KASIR RINGKAS */}
+                {/* KOLOM KANAN (5 Kolom): PENERIMAAN SALURAN KASIR */}
                 <div className="lg:col-span-5 space-y-4">
                     <div className="rounded-2xl border border-zinc-800/90 bg-[#111116] p-6 space-y-5 shadow-xl">
                         {/* Header Widget */}
@@ -878,7 +925,7 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* ========================================================================= */}
-            {/* 4. MUTASI TRANSAKSI TERAKHIR (BUKU KAS RIIL)                              */}
+            {/* 5. MUTASI TRANSAKSI TERAKHIR (BUKU KAS RIIL DENGAN FILTER TAB)            */}
             {/* ========================================================================= */}
             <div className="rounded-2xl border border-zinc-800/90 bg-[#111116] p-5 sm:p-6 space-y-4 shadow-xl text-left">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
@@ -894,58 +941,103 @@ export const DashboardPage: React.FC = () => {
                         </p>
                     </div>
 
-                    <Link
-                        to="/app/activity"
-                        className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold transition-colors shrink-0"
-                    >
-                        <span>Buka Buku Besar Lengkap</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        {/* Tab Filter Mutasi Ringkas */}
+                        <div className="p-1 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center gap-1 text-xs">
+                            <button
+                                type="button"
+                                onClick={() => setActivityFilter('all')}
+                                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                                    activityFilter === 'all'
+                                        ? 'bg-zinc-800 text-white font-semibold'
+                                        : 'text-zinc-400 hover:text-zinc-200'
+                                }`}
+                            >
+                                Semua ({recentActivities.length})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActivityFilter('in')}
+                                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                                    activityFilter === 'in'
+                                        ? 'bg-emerald-950/60 text-emerald-300 font-semibold border border-emerald-800/40'
+                                        : 'text-zinc-400 hover:text-emerald-300'
+                                }`}
+                            >
+                                Uang Masuk
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActivityFilter('out')}
+                                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                                    activityFilter === 'out'
+                                        ? 'bg-rose-950/60 text-rose-300 font-semibold border border-rose-800/40'
+                                        : 'text-zinc-400 hover:text-rose-300'
+                                }`}
+                            >
+                                Pengeluaran
+                            </button>
+                        </div>
+
+                        <Link
+                            to="/app/activity"
+                            className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold transition-colors shrink-0 hidden md:inline-flex"
+                        >
+                            <span>Buku Besar</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="divide-y divide-zinc-800/60">
-                    {recentActivities.map((act) => (
-                        <div
-                            key={act.id}
-                            className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:bg-zinc-900/30 px-2 rounded-lg transition-colors"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div
-                                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
-                                        act.type === 'IN'
-                                            ? 'bg-emerald-950/40 border-emerald-800/50 text-emerald-400'
-                                            : 'bg-rose-950/40 border-rose-800/50 text-rose-400'
-                                    }`}
-                                >
-                                    {act.type === 'IN' ? (
-                                        <ArrowDownLeft className="w-4 h-4" />
-                                    ) : (
-                                        <ArrowUpRight className="w-4 h-4" />
-                                    )}
-                                </div>
-                                <div className="space-y-0.5">
-                                    <div className="font-semibold text-white">{act.title}</div>
-                                    <div className="text-[11px] text-zinc-500 font-mono">
-                                        {act.walletType} • {act.time}
+                    {filteredActivities.length === 0 ? (
+                        <div className="py-8 text-center text-xs text-zinc-500">
+                            Tidak ada aktivitas mutasi untuk filter ini.
+                        </div>
+                    ) : (
+                        filteredActivities.map((act) => (
+                            <div
+                                key={act.id}
+                                className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:bg-zinc-900/30 px-2 rounded-lg transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div
+                                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
+                                            act.type === 'IN'
+                                                ? 'bg-emerald-950/40 border-emerald-800/50 text-emerald-400'
+                                                : 'bg-rose-950/40 border-rose-800/50 text-rose-400'
+                                        }`}
+                                    >
+                                        {act.type === 'IN' ? (
+                                            <ArrowDownLeft className="w-4 h-4" />
+                                        ) : (
+                                            <ArrowUpRight className="w-4 h-4" />
+                                        )}
+                                    </div>
+                                    <div className="space-y-0.5">
+                                        <div className="font-semibold text-white">{act.title}</div>
+                                        <div className="text-[11px] text-zinc-500 font-mono">
+                                            {act.walletType} • {act.time}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="flex items-center justify-between sm:justify-end gap-3 pl-11 sm:pl-0">
-                                <span
-                                    className={`font-mono font-bold text-sm ${
-                                        act.type === 'IN' ? 'text-emerald-400' : 'text-rose-400'
-                                    }`}
-                                >
-                                    {act.type === 'IN' ? '+' : '-'}
-                                    {formatCurrency(act.amount, act.currency)}
-                                </span>
-                                <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400">
-                                    {act.status} ✓
-                                </span>
+                                <div className="flex items-center justify-between sm:justify-end gap-3 pl-11 sm:pl-0">
+                                    <span
+                                        className={`font-mono font-bold text-sm ${
+                                            act.type === 'IN' ? 'text-emerald-400' : 'text-rose-400'
+                                        }`}
+                                    >
+                                        {act.type === 'IN' ? '+' : '-'}
+                                        {formatCurrency(act.amount, act.currency)}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400">
+                                        {act.status} ✓
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             </div>
 
