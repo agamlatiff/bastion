@@ -225,8 +225,6 @@ export const DashboardPage: React.FC = () => {
             .filter((w) => w.currency === 'IDR' && w.status !== 'CLOSED')
             .reduce((sum, w) => sum + (Number(w.balance) || 0), 0) + simulatedOffset;
 
-    const foreignWallets = wallets.filter((w) => w.currency !== 'IDR' && w.status !== 'CLOSED');
-
     const currentPeriod = PERIOD_METRICS[selectedPeriod];
 
     const filteredActivities = recentActivities.filter((act) => {
@@ -401,13 +399,13 @@ export const DashboardPage: React.FC = () => {
             {/* 2. REKENING & DOMPET RIIL PENGGUNA (HERO TOTAL SALDO KAS)                 */}
             {/* ========================================================================= */}
             <div className="space-y-4">
-                {/* Kartu Hero: Pusat Kas Riil 3-Zona Seimbang */}
+                {/* Kartu Hero: Saldo Kas Eksekutif & Aksi Cepat (Minimalis & Bersih) */}
                 <div className="rounded-2xl border border-zinc-800/90 bg-gradient-to-br from-[#121218] via-[#111116] to-[#0d0d12] p-6 sm:p-7 relative overflow-hidden shadow-xl">
                     <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
-                        {/* Zona 1: Total Saldo Kas Tersedia (lg:col-span-5) */}
-                        <div className="lg:col-span-5 space-y-3">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+                        {/* Sisi Kiri: Total Saldo Kas Tersedia & Kepastian Pembukuan */}
+                        <div className="space-y-3">
                             <div className="flex items-center gap-2">
                                 <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
                                     <Wallet className="w-3.5 h-3.5 text-emerald-400" />
@@ -426,68 +424,39 @@ export const DashboardPage: React.FC = () => {
                                 )}
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
-                                <span className="text-emerald-400/90 font-medium">
+                            <div className="flex flex-wrap items-center gap-2.5 text-xs text-zinc-400">
+                                <span className="text-emerald-400/90 font-medium flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                     {wallets.length} Rekening Terdaftar & Siap Pakai
                                 </span>
-                                <span>•</span>
-                                <span className="text-zinc-500">Buku Kas Terkunci</span>
+                                <span className="text-zinc-600">•</span>
+                                <span className="text-zinc-400">Buku Kas Terkunci</span>
+                                {wallets.length > 0 && (
+                                    <>
+                                        <span className="text-zinc-600">•</span>
+                                        <div className="flex items-center gap-1">
+                                            {wallets.map((w) => (
+                                                <span
+                                                    key={w.id}
+                                                    className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-300"
+                                                    title={`Dompet ${w.currency}`}
+                                                >
+                                                    {w.currency}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
-                        {/* Zona 2: Rincian Komposisi Kas Riil (lg:col-span-4) */}
-                        <div className="lg:col-span-4 p-4 rounded-xl bg-zinc-900/70 border border-zinc-800/80 space-y-2.5">
-                            <div className="flex items-center justify-between text-xs font-semibold text-zinc-300">
-                                <span className="flex items-center gap-1.5">
-                                    <span>Komposisi Kas Riil</span>
-                                </span>
-                                <span className="text-[10px] font-mono text-emerald-400/90 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                                    Live Saldo
-                                </span>
-                            </div>
-
-                            <div className="space-y-1.5 text-xs">
-                                <div className="flex items-center justify-between p-2 rounded-lg bg-zinc-950/60 border border-zinc-800/60">
-                                    <div className="flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                                        <span className="text-zinc-300 font-medium">Kas Operasional (IDR)</span>
-                                    </div>
-                                    <span className="font-mono font-bold text-white">
-                                        {isWalletsLoading ? '...' : formatCurrency(totalIdrBalance, 'IDR')}
-                                    </span>
-                                </div>
-
-                                <div className="flex items-center justify-between p-2 rounded-lg bg-zinc-950/60 border border-zinc-800/60">
-                                    <div className="flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
-                                        <span className="text-zinc-300 font-medium">Valas & Cadangan</span>
-                                    </div>
-                                    {foreignWallets.length > 0 ? (
-                                        <span className="font-mono font-semibold text-blue-300">
-                                            {foreignWallets
-                                                .map((w) => `${w.currency} ${Number(w.balance || 0).toLocaleString('id-ID')}`)
-                                                .join(', ')}
-                                        </span>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsCreateModalOpen(true)}
-                                            className="text-[11px] text-zinc-400 hover:text-emerald-300 transition-colors cursor-pointer"
-                                        >
-                                            + Buka Dompet Valas
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Zona 3: Tombol Aksi Finansial Langsung (lg:col-span-3) */}
-                        <div className="lg:col-span-3 flex sm:flex-col justify-stretch gap-2.5">
+                        {/* Sisi Kanan: Tombol Aksi Finansial Horizontal Berjajar */}
+                        <div className="flex flex-wrap items-center gap-3">
                             <Button
                                 size="md"
                                 onClick={() => setMoneyModalState({ isOpen: true, mode: 'topup' })}
                                 leftIcon={<ArrowDownLeft className="w-4 h-4" />}
-                                className="flex-1 w-full justify-center text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-950/30"
+                                className="px-5 py-2.5 text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-950/25 transition-all"
                             >
                                 Isi Saldo
                             </Button>
@@ -496,7 +465,7 @@ export const DashboardPage: React.FC = () => {
                                 size="md"
                                 onClick={() => setMoneyModalState({ isOpen: true, mode: 'transfer' })}
                                 leftIcon={<ArrowUpRight className="w-4 h-4 text-blue-400" />}
-                                className="flex-1 w-full justify-center text-xs font-semibold hover:border-blue-500/40"
+                                className="px-5 py-2.5 text-xs font-semibold hover:border-zinc-600 transition-all"
                             >
                                 Kirim Uang
                             </Button>
