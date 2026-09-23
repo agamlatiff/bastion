@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/agamlatiff/bastion/services/identity/domain"
@@ -50,24 +51,40 @@ func New(db *pgxpool.Pool) Repository {
 	return &pgxRepository{db: db}
 }
 
-// CreateUser inserts a new user, assigns the default CUSTOMER role, and records an outbox event in a single transaction.
+// CreateUser inserts a new user, assigns their roles (defaulting to CUSTOMER), and records an outbox event in a single transaction.
 func (r *pgxRepository) CreateUser(ctx context.Context, user *domain.User, event *domain.OutboxEvent) error {
+	// Defensive checks for ID, timestamps, and status
+	if user.ID == uuid.Nil {
+		user.ID = uuid.New()
+	}
+	now := time.Now().UTC()
+	if user.CreatedAt.IsZero() {
+		user.CreatedAt = now
+	}
+	if user.UpdatedAt.IsZero() {
+		user.UpdatedAt = now
+	}
+	if user.Status == "" {
+		user.Status = domain.StatusActive
+	}
+
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
-	// 1. Insert into users table
+	// 1. Insert into users table (explicitly handling two_factor_enabled and normalizing email)
 	queryUser := `
-		INSERT INTO users (id, email, password_hash, status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO users (id, email, password_hash, status, two_factor_enabled, created_at, updated_at)
+		VALUES ($1, LOWER(TRIM($2)), $3, $4, $5, $6, $7)
 	`
 	_, err = tx.Exec(ctx, queryUser,
 		user.ID,
 		user.Email,
 		user.PasswordHash,
 		user.Status,
+		user.TwoFactorEnabled,
 		user.CreatedAt,
 		user.UpdatedAt,
 	)
@@ -79,14 +96,35 @@ func (r *pgxRepository) CreateUser(ctx context.Context, user *domain.User, event
 		return fmt.Errorf("failed to insert user: %w", err)
 	}
 
-	// 2. Assign default CUSTOMER role
+	// 2. Assign roles (using user.Roles if provided, fallback to default CUSTOMER)
+	rolesToAssign := user.Roles
+	if len(rolesToAssign) == 0 {
+		rolesToAssign = []string{"CUSTOMER"}
+	}
+
 	queryRole := `
 		INSERT INTO user_roles (user_id, role_id)
-		SELECT $1, id FROM roles WHERE name = 'CUSTOMER'
+		SELECT $1, id FROM roles WHERE UPPER(name) = UPPER($2)
+		ON CONFLICT (user_id, role_id) DO NOTHING
 	`
-	if _, err := tx.Exec(ctx, queryRole, user.ID); err != nil {
-		return fmt.Errorf("failed to assign default role: %w", err)
+	for _, roleName := range rolesToAssign {
+		trimmedRole := strings.TrimSpace(roleName)
+		if trimmedRole == "" {
+			continue
+		}
+		cmdTag, err := tx.Exec(ctx, queryRole, user.ID, trimmedRole)
+		if err != nil {
+			return fmt.Errorf("failed to assign role '%s': %w", trimmedRole, err)
+		}
+		if cmdTag.RowsAffected() == 0 {
+			var roleExists bool
+			_ = tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM roles WHERE UPPER(name) = UPPER($1))", trimmedRole).Scan(&roleExists)
+			if !roleExists {
+				return fmt.Errorf("role '%s' not found in database", trimmedRole)
+			}
+		}
 	}
+	user.Roles = rolesToAssign
 
 	// 3. Atomically persist outbox event if provided
 	if event != nil {
