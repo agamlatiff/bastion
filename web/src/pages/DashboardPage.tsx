@@ -342,44 +342,26 @@ export const DashboardPage: React.FC = () => {
             {/* 2. REKENING & DOMPET RIIL PENGGUNA (FOKUS UTAMA BISNIS)                   */}
             {/* ========================================================================= */}
             <div className="space-y-4">
-                {/* Kartu Hero: Total Saldo Kas Tersedia */}
-                <div className="rounded-2xl border border-zinc-800/90 bg-gradient-to-br from-[#121218] via-[#111116] to-[#0d0d12] p-6 sm:p-7 relative overflow-hidden shadow-xl">
-                    <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+                {/* Kartu Hero: Total Saldo Kas & Saldo Bersih Berjalan */}
+                <div className="rounded-2xl border border-zinc-800/90 bg-gradient-to-br from-[#121218] via-[#111116] to-[#0d0d12] p-5 sm:p-7 relative overflow-hidden shadow-xl space-y-6">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                                    <Wallet className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span>Total Saldo Kas Tersedia</span>
-                                </span>
-                                <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-mono">
-                                    {currentPeriod.growthBadge} {currentPeriod.growthSub}
-                                </span>
-                            </div>
-
-                            <div className="text-3xl sm:text-4xl xl:text-5xl font-extrabold font-mono text-white tracking-tight">
-                                {isWalletsLoading ? (
-                                    <Skeleton className="h-12 w-64" />
-                                ) : (
-                                    formatCurrency(totalIdrBalance, 'IDR')
-                                )}
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400">
-                                <span className="flex items-center gap-1.5 font-medium">
-                                    <Calendar className="w-3.5 h-3.5 text-zinc-500" />
-                                    <span>Buku Kas: {currentPeriod.dateRange}</span>
-                                </span>
-                                <span>•</span>
-                                <span className="text-emerald-400/90 font-medium">
-                                    {wallets.length} Rekening Terdaftar & Siap Digunakan
-                                </span>
-                            </div>
+                    {/* Baris Atas Hero: Info Buku Kas & Pemilih Periode */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-800/80 relative z-10">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+                            <span className="flex items-center gap-1.5 font-medium">
+                                <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+                                <span>Buku Kas: <strong className="text-zinc-200 font-mono font-normal">{currentPeriod.dateRange}</strong></span>
+                            </span>
+                            <span className="text-zinc-600 hidden xs:inline">•</span>
+                            <span className="text-emerald-400/90 font-medium hidden xs:inline">
+                                {wallets.length} Rekening Terdaftar
+                            </span>
                         </div>
 
                         {/* Periode Switcher Ringkas */}
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <div className="flex items-center gap-2 self-start sm:self-auto">
+                            <span className="text-[11px] text-zinc-500 font-medium hidden sm:inline">Periode:</span>
                             <div className="p-1 rounded-xl bg-zinc-900/90 border border-zinc-800 flex items-center gap-1">
                                 {(['feb26', 'jan26', 'q1_26'] as PeriodType[]).map((p) => (
                                     <button
@@ -395,6 +377,66 @@ export const DashboardPage: React.FC = () => {
                                         {p === 'feb26' ? 'Februari' : p === 'jan26' ? 'Januari' : 'Kuartal 1'}
                                     </button>
                                 ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Dua Pilar Finansial: Saldo Kas Tersedia & Saldo Bersih */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 relative z-10">
+                        {/* Pilar 1: Total Saldo Kas Tersedia (Likuiditas Riil) */}
+                        <div className="p-5 sm:p-6 rounded-xl bg-zinc-900/40 border border-zinc-800/80 space-y-3 flex flex-col justify-between">
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                                        <Wallet className="w-3.5 h-3.5 text-emerald-400" />
+                                        <span>Total Saldo Kas Tersedia</span>
+                                    </span>
+                                    <span className="text-[10px] text-zinc-400 font-mono px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800">
+                                        Dana Riil
+                                    </span>
+                                </div>
+
+                                <div className="text-3xl sm:text-4xl xl:text-5xl font-extrabold font-mono text-white tracking-tight">
+                                    {isWalletsLoading ? (
+                                        <Skeleton className="h-12 w-64" />
+                                    ) : (
+                                        formatCurrency(totalIdrBalance, 'IDR')
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="pt-2 border-t border-zinc-800/60 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400">
+                                <span>Akumulasi seluruh rekening dompet IDR aktif</span>
+                                <span className="text-emerald-400 font-medium">Buku Kas Terkunci ✓</span>
+                            </div>
+                        </div>
+
+                        {/* Pilar 2: Saldo Bersih (Surplus Operasional) */}
+                        <div className="p-5 sm:p-6 rounded-xl bg-gradient-to-br from-emerald-950/30 via-zinc-900/50 to-zinc-900/30 border border-emerald-500/20 space-y-3 flex flex-col justify-between relative overflow-hidden">
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
+                                        <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                                        <span>Saldo Bersih (Surplus Operasional)</span>
+                                    </span>
+                                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-mono flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                        <span>{currentPeriod.growthBadge}</span>
+                                    </span>
+                                </div>
+
+                                <div className="text-3xl sm:text-4xl xl:text-5xl font-extrabold font-mono text-emerald-300 tracking-tight">
+                                    {currentPeriod.netReserve}
+                                </div>
+                            </div>
+
+                            <div className="pt-2 border-t border-emerald-500/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+                                <div className="flex items-center gap-2 font-mono text-[11px]">
+                                    <span className="text-emerald-400 font-semibold">{currentPeriod.grossInflow}</span>
+                                    <span className="text-zinc-600">−</span>
+                                    <span className="text-rose-400 font-semibold">{currentPeriod.operatingExpense}</span>
+                                </div>
+                                <span className="text-zinc-400 text-[11px]">{currentPeriod.growthSub}</span>
                             </div>
                         </div>
                     </div>
