@@ -22,6 +22,30 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { Alert } from '../components/ui/Alert';
 import { MoneyMovementModal } from '../components/dashboard/MoneyMovementModal';
 import { formatCurrency } from '../lib/formatters';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend,
+    Filler,
+    type ScriptableContext,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend,
+    Filler
+);
 
 type PeriodType = 'feb26' | 'jan26' | 'q1_26';
 
@@ -106,6 +130,18 @@ const CHANNELS_DATA = [
         dotColor: 'bg-amber-400',
         strokeColor: '#f59e0b',
     },
+];
+
+const CASH_FLOW_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+const CASH_FLOW_INFLOW = [
+    395000000, 312000000, 420000000, 385000000, 580000000, 220000000,
+    490000000, 864000000, 360000000, 470000000, 780000000, 540000000,
+];
+
+const CASH_FLOW_OUTFLOW = [
+    180000000, 140000000, 130000000, 150000000, 160000000, 125000000,
+    145000000, 170000000, 135000000, 145000000, 155000000, 140000000,
 ];
 
 interface RecentActivityItem {
@@ -564,33 +600,133 @@ export const DashboardPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Mini Sparkline Kurva Arus Kas */}
-                        <div className="pt-1 space-y-2">
+                        {/* Grafik Kurva Arus Kas Chart.js */}
+                        <div className="pt-2 space-y-2">
                             <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                                <span>Tren Perjalanan Arus Kas</span>
+                                <span>Kurva Tren Arus Kas Sepanjang Tahun</span>
                                 <span className="font-mono text-emerald-400 font-medium">Surplus Bertumbuh</span>
                             </div>
-                            <div className="h-20 w-full bg-zinc-900/50 rounded-xl p-2 border border-zinc-800/70 flex items-center justify-center relative overflow-hidden">
-                                <svg viewBox="0 0 400 60" className="w-full h-full overflow-visible" preserveAspectRatio="none">
-                                    <defs>
-                                        <linearGradient id="mini-curve-grad" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
-                                            <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
-                                        </linearGradient>
-                                    </defs>
-                                    <path
-                                        d="M 0,45 Q 60,40 100,32 T 200,20 T 300,10 T 400,15 L 400,60 L 0,60 Z"
-                                        fill="url(#mini-curve-grad)"
-                                    />
-                                    <path
-                                        d="M 0,45 Q 60,40 100,32 T 200,20 T 300,10 T 400,15"
-                                        fill="none"
-                                        stroke="#10b981"
-                                        strokeWidth="2.5"
-                                        strokeLinecap="round"
-                                    />
-                                    <circle cx="400" cy="15" r="4" fill="#10b981" />
-                                </svg>
+                            <div className="h-64 sm:h-72 w-full bg-zinc-900/30 rounded-xl p-3 border border-zinc-800/70">
+                                <Line
+                                    data={{
+                                        labels: CASH_FLOW_LABELS,
+                                        datasets: [
+                                            {
+                                                label: 'Uang Masuk (Omzet)',
+                                                data: CASH_FLOW_INFLOW,
+                                                borderColor: '#10b981',
+                                                backgroundColor: (context: ScriptableContext<'line'>) => {
+                                                    const ctx = context.chart.ctx;
+                                                    const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+                                                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.28)');
+                                                    gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+                                                    return gradient;
+                                                },
+                                                fill: true,
+                                                tension: 0.4,
+                                                borderWidth: 2.5,
+                                                pointRadius: 3,
+                                                pointHoverRadius: 6,
+                                                pointBackgroundColor: '#10b981',
+                                                pointBorderColor: '#ffffff',
+                                                pointBorderWidth: 1.5,
+                                            },
+                                            {
+                                                label: 'Beban Keluar',
+                                                data: CASH_FLOW_OUTFLOW,
+                                                borderColor: '#f43f5e',
+                                                backgroundColor: 'transparent',
+                                                fill: false,
+                                                tension: 0.4,
+                                                borderWidth: 1.8,
+                                                borderDash: [4, 4],
+                                                pointRadius: 2.5,
+                                                pointHoverRadius: 5,
+                                                pointBackgroundColor: '#f43f5e',
+                                                pointBorderColor: '#ffffff',
+                                                pointBorderWidth: 1,
+                                            },
+                                        ],
+                                    }}
+                                    options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        interaction: {
+                                            mode: 'index',
+                                            intersect: false,
+                                        },
+                                        plugins: {
+                                            legend: {
+                                                display: true,
+                                                position: 'top',
+                                                align: 'end',
+                                                labels: {
+                                                    boxWidth: 10,
+                                                    boxHeight: 10,
+                                                    color: '#a1a1aa',
+                                                    font: {
+                                                        size: 11,
+                                                    },
+                                                    usePointStyle: true,
+                                                    pointStyle: 'circle',
+                                                },
+                                            },
+                                            tooltip: {
+                                                backgroundColor: '#18181b',
+                                                titleColor: '#ffffff',
+                                                bodyColor: '#e4e4e7',
+                                                borderColor: '#27272a',
+                                                borderWidth: 1,
+                                                padding: 10,
+                                                boxPadding: 4,
+                                                usePointStyle: true,
+                                                callbacks: {
+                                                    label: (ctx) => {
+                                                        const val = ctx.parsed.y ?? 0;
+                                                        const formatted = new Intl.NumberFormat('id-ID', {
+                                                            style: 'currency',
+                                                            currency: 'IDR',
+                                                            maximumFractionDigits: 0,
+                                                        }).format(val);
+                                                        return ` ${ctx.dataset.label}: ${formatted}`;
+                                                    },
+                                                },
+                                            },
+                                        },
+                                        scales: {
+                                            x: {
+                                                grid: {
+                                                    color: 'rgba(255, 255, 255, 0.04)',
+                                                },
+                                                ticks: {
+                                                    color: '#71717a',
+                                                    font: {
+                                                        size: 10,
+                                                        family: 'monospace',
+                                                    },
+                                                },
+                                            },
+                                            y: {
+                                                grid: {
+                                                    color: 'rgba(255, 255, 255, 0.04)',
+                                                },
+                                                ticks: {
+                                                    color: '#71717a',
+                                                    font: {
+                                                        size: 10,
+                                                        family: 'monospace',
+                                                    },
+                                                    callback: (val) => {
+                                                        const num = Number(val);
+                                                        if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)} M`;
+                                                        if (num >= 1_000_000) return `${Math.round(num / 1_000_000)} Jt`;
+                                                        return `${num}`;
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
                             </div>
                         </div>
 
