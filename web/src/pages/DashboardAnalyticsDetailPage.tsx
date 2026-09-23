@@ -13,6 +13,30 @@ import { PageHeader } from '../components/common/PageHeader';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { formatCurrency } from '../lib/formatters';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend,
+    Filler,
+    type ScriptableContext,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend,
+    Filler
+);
 
 interface MonthRow {
     month: string;
@@ -197,6 +221,162 @@ export const DashboardAnalyticsDetailPage: React.FC = () => {
 
                 <div className="text-xs text-zinc-500 font-mono hidden sm:block">
                     Menampilkan {filteredRows.length} bulan pembukuan
+                </div>
+            </div>
+
+            {/* Visualisasi Grafik Kurva Arus Kas Lengkap (Chart.js) */}
+            <div className="rounded-2xl border border-zinc-800 bg-[#111116] p-6 space-y-4 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800/80 pb-3">
+                    <div>
+                        <h3 className="text-sm sm:text-base font-bold text-white tracking-tight font-heading flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-emerald-400" />
+                            <span>Grafik Fluktuasi Arus Kas & Saldo Bersih</span>
+                        </h3>
+                        <p className="text-xs text-zinc-400 pt-0.5">
+                            Visualisasi komparasi uang masuk, beban operasional, dan saldo bersih riil.
+                        </p>
+                    </div>
+                    <span className="text-[11px] font-mono text-zinc-400 px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 self-start sm:self-auto">
+                        {filterPeriod === 'ALL' ? '12 Bulan Penuh' : filterPeriod === 'H1' ? 'Semester 1' : 'Semester 2'}
+                    </span>
+                </div>
+
+                <div className="h-80 sm:h-96 w-full pt-2">
+                    <Line
+                        data={{
+                            labels: filteredRows.map((r) => r.month.replace(' 2026', '')),
+                            datasets: [
+                                {
+                                    label: 'Uang Masuk (Omzet)',
+                                    data: filteredRows.map((r) => r.inflow),
+                                    borderColor: '#10b981',
+                                    backgroundColor: (context: ScriptableContext<'line'>) => {
+                                        const ctx = context.chart.ctx;
+                                        const gradient = ctx.createLinearGradient(0, 0, 0, 320);
+                                        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.28)');
+                                        gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+                                        return gradient;
+                                    },
+                                    fill: true,
+                                    tension: 0.4,
+                                    borderWidth: 2.8,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 7,
+                                    pointBackgroundColor: '#10b981',
+                                    pointBorderColor: '#ffffff',
+                                    pointBorderWidth: 1.5,
+                                },
+                                {
+                                    label: 'Beban Operasional',
+                                    data: filteredRows.map((r) => r.outflow),
+                                    borderColor: '#f43f5e',
+                                    backgroundColor: 'transparent',
+                                    fill: false,
+                                    tension: 0.4,
+                                    borderWidth: 2,
+                                    borderDash: [4, 4],
+                                    pointRadius: 3,
+                                    pointHoverRadius: 6,
+                                    pointBackgroundColor: '#f43f5e',
+                                    pointBorderColor: '#ffffff',
+                                    pointBorderWidth: 1.5,
+                                },
+                                {
+                                    label: 'Saldo Bersih (Surplus)',
+                                    data: filteredRows.map((r) => r.net),
+                                    borderColor: '#38bdf8',
+                                    backgroundColor: 'transparent',
+                                    fill: false,
+                                    tension: 0.4,
+                                    borderWidth: 2.2,
+                                    pointRadius: 3.5,
+                                    pointHoverRadius: 6,
+                                    pointBackgroundColor: '#38bdf8',
+                                    pointBorderColor: '#ffffff',
+                                    pointBorderWidth: 1.5,
+                                },
+                            ],
+                        }}
+                        options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                    align: 'end',
+                                    labels: {
+                                        boxWidth: 10,
+                                        boxHeight: 10,
+                                        color: '#d4d4d8',
+                                        font: {
+                                            size: 11,
+                                        },
+                                        usePointStyle: true,
+                                        pointStyle: 'circle',
+                                    },
+                                },
+                                tooltip: {
+                                    backgroundColor: '#18181b',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#e4e4e7',
+                                    borderColor: '#27272a',
+                                    borderWidth: 1,
+                                    padding: 12,
+                                    boxPadding: 6,
+                                    usePointStyle: true,
+                                    callbacks: {
+                                        label: (ctx) => {
+                                            const val = ctx.parsed.y ?? 0;
+                                            const formatted = new Intl.NumberFormat('id-ID', {
+                                                style: 'currency',
+                                                currency: 'IDR',
+                                                maximumFractionDigits: 0,
+                                            }).format(val);
+                                            return ` ${ctx.dataset.label}: ${formatted}`;
+                                        },
+                                    },
+                                },
+                            },
+                            scales: {
+                                x: {
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.04)',
+                                    },
+                                    ticks: {
+                                        color: '#a1a1aa',
+                                        font: {
+                                            size: 11,
+                                            family: 'monospace',
+                                        },
+                                    },
+                                },
+                                y: {
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.04)',
+                                    },
+                                    ticks: {
+                                        color: '#a1a1aa',
+                                        font: {
+                                            size: 10,
+                                            family: 'monospace',
+                                        },
+                                        callback: (val) => {
+                                            const num = Number(val);
+                                            if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)} M`;
+                                            if (num >= 1_000_000) return `${Math.round(num / 1_000_000)} Jt`;
+                                            if (num <= -1_000_000) return `-${Math.round(Math.abs(num) / 1_000_000)} Jt`;
+                                            return `${num}`;
+                                        },
+                                    },
+                                },
+                            },
+                        }}
+                    />
                 </div>
             </div>
 

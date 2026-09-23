@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
 import { MobileNav } from './components/MobileNav';
@@ -8,6 +8,12 @@ import { CommandPalette } from '../components/common/CommandPalette';
 export const AppLayout: React.FC = () => {
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
     const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+    const { pathname } = useLocation();
+
+    // Automatically scroll window to top whenever navigation route changes
+    useEffect(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }, [pathname]);
 
     // Global keyboard listener for Ctrl+K / Cmd+K
     useEffect(() => {
