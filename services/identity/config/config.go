@@ -46,3 +46,8 @@ func getEnvAsInt(key string, defaultValue int) int {
 	}
 	return defaultValue
 }
+
+// KafkaBrokerList splits the comma-separated Kafka brokers configuration string.
+func (c *Config) KafkaBrokerList() []string {
+	return strings.Split(c.KafkaBrokers, ",")
+}
