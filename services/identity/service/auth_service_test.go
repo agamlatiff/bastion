@@ -12,6 +12,7 @@ import (
 )
 
 type mockRepository struct {
+	domain.Repository
 	createdUser  *domain.User
 	createdEvent *domain.OutboxEvent
 	createUserFn func(ctx context.Context, user *domain.User, event *domain.OutboxEvent) error
@@ -26,52 +27,7 @@ func (m *mockRepository) CreateUser(ctx context.Context, user *domain.User, even
 	return nil
 }
 
-func (m *mockRepository) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
-	return nil, nil
-}
-func (m *mockRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
-	return nil, nil
-}
-func (m *mockRepository) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]string, error) {
-	return nil, nil
-}
-func (m *mockRepository) UpdateTwoFactor(ctx context.Context, userID uuid.UUID, secretEncrypted *string, enabled bool) error {
-	return nil
-}
-func (m *mockRepository) CreateSession(ctx context.Context, session *domain.Session) error {
-	return nil
-}
-func (m *mockRepository) GetSessionByTokenHash(ctx context.Context, tokenHash string) (*domain.Session, error) {
-	return nil, nil
-}
-func (m *mockRepository) RevokeSession(ctx context.Context, sessionID uuid.UUID) error {
-	return nil
-}
-func (m *mockRepository) RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error {
-	return nil
-}
 func (m *mockRepository) LogSecurityAudit(ctx context.Context, userID *uuid.UUID, action, requestID, ip string) {
-}
-func (m *mockRepository) GetPendingOutboxEvents(ctx context.Context, limit int) ([]*domain.OutboxEvent, error) {
-	return nil, nil
-}
-func (m *mockRepository) MarkOutboxEventPublished(ctx context.Context, id uuid.UUID) error {
-	return nil
-}
-func (m *mockRepository) MarkOutboxEventFailed(ctx context.Context, id uuid.UUID, maxRetries int) error {
-	return nil
-}
-func (m *mockRepository) AssignUserRole(ctx context.Context, userID uuid.UUID, roleName string) error {
-	return nil
-}
-func (m *mockRepository) RevokeUserRole(ctx context.Context, userID uuid.UUID, roleName string) error {
-	return nil
-}
-func (m *mockRepository) ListUsers(ctx context.Context, limit, offset int) ([]*domain.User, int, error) {
-	return nil, 0, nil
-}
-func (m *mockRepository) ListRoles(ctx context.Context) ([]string, error) {
-	return []string{"CUSTOMER", "ADMIN"}, nil
 }
 
 func TestRegister_PersistsOutboxEvent(t *testing.T) {

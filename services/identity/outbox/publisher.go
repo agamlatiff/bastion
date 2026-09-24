@@ -5,19 +5,19 @@ import (
 	"log"
 	"time"
 
-	"github.com/agamlatiff/bastion/services/identity/repository"
+	"github.com/agamlatiff/bastion/services/identity/domain"
 	"github.com/segmentio/kafka-go"
 )
 
 // OutboxPublisher polls pending outbox events from identity_db and writes them to Kafka.
 type OutboxPublisher struct {
-	repo   repository.Repository
+	repo   domain.OutboxRepository
 	writer *kafka.Writer
 	stopCh chan struct{}
 }
 
 // NewOutboxPublisher initializes a new transactional outbox publisher worker.
-func NewOutboxPublisher(repo repository.Repository, brokers []string, topic string) *OutboxPublisher {
+func NewOutboxPublisher(repo domain.OutboxRepository, brokers []string, topic string) *OutboxPublisher {
 	writer := &kafka.Writer{
 		Addr:         kafka.TCP(brokers...),
 		Topic:        topic,
