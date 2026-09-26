@@ -54,6 +54,8 @@ func New(cfg *config.Config) *gin.Engine {
 
 	r.Any("/v1/auth", proxyIdentity)
 	r.Any("/v1/auth/*path", proxyIdentity)
+	r.Any("/v1/admin", proxyIdentity)
+	r.Any("/v1/admin/*path", proxyIdentity)
 	r.Any("/v1/customers", proxyCustomer)
 	r.Any("/v1/customers/*path", proxyCustomer)
 	r.Any("/v1/wallets", proxyWallet)

@@ -56,7 +56,8 @@ export const TopupModal: React.FC<TopupModalProps> = ({
     const selectedWallet = activeWallets.find((w) => w.id === receiverWalletId) || activeWallets[0];
     const isUSD = selectedWallet?.currency === 'USD';
     const presets = isUSD ? PRESET_AMOUNTS_USD : PRESET_AMOUNTS_IDR;
-    const rawAmount = parseInt(amountStr.replace(/\D/g, '') || '0', 10);
+    const rawMajorAmount = parseInt(amountStr.replace(/\D/g, '') || '0', 10);
+    const minorAmount = rawMajorAmount * 100;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,7 +69,7 @@ export const TopupModal: React.FC<TopupModalProps> = ({
             return;
         }
 
-        if (rawAmount <= 0) {
+        if (rawMajorAmount <= 0) {
             setErrorMsg('Nominal pengisian saldo harus lebih dari 0.');
             return;
         }
@@ -77,12 +78,12 @@ export const TopupModal: React.FC<TopupModalProps> = ({
             await createTopup({
                 idempotency_key: idempotencyKey,
                 receiver_wallet_id: receiverWalletId,
-                amount: rawAmount,
+                amount: minorAmount,
                 currency: selectedWallet?.currency || 'IDR',
                 description: description.trim() || 'Pengisian saldo dompet',
             });
 
-            setSuccessMsg(`Saldo sebesar ${formatCurrency(rawAmount, selectedWallet?.currency || 'IDR')} berhasil ditambahkan.`);
+            setSuccessMsg(`Saldo sebesar ${formatCurrency(minorAmount, selectedWallet?.currency || 'IDR')} berhasil ditambahkan.`);
             setTimeout(() => {
                 onClose();
                 if (onSuccess) onSuccess();
@@ -170,12 +171,12 @@ export const TopupModal: React.FC<TopupModalProps> = ({
                                     onClick={() => setAmountStr(val.toString())}
                                     disabled={isPending || !!successMsg}
                                     className={`py-2 px-2.5 rounded-lg border text-xs font-mono transition-colors text-center ${
-                                        rawAmount === val
+                                        rawMajorAmount === val
                                             ? 'border-blue-500 bg-blue-950/40 text-blue-300 font-bold'
                                             : 'border-zinc-800 bg-[#0c0c0e] text-zinc-300 hover:border-zinc-700'
                                     }`}
                                 >
-                                    {formatCurrency(val, selectedWallet?.currency || 'IDR')}
+                                    {formatCurrency(val * 100, selectedWallet?.currency || 'IDR')}
                                 </button>
                             ))}
                         </div>
@@ -232,7 +233,7 @@ export const TopupModal: React.FC<TopupModalProps> = ({
                         <div className="border-t border-zinc-800 pt-1.5 flex justify-between font-semibold text-white">
                             <span>Total Saldo Masuk</span>
                             <span className="font-mono text-blue-400">
-                                {formatCurrency(rawAmount, selectedWallet?.currency || 'IDR')}
+                                {formatCurrency(minorAmount, selectedWallet?.currency || 'IDR')}
                             </span>
                         </div>
                     </div>
@@ -252,7 +253,7 @@ export const TopupModal: React.FC<TopupModalProps> = ({
                             type="submit"
                             size="sm"
                             isLoading={isPending}
-                            disabled={rawAmount <= 0 || !!successMsg}
+                            disabled={rawMajorAmount <= 0 || !!successMsg}
                             rightIcon={successMsg ? <CheckCircle2 className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
                         >
                             {successMsg ? 'Berhasil' : 'Tambahkan Saldo'}
