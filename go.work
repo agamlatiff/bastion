@@ -1,6 +1,7 @@
 go 1.26.4
 
 use (
+	./services/customer
 	./services/gateway
 	./services/identity
 	./services/ledger
