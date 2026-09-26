@@ -31,7 +31,7 @@ Frontend (web/)                          API Gateway (:8080)                    
 ### Tahap 1: Penyelarasan Jalur Routing API Gateway (Prioritas Segera)
 Tujuan: Memastikan seluruh rute admin dan transaksi yang dipanggil oleh frontend dapat diteruskan ke service yang tepat tanpa galat 404.
 
-- [ ] **GW-001: Daftarkan Rute Admin Identity di Gateway**
+- [x] **GW-001: Daftarkan Rute Admin Identity di Gateway**
   - **Berkas Target:** [`services/gateway/router/router.go`](file:///c:/Projects/bastion/services/gateway/router/router.go)
   - **Aksi:** Tambahkan pendaftaran reverse proxy untuk rute admin:
     ```go
@@ -40,7 +40,7 @@ Tujuan: Memastikan seluruh rute admin dan transaksi yang dipanggil oleh frontend
     ```
   - **Hasil:** Permintaan dari `web/src/features/admin/api.ts` (`/v1/admin/users`, `/v1/admin/roles`) berhasil diteruskan ke `services/identity`.
 
-- [ ] **GW-002: Tambahkan Unit Test Routing Admin di Gateway**
+- [x] **GW-002: Tambahkan Unit Test Routing Admin di Gateway**
   - **Berkas Target:** [`services/gateway/router/router_test.go`](file:///c:/Projects/bastion/services/gateway/router/router_test.go)
   - **Aksi:** Buat pengujian otomatis untuk memverifikasi bahwa permintaan dengan prefix `/v1/admin` diteruskan ke `identityServiceURL`.
 
@@ -49,7 +49,7 @@ Tujuan: Memastikan seluruh rute admin dan transaksi yang dipanggil oleh frontend
 ### Tahap 2: Penyelarasan Format Mata Uang & Satuan Terkecil (Minor Units)
 Tujuan: Mencegah selisih nilai nominal (100x) antara angka yang dimasukkan pengguna di form dengan angka yang dicatat di database keuangan.
 
-- [ ] **CU-001: Konversi Nominal Input Pengguna ke Minor Unit di Modal Transaksi**
+- [x] **CU-001: Konversi Nominal Input Pengguna ke Minor Unit di Modal Transaksi**
   - **Berkas Target:** 
     - [`web/src/components/transaction/TransferModal.tsx`](file:///c:/Projects/bastion/web/src/components/transaction/TransferModal.tsx)
     - [`web/src/components/transaction/TopupModal.tsx`](file:///c:/Projects/bastion/web/src/components/transaction/TopupModal.tsx)
@@ -59,7 +59,7 @@ Tujuan: Mencegah selisih nilai nominal (100x) antara angka yang dimasukkan pengg
     - Pastikan nilai preset tombol (Rp 50.000, Rp 100.000, dst.) dikonversi ke satuan sen yang tepat.
   - **Hasil:** Input Rp 50.000 akan tersimpan sebagai 5.000.000 sen di database, dan diformat kembali secara akurat oleh `formatCurrency()` menjadi `Rp 50.000,00`.
 
-- [ ] **CU-002: Uji Validasi Tampilan Saldo dan Riwayat**
+- [x] **CU-002: Uji Validasi Tampilan Saldo dan Riwayat**
   - **Berkas Target:** [`web/src/lib/formatters.ts`](file:///c:/Projects/bastion/web/src/lib/formatters.ts)
   - **Aksi:** Verifikasi fungsi `formatCurrency` bekerja konsisten pada seluruh komponen (Virtual Card, Saldo Utama, Daftar Transaksi, dan Struk Rincian Transaksi).
 
@@ -68,12 +68,12 @@ Tujuan: Mencegah selisih nilai nominal (100x) antara angka yang dimasukkan pengg
 ### Tahap 3: Penyelarasan Halaman Dasbor Utama dengan Data Riil
 Tujuan: Menghapus data tiruan (*mock/dummy*) dan simulasi waktu tunda (*setTimeout*) di dasbor agar 100% menggunakan data dari backend.
 
-- [ ] **DB-001: Hubungkan Widget Mutasi Dasbor ke Data Transaksi Riil**
+- [x] **DB-001: Hubungkan Widget Mutasi Dasbor ke Data Transaksi Riil**
   - **Berkas Target:** [`web/src/pages/DashboardPage.tsx`](file:///c:/Projects/bastion/web/src/pages/DashboardPage.tsx)
   - **Aksi:** Ganti state lokal `recentActivities` dengan query `useTransactions({ limit: 5 })`.
   - **Hasil:** Transaksi terkini di dasbor langsung mencerminkan data riil dari `services/transaction`.
 
-- [ ] **DB-002: Ganti `MoneyMovementModal` dengan `TransferModal` & `TopupModal` Riil**
+- [x] **DB-002: Ganti `MoneyMovementModal` dengan `TransferModal` & `TopupModal` Riil**
   - **Berkas Target:** 
     - [`web/src/pages/DashboardPage.tsx`](file:///c:/Projects/bastion/web/src/pages/DashboardPage.tsx)
     - Hapus ketergantungan pada [`web/src/components/dashboard/MoneyMovementModal.tsx`](file:///c:/Projects/bastion/web/src/components/dashboard/MoneyMovementModal.tsx).
@@ -82,7 +82,7 @@ Tujuan: Menghapus data tiruan (*mock/dummy*) dan simulasi waktu tunda (*setTimeo
     - Tombol "Isi Saldo" membuka `TopupModal`.
     - Hapus variabel `simulatedOffset` (tidak ada lagi penambahan saldo palsu di memory).
 
-- [ ] **DB-003: Agregasi Metrik Arus Kas dari Transaksi Riil**
+- [x] **DB-003: Agregasi Metrik Arus Kas dari Transaksi Riil**
   - **Berkas Target:** [`web/src/pages/DashboardPage.tsx`](file:///c:/Projects/bastion/web/src/pages/DashboardPage.tsx)
   - **Aksi:** Hitung total uang masuk (*inflow*) dan total uang keluar (*outflow*) langsung dari daftar transaksi pengguna aktif, bukan dari angka perkiraan statis.
 

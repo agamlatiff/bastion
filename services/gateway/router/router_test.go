@@ -75,3 +75,29 @@ func TestMetricsEndpointAuth(t *testing.T) {
 		t.Fatalf("expected 200 OK with valid basic auth, got %d", wAuth.Code)
 	}
 }
+
+func TestAdminProxyRoute(t *testing.T) {
+	// Spin up a mock identity service
+	receivedPath := ""
+	mockIdentity := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedPath = r.URL.Path
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"users":[]}`))
+	}))
+	defer mockIdentity.Close()
+
+	cfg := testConfig()
+	cfg.IdentityServiceURL = mockIdentity.URL
+	r := New(cfg)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/v1/admin/users", nil)
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK from proxied admin route, got %d", w.Code)
+	}
+	if receivedPath != "/v1/admin/users" {
+		t.Fatalf("expected path /v1/admin/users received by backend, got %s", receivedPath)
+	}
+}

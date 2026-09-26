@@ -54,9 +54,10 @@ export const TransferModal: React.FC<TransferModalProps> = ({
     if (!isOpen) return null;
 
     const selectedWallet = activeWallets.find((w) => w.id === senderWalletId) || activeWallets[0];
-    const rawAmount = parseInt(amountStr.replace(/\D/g, '') || '0', 10);
+    const rawMajorAmount = parseInt(amountStr.replace(/\D/g, '') || '0', 10);
+    const minorAmount = rawMajorAmount * 100;
     const availableBalance = selectedWallet ? Number(selectedWallet.balance) || 0 : 0;
-    const isExceedingBalance = rawAmount > availableBalance;
+    const isExceedingBalance = minorAmount > availableBalance;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -79,7 +80,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
             return;
         }
 
-        if (rawAmount <= 0) {
+        if (rawMajorAmount <= 0) {
             setErrorMsg('Nominal transfer harus lebih besar dari 0.');
             return;
         }
@@ -94,12 +95,12 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                 idempotency_key: idempotencyKey,
                 sender_wallet_id: senderWalletId,
                 receiver_wallet_id: trimmedReceiver,
-                amount: rawAmount,
+                amount: minorAmount,
                 currency: selectedWallet.currency,
                 description: description.trim() || undefined,
             });
 
-            setSuccessMsg(`Transfer sebesar ${formatCurrency(rawAmount, selectedWallet.currency)} berhasil dikirim.`);
+            setSuccessMsg(`Transfer sebesar ${formatCurrency(minorAmount, selectedWallet.currency)} berhasil dikirim.`);
             setTimeout(() => {
                 onClose();
                 if (onSuccess) onSuccess();
@@ -257,7 +258,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                         <div className="border-t border-zinc-800 pt-1.5 flex justify-between font-semibold text-white">
                             <span>Total Terpotong</span>
                             <span className="font-mono text-emerald-400">
-                                {formatCurrency(rawAmount, selectedWallet?.currency || 'IDR')}
+                                {formatCurrency(minorAmount, selectedWallet?.currency || 'IDR')}
                             </span>
                         </div>
                     </div>
@@ -277,7 +278,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                             type="submit"
                             size="sm"
                             isLoading={isPending}
-                            disabled={rawAmount <= 0 || isExceedingBalance || !receiverWalletId.trim() || !!successMsg}
+                            disabled={rawMajorAmount <= 0 || isExceedingBalance || !receiverWalletId.trim() || !!successMsg}
                             rightIcon={successMsg ? <CheckCircle2 className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
                         >
                             {successMsg ? 'Terkirim' : 'Kirim Sekarang'}

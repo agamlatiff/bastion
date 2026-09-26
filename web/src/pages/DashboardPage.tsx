@@ -21,8 +21,12 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { Alert } from '../components/ui/Alert';
-import { MoneyMovementModal } from '../components/dashboard/MoneyMovementModal';
-import { formatCurrency } from '../lib/formatters';
+import { TransferModal } from '../components/transaction/TransferModal';
+import { TopupModal } from '../components/transaction/TopupModal';
+import { TransactionDetailModal } from '../components/transaction/TransactionDetailModal';
+import { useTransactions } from '../features/transaction/hooks';
+import type { Transaction } from '../types/transaction';
+import { formatCurrency, formatDate } from '../lib/formatters';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -152,84 +156,56 @@ const FX_RATES_TO_IDR: Record<string, number> = {
     SGD: 12100,
 };
 
-interface RecentActivityItem {
-    id: string;
-    title: string;
-    walletType: string;
-    amount: number;
-    currency: string;
-    type: 'IN' | 'OUT';
-    time: string;
-    status: string;
-}
-
 export const DashboardPage: React.FC = () => {
-    // Data Pelanggan dan Dompet Riil
+    // Data Pelanggan, Dompet, dan Transaksi Riil
     const { data: profile, isLoading: isProfileLoading } = useCustomerProfile();
     const { data: wallets = [], isLoading: isWalletsLoading, refetch: refetchWallets, isRefetching } = useWallets();
     const { mutateAsync: createWallet, isPending: isCreatingWallet } = useCreateWallet();
+    const { data: txData, isLoading: isTxLoading, refetch: refetchTx } = useTransactions({ limit: 10 });
+
+    const transactions = txData?.items || [];
+    const userWalletIds = new Set(wallets.map((w) => w.id));
 
     // Dialog & Status Interaksi
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [moneyModalState, setMoneyModalState] = useState<{
-        isOpen: boolean;
-        mode: 'transfer' | 'topup';
-    }>({ isOpen: false, mode: 'topup' });
+    const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+    const [isTopupModalOpen, setIsTopupModalOpen] = useState(false);
+    const [selectedWalletForAction, setSelectedWalletForAction] = useState<string | undefined>(undefined);
+    const [selectedTxDetail, setSelectedTxDetail] = useState<Transaction | null>(null);
+
     const [selectedCurrency, setSelectedCurrency] = useState('IDR');
     const [createError, setCreateError] = useState<string | null>(null);
-    const [simulatedOffset, setSimulatedOffset] = useState<number>(0);
     const [copiedWalletId, setCopiedWalletId] = useState<string | null>(null);
     const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('feb26');
     const [chartFilter, setChartFilter] = useState<'all' | 'inflow' | 'outflow' | 'net'>('all');
     const [activityFilter, setActivityFilter] = useState<'all' | 'in' | 'out'>('all');
 
-    // Riwayat Mutasi Terkini
-    const [recentActivities, setRecentActivities] = useState<RecentActivityItem[]>([
-        {
-            id: 'act-1',
-            title: 'Isi Saldo Kasir Otomatis',
-            walletType: 'Dompet Rupiah',
-            amount: 5000000,
-            currency: 'IDR',
-            type: 'IN',
-            time: '12 menit lalu',
-            status: 'Tercatat Sah',
-        },
-        {
-            id: 'act-2',
-            title: 'Biaya Pengadaan & Operasional',
-            walletType: 'Dompet Rupiah',
-            amount: 1450000,
-            currency: 'IDR',
-            type: 'OUT',
-            time: '1 jam lalu',
-            status: 'Tercatat Sah',
-        },
-        {
-            id: 'act-3',
-            title: 'Settlement Kliring QRIS Toko',
-            walletType: 'Dompet Rupiah',
-            amount: 2850000,
-            currency: 'IDR',
-            type: 'IN',
-            time: '3 jam lalu',
-            status: 'Tercatat Sah',
-        },
-    ]);
-
     const displayName = profile?.fullName || profile?.full_name || 'PT Kopi Nusantara';
 
     // Total Saldo Rupiah Riil
-    const totalIdrBalance =
-        wallets
-            .filter((w) => w.currency === 'IDR' && w.status !== 'CLOSED')
-            .reduce((sum, w) => sum + (Number(w.balance) || 0), 0) + simulatedOffset;
+    const totalIdrBalance = wallets
+        .filter((w) => w.currency === 'IDR' && w.status !== 'CLOSED')
+        .reduce((sum, w) => sum + (Number(w.balance) || 0), 0);
+
+    // Agregasi Mutasi Transaksi Riil (DB-003)
+    const liveInflow = transactions
+        .filter((tx) => tx.type === 'TOPUP' || (tx.receiver_wallet_id && userWalletIds.has(tx.receiver_wallet_id) && tx.sender_wallet_id !== tx.receiver_wallet_id))
+        .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+
+    const liveOutflow = transactions
+        .filter((tx) => tx.type === 'TRANSFER' && tx.sender_wallet_id && userWalletIds.has(tx.sender_wallet_id))
+        .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+
+    const liveNet = liveInflow - liveOutflow;
 
     const currentPeriod = PERIOD_METRICS[selectedPeriod];
 
-    const filteredActivities = recentActivities.filter((act) => {
-        if (activityFilter === 'in') return act.type === 'IN';
-        if (activityFilter === 'out') return act.type === 'OUT';
+    const filteredActivities = transactions.filter((tx) => {
+        const isIncoming = tx.type === 'TOPUP' || (tx.receiver_wallet_id && userWalletIds.has(tx.receiver_wallet_id) && tx.sender_wallet_id !== tx.receiver_wallet_id);
+        const isOutgoing = tx.type === 'TRANSFER' && tx.sender_wallet_id && userWalletIds.has(tx.sender_wallet_id);
+
+        if (activityFilter === 'in') return isIncoming;
+        if (activityFilter === 'out') return isOutgoing;
         return true;
     });
 
@@ -299,40 +275,6 @@ export const DashboardPage: React.FC = () => {
         navigator.clipboard.writeText(id);
         setCopiedWalletId(id);
         setTimeout(() => setCopiedWalletId(null), 2000);
-    };
-
-    const handleMoneySuccess = (amount: number, type: 'transfer' | 'topup') => {
-        if (type === 'topup') {
-            setSimulatedOffset((prev) => prev + amount);
-            setRecentActivities((prev) => [
-                {
-                    id: `act-${Date.now()}`,
-                    title: 'Top Up Saldo Mandiri',
-                    walletType: 'Dompet Rupiah',
-                    amount: amount,
-                    currency: 'IDR',
-                    type: 'IN',
-                    time: 'Baru saja',
-                    status: 'Tercatat Sah',
-                },
-                ...prev.slice(0, 4),
-            ]);
-        } else {
-            setSimulatedOffset((prev) => Math.max(0, prev - amount));
-            setRecentActivities((prev) => [
-                {
-                    id: `act-${Date.now()}`,
-                    title: 'Transfer Pengeluaran Kasir',
-                    walletType: 'Dompet Rupiah',
-                    amount: amount,
-                    currency: 'IDR',
-                    type: 'OUT',
-                    time: 'Baru saja',
-                    status: 'Tercatat Sah',
-                },
-                ...prev.slice(0, 4),
-            ]);
-        }
     };
 
     const handleCreateWallet = async (e: React.FormEvent) => {
@@ -454,7 +396,10 @@ export const DashboardPage: React.FC = () => {
                         <div className="flex flex-wrap items-center gap-3">
                             <Button
                                 size="md"
-                                onClick={() => setMoneyModalState({ isOpen: true, mode: 'topup' })}
+                                onClick={() => {
+                                    setSelectedWalletForAction(undefined);
+                                    setIsTopupModalOpen(true);
+                                }}
                                 leftIcon={<ArrowDownLeft className="w-4 h-4" />}
                                 className="px-5 py-2.5 text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-950/25 transition-all"
                             >
@@ -463,7 +408,10 @@ export const DashboardPage: React.FC = () => {
                             <Button
                                 variant="secondary"
                                 size="md"
-                                onClick={() => setMoneyModalState({ isOpen: true, mode: 'transfer' })}
+                                onClick={() => {
+                                    setSelectedWalletForAction(undefined);
+                                    setIsTransferModalOpen(true);
+                                }}
                                 leftIcon={<ArrowUpRight className="w-4 h-4 text-blue-400" />}
                                 className="px-5 py-2.5 text-xs font-semibold hover:border-zinc-600 transition-all"
                             >
@@ -560,9 +508,11 @@ export const DashboardPage: React.FC = () => {
                             Uang Masuk (Omzet)
                         </span>
                         <span className="text-base sm:text-lg xl:text-xl font-mono font-bold text-emerald-400 block truncate">
-                            {currentPeriod.grossInflow}
+                            {liveInflow > 0 ? `+${formatCurrency(liveInflow, 'IDR')}` : currentPeriod.grossInflow}
                         </span>
-                        <span className="text-[10px] text-emerald-400/80 font-mono block">Omzet kasir riil</span>
+                        <span className="text-[10px] text-emerald-400/80 font-mono block">
+                            {liveInflow > 0 ? 'Akumulasi mutasi riil' : 'Omzet kasir riil'}
+                        </span>
                     </div>
 
                     <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
@@ -570,9 +520,11 @@ export const DashboardPage: React.FC = () => {
                             Pengeluaran Operasional
                         </span>
                         <span className="text-base sm:text-lg xl:text-xl font-mono font-bold text-rose-400 block truncate">
-                            {currentPeriod.operatingExpense}
+                            {liveOutflow > 0 ? `-${formatCurrency(liveOutflow, 'IDR')}` : currentPeriod.operatingExpense}
                         </span>
-                        <span className="text-[10px] text-zinc-500 font-mono block">Biaya & stok kasir</span>
+                        <span className="text-[10px] text-zinc-500 font-mono block">
+                            {liveOutflow > 0 ? 'Akumulasi mutasi riil' : 'Biaya & stok kasir'}
+                        </span>
                     </div>
 
                     <div className="p-4 rounded-xl bg-zinc-900/60 border border-emerald-500/20 space-y-1 bg-emerald-500/5">
@@ -580,9 +532,11 @@ export const DashboardPage: React.FC = () => {
                             Saldo Bersih (Surplus)
                         </span>
                         <span className="text-base sm:text-lg xl:text-xl font-mono font-bold text-emerald-300 block truncate">
-                            {currentPeriod.netReserve}
+                            {liveInflow > 0 || liveOutflow > 0 ? formatCurrency(liveNet, 'IDR') : currentPeriod.netReserve}
                         </span>
-                        <span className="text-[10px] text-emerald-400 font-mono block">Surplus kas aman</span>
+                        <span className="text-[10px] text-emerald-400 font-mono block">
+                            {liveInflow > 0 || liveOutflow > 0 ? 'Surplus mutasi riil' : 'Surplus kas aman'}
+                        </span>
                     </div>
 
                     <div className="p-4 rounded-xl bg-zinc-900/60 border border-sky-500/20 space-y-1 bg-sky-500/5">
@@ -793,7 +747,10 @@ export const DashboardPage: React.FC = () => {
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => setMoneyModalState({ isOpen: true, mode: 'topup' })}
+                                                    onClick={() => {
+                                                        setSelectedWalletForAction(w.id);
+                                                        setIsTopupModalOpen(true);
+                                                    }}
                                                     className="text-zinc-400 hover:text-emerald-300 font-medium transition-colors cursor-pointer"
                                                 >
                                                     Isi
@@ -801,7 +758,10 @@ export const DashboardPage: React.FC = () => {
                                                 <span className="text-zinc-700">•</span>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setMoneyModalState({ isOpen: true, mode: 'transfer' })}
+                                                    onClick={() => {
+                                                        setSelectedWalletForAction(w.id);
+                                                        setIsTransferModalOpen(true);
+                                                    }}
                                                     className="text-zinc-400 hover:text-blue-300 font-medium transition-colors cursor-pointer"
                                                 >
                                                     Kirim
@@ -979,7 +939,7 @@ export const DashboardPage: React.FC = () => {
                                         : 'text-zinc-400 hover:text-zinc-200'
                                 }`}
                             >
-                                Semua ({recentActivities.length})
+                                Semua ({transactions.length})
                             </button>
                             <button
                                 type="button"
@@ -1016,53 +976,69 @@ export const DashboardPage: React.FC = () => {
                 </div>
 
                 <div className="divide-y divide-zinc-800/60">
-                    {filteredActivities.length === 0 ? (
+                    {isTxLoading ? (
+                        <div className="py-4 space-y-3">
+                            <Skeleton className="h-12 w-full rounded-xl" />
+                            <Skeleton className="h-12 w-full rounded-xl" />
+                            <Skeleton className="h-12 w-full rounded-xl" />
+                        </div>
+                    ) : filteredActivities.length === 0 ? (
                         <div className="py-8 text-center text-xs text-zinc-500">
-                            Tidak ada aktivitas mutasi untuk filter ini.
+                            Tidak ada aktivitas mutasi untuk filter ini. Silakan lakukan isi saldo atau transfer.
                         </div>
                     ) : (
-                        filteredActivities.map((act) => (
-                            <div
-                                key={act.id}
-                                className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:bg-zinc-900/30 px-2 rounded-lg transition-colors"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
-                                            act.type === 'IN'
-                                                ? 'bg-emerald-950/40 border-emerald-800/50 text-emerald-400'
-                                                : 'bg-rose-950/40 border-rose-800/50 text-rose-400'
-                                        }`}
-                                    >
-                                        {act.type === 'IN' ? (
-                                            <ArrowDownLeft className="w-4 h-4" />
-                                        ) : (
-                                            <ArrowUpRight className="w-4 h-4" />
-                                        )}
-                                    </div>
-                                    <div className="space-y-0.5">
-                                        <div className="font-semibold text-white">{act.title}</div>
-                                        <div className="text-[11px] text-zinc-500 font-mono">
-                                            {act.walletType} • {act.time}
+                        filteredActivities.map((tx) => {
+                            const isIncoming = tx.type === 'TOPUP' || (tx.receiver_wallet_id && userWalletIds.has(tx.receiver_wallet_id) && tx.sender_wallet_id !== tx.receiver_wallet_id);
+                            const title = tx.description || (isIncoming ? (tx.type === 'TOPUP' ? 'Pengisian Saldo Dompet' : 'Transfer Masuk') : 'Transfer Keluar');
+                            const walletLabel = isIncoming
+                                ? (tx.receiver_wallet_id ? `Dompet ${tx.currency} • ${tx.receiver_wallet_id.slice(0, 8)}...` : `Dompet ${tx.currency}`)
+                                : (tx.sender_wallet_id ? `Dompet ${tx.currency} • ${tx.sender_wallet_id.slice(0, 8)}...` : `Dompet ${tx.currency}`);
+                            const statusLabel = tx.status === 'COMPLETED' ? 'Tercatat Sah ✓' : tx.status === 'PROCESSING' ? 'Diproses' : tx.status === 'FAILED' ? 'Gagal' : 'Dibuat';
+
+                            return (
+                                <div
+                                    key={tx.id}
+                                    onClick={() => setSelectedTxDetail(tx)}
+                                    className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:bg-zinc-900/40 px-2.5 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-zinc-800"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div
+                                            className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
+                                                isIncoming
+                                                    ? 'bg-emerald-950/40 border-emerald-800/50 text-emerald-400'
+                                                    : 'bg-rose-950/40 border-rose-800/50 text-rose-400'
+                                            }`}
+                                        >
+                                            {isIncoming ? (
+                                                <ArrowDownLeft className="w-4 h-4" />
+                                            ) : (
+                                                <ArrowUpRight className="w-4 h-4" />
+                                            )}
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <div className="font-semibold text-white">{title}</div>
+                                            <div className="text-[11px] text-zinc-500 font-mono">
+                                                {walletLabel} • {formatDate(tx.created_at)}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="flex items-center justify-between sm:justify-end gap-3 pl-11 sm:pl-0">
-                                    <span
-                                        className={`font-mono font-bold text-sm ${
-                                            act.type === 'IN' ? 'text-emerald-400' : 'text-rose-400'
-                                        }`}
-                                    >
-                                        {act.type === 'IN' ? '+' : '-'}
-                                        {formatCurrency(act.amount, act.currency)}
-                                    </span>
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400">
-                                        {act.status} ✓
-                                    </span>
+                                    <div className="flex items-center justify-between sm:justify-end gap-3 pl-11 sm:pl-0">
+                                        <span
+                                            className={`font-mono font-bold text-sm ${
+                                                isIncoming ? 'text-emerald-400' : 'text-rose-400'
+                                            }`}
+                                        >
+                                            {isIncoming ? '+' : '-'}
+                                            {formatCurrency(tx.amount, tx.currency)}
+                                        </span>
+                                        <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400">
+                                            {statusLabel}
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
             </div>
@@ -1143,14 +1119,32 @@ export const DashboardPage: React.FC = () => {
                 </div>
             )}
 
-            {/* Modal Kirim Uang & Top-Up */}
-            <MoneyMovementModal
-                isOpen={moneyModalState.isOpen}
-                mode={moneyModalState.mode}
-                wallets={wallets}
-                onClose={() => setMoneyModalState({ isOpen: false, mode: 'topup' })}
-                onSuccess={handleMoneySuccess}
+            {/* Modal Kirim Uang, Top-Up, & Detail Transaksi Riil */}
+            <TransferModal
+                isOpen={isTransferModalOpen}
+                onClose={() => setIsTransferModalOpen(false)}
+                defaultSenderWalletId={selectedWalletForAction}
+                onSuccess={() => {
+                    refetchWallets();
+                    refetchTx();
+                }}
             />
+            <TopupModal
+                isOpen={isTopupModalOpen}
+                onClose={() => setIsTopupModalOpen(false)}
+                defaultReceiverWalletId={selectedWalletForAction}
+                onSuccess={() => {
+                    refetchWallets();
+                    refetchTx();
+                }}
+            />
+            {selectedTxDetail && (
+                <TransactionDetailModal
+                    isOpen={!!selectedTxDetail}
+                    onClose={() => setSelectedTxDetail(null)}
+                    transaction={selectedTxDetail}
+                />
+            )}
         </div>
     );
 };
