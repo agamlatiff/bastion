@@ -4,6 +4,7 @@ use (
 	./services/customer
 	./services/gateway
 	./services/identity
+	./services/kyc
 	./services/ledger
 	./services/wallet
 )
