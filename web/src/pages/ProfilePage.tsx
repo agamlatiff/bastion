@@ -23,6 +23,7 @@ import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { Alert } from '../components/ui/Alert';
 import { formatDate } from '../lib/formatters';
+import { KYCVerificationCard } from '../components/kyc/KYCVerificationCard';
 import type { CustomerProfile } from '../types/customer';
 
 interface ProfileEditFormProps {
@@ -538,6 +539,9 @@ export const ProfilePage: React.FC = () => {
 
                 {/* 2FA Security Management Card */}
                 <SecurityTwoFactorCard />
+
+                {/* KYC Identity Verification Card */}
+                <KYCVerificationCard />
             </div>
         </div>
     );
