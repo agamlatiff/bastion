@@ -17,6 +17,7 @@ type Config struct {
 	IdentityServiceURL string
 	CustomerServiceURL string
 	WalletServiceURL   string
+	KYCServiceURL      string
 }
 
 // Load reads Gateway configuration from environment variables with sensible defaults.
@@ -31,6 +32,7 @@ func Load() *Config {
 		IdentityServiceURL: getEnv("IDENTITY_SERVICE_URL", "http://localhost:8081"),
 		CustomerServiceURL: getEnv("CUSTOMER_SERVICE_URL", "http://localhost:8082"),
 		WalletServiceURL:   getEnv("WALLET_SERVICE_URL", "http://localhost:8083"),
+		KYCServiceURL:      getEnv("KYC_SERVICE_URL", "http://localhost:8085"),
 	}
 }
 
