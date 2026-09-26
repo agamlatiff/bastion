@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Snowflake, Sun, RefreshCw, Copy, Check, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Snowflake, Sun, RefreshCw, Copy, Check, ShieldCheck, AlertTriangle, Send, ArrowDownLeft, History, ChevronRight } from 'lucide-react';
 import {
     useWalletDetail,
     useWalletBalance,
     useFreezeWallet,
     useUnfreezeWallet,
 } from '../features/wallet/hooks';
+import { useTransactions } from '../features/transaction/hooks';
+import type { Transaction } from '../types/transaction';
 import { PageHeader } from '../components/common/PageHeader';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -15,6 +17,9 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { Alert } from '../components/ui/Alert';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { VirtualDebitCard } from '../components/wallet/VirtualDebitCard';
+import { TransferModal } from '../components/transaction/TransferModal';
+import { TopupModal } from '../components/transaction/TopupModal';
+import { TransactionDetailModal } from '../components/transaction/TransactionDetailModal';
 import { formatCurrency, formatDate } from '../lib/formatters';
 
 export const WalletDetailPage: React.FC = () => {
@@ -40,8 +45,18 @@ export const WalletDetailPage: React.FC = () => {
 
     const [isConfirmFreezeOpen, setIsConfirmFreezeOpen] = useState(false);
     const [isConfirmUnfreezeOpen, setIsConfirmUnfreezeOpen] = useState(false);
+    const [isTransferOpen, setIsTransferOpen] = useState(false);
+    const [isTopupOpen, setIsTopupOpen] = useState(false);
+    const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
     const [isCopied, setIsCopied] = useState(false);
+
+    const {
+        data: txData,
+        isLoading: isTxLoading,
+        refetch: refetchTx,
+    } = useTransactions({ wallet_id: walletId, limit: 5 });
+    const recentTransactions = txData?.items || [];
 
     const handleCopyId = () => {
         if (!wallet) return;
@@ -138,12 +153,32 @@ export const WalletDetailPage: React.FC = () => {
                                 onClick={() => {
                                     refetchWallet();
                                     refetchBalance();
+                                    refetchTx();
                                 }}
                                 leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />}
                                 disabled={isSyncing}
                             >
-                                Perbarui Saldo
+                                Perbarui
                             </Button>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsTopupOpen(true)}
+                                leftIcon={<ArrowDownLeft className="w-3.5 h-3.5 text-blue-400" />}
+                            >
+                                Isi Saldo
+                            </Button>
+
+                            {wallet.status === 'ACTIVE' && (
+                                <Button
+                                    size="sm"
+                                    onClick={() => setIsTransferOpen(true)}
+                                    leftIcon={<Send className="w-3.5 h-3.5" />}
+                                >
+                                    Kirim Uang
+                                </Button>
+                            )}
 
                             {wallet.status === 'ACTIVE' && (
                                 <Button
@@ -152,7 +187,7 @@ export const WalletDetailPage: React.FC = () => {
                                     onClick={() => setIsConfirmFreezeOpen(true)}
                                     leftIcon={<Snowflake className="w-3.5 h-3.5" />}
                                 >
-                                    Bekukan Rekening
+                                    Bekukan
                                 </Button>
                             )}
 
@@ -295,6 +330,82 @@ export const WalletDetailPage: React.FC = () => {
                 </Card>
             </div>
 
+            {/* Mutasi Terkini Khusus Rekening Ini */}
+            <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <History className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Aktivitas Mutasi Terkini</span>
+                    </span>
+                    <Link
+                        to="/app/activity"
+                        className="text-xs text-zinc-400 hover:text-white transition-colors inline-flex items-center gap-1"
+                    >
+                        <span>Lihat Semua Aktivitas</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
+                </div>
+
+                {isTxLoading ? (
+                    <Skeleton className="h-20 rounded-xl" />
+                ) : recentTransactions.length === 0 ? (
+                    <div className="p-6 rounded-xl border border-zinc-800 bg-[#111114] text-center text-xs text-zinc-400 space-y-2">
+                        <p>Belum ada transaksi di dompet ini.</p>
+                        <Button size="sm" variant="outline" onClick={() => setIsTopupOpen(true)}>
+                            Isi Saldo Pertama
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="rounded-xl border border-zinc-800 bg-[#111114] divide-y divide-zinc-800/80 overflow-hidden">
+                        {recentTransactions.map((tx) => {
+                            const isIncoming = tx.type === 'TOPUP' || tx.receiver_wallet_id === wallet.id;
+                            return (
+                                <div
+                                    key={tx.id}
+                                    onClick={() => setSelectedTx(tx)}
+                                    className="p-3.5 sm:px-4 hover:bg-zinc-800/30 transition-colors cursor-pointer flex items-center justify-between gap-4"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div
+                                            className={`w-8 h-8 rounded-lg flex items-center justify-center border shrink-0 ${
+                                                isIncoming
+                                                    ? 'bg-emerald-950/40 border-emerald-800/50 text-emerald-400'
+                                                    : 'bg-zinc-900 border-zinc-800 text-zinc-300'
+                                            }`}
+                                        >
+                                            {isIncoming ? (
+                                                <ArrowDownLeft className="w-4 h-4 text-emerald-400" />
+                                            ) : (
+                                                <ArrowUpRight className="w-4 h-4 text-zinc-300" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <span className="text-xs font-semibold text-white block">
+                                                {tx.description || (isIncoming ? 'Uang Masuk / Top-up' : 'Transfer Keluar')}
+                                            </span>
+                                            <span className="text-[10px] font-mono text-zinc-500">
+                                                {formatDate(tx.created_at)}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="text-right">
+                                        <span
+                                            className={`text-xs font-mono font-bold block ${
+                                                isIncoming ? 'text-emerald-400' : 'text-white'
+                                            }`}
+                                        >
+                                            {isIncoming ? '+' : '-'} {formatCurrency(tx.amount, tx.currency)}
+                                        </span>
+                                        <span className="text-[10px] text-zinc-500 font-mono">{tx.status}</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+
             {/* Dialog Konfirmasi Pembekuan */}
             <ConfirmDialog
                 isOpen={isConfirmFreezeOpen}
@@ -317,6 +428,36 @@ export const WalletDetailPage: React.FC = () => {
                 isLoading={isUnfreezing}
                 onConfirm={handleUnfreeze}
                 onCancel={() => setIsConfirmUnfreezeOpen(false)}
+            />
+
+            {/* Modals Transaksi */}
+            <TransferModal
+                isOpen={isTransferOpen}
+                onClose={() => setIsTransferOpen(false)}
+                defaultSenderWalletId={wallet.id}
+                onSuccess={() => {
+                    refetchWallet();
+                    refetchBalance();
+                    refetchTx();
+                }}
+            />
+
+            <TopupModal
+                isOpen={isTopupOpen}
+                onClose={() => setIsTopupOpen(false)}
+                defaultReceiverWalletId={wallet.id}
+                onSuccess={() => {
+                    refetchWallet();
+                    refetchBalance();
+                    refetchTx();
+                }}
+            />
+
+            <TransactionDetailModal
+                transaction={selectedTx}
+                currentWalletId={wallet.id}
+                isOpen={!!selectedTx}
+                onClose={() => setSelectedTx(null)}
             />
         </div>
     );

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, WalletCards, RefreshCw, Copy, Check, ArrowRight, CreditCard } from 'lucide-react';
+import { Plus, WalletCards, RefreshCw, Copy, Check, ArrowRight, CreditCard, Send, ArrowDownLeft } from 'lucide-react';
 import { useWallets, useCreateWallet } from '../features/wallet/hooks';
 import { useCustomerProfile } from '../features/customer/hooks';
 import { PageHeader } from '../components/common/PageHeader';
@@ -11,6 +11,8 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Alert } from '../components/ui/Alert';
 import { VirtualDebitCard } from '../components/wallet/VirtualDebitCard';
 import { CurrencyConverter } from '../components/dashboard/CurrencyConverter';
+import { TransferModal } from '../components/transaction/TransferModal';
+import { TopupModal } from '../components/transaction/TopupModal';
 import { formatCurrency, formatDate } from '../lib/formatters';
 
 export const WalletsPage: React.FC = () => {
@@ -19,6 +21,9 @@ export const WalletsPage: React.FC = () => {
     const { data: profile } = useCustomerProfile();
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isTransferOpen, setIsTransferOpen] = useState(false);
+    const [isTopupOpen, setIsTopupOpen] = useState(false);
+    const [activeTargetWalletId, setActiveTargetWalletId] = useState<string | undefined>(undefined);
     const [currency, setCurrency] = useState('IDR');
     const [createError, setCreateError] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -67,14 +72,36 @@ export const WalletsPage: React.FC = () => {
                             leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} />}
                             disabled={isRefetching}
                         >
-                            Perbarui Saldo
+                            Perbarui
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                setActiveTargetWalletId(undefined);
+                                setIsTopupOpen(true);
+                            }}
+                            leftIcon={<ArrowDownLeft className="w-3.5 h-3.5 text-blue-400" />}
+                        >
+                            Isi Saldo
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                setActiveTargetWalletId(undefined);
+                                setIsTransferOpen(true);
+                            }}
+                            leftIcon={<Send className="w-3.5 h-3.5 text-emerald-400" />}
+                        >
+                            Kirim Uang
                         </Button>
                         <Button
                             size="sm"
                             onClick={() => setIsCreateOpen(true)}
                             leftIcon={<Plus className="w-3.5 h-3.5" />}
                         >
-                            Buka Dompet Baru
+                            Buka Dompet
                         </Button>
                     </div>
                 }
@@ -283,6 +310,20 @@ export const WalletsPage: React.FC = () => {
                     </div>
                 </div>
             )}
+            {/* Modals Transaksi */}
+            <TransferModal
+                isOpen={isTransferOpen}
+                onClose={() => setIsTransferOpen(false)}
+                defaultSenderWalletId={activeTargetWalletId}
+                onSuccess={() => refetch()}
+            />
+
+            <TopupModal
+                isOpen={isTopupOpen}
+                onClose={() => setIsTopupOpen(false)}
+                defaultReceiverWalletId={activeTargetWalletId}
+                onSuccess={() => refetch()}
+            />
         </div>
     );
 };
