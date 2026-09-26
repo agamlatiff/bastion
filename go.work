@@ -6,5 +6,6 @@ use (
 	./services/identity
 	./services/kyc
 	./services/ledger
+	./services/transaction
 	./services/wallet
 )

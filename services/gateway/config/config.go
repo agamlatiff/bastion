@@ -17,22 +17,24 @@ type Config struct {
 	IdentityServiceURL string
 	CustomerServiceURL string
 	WalletServiceURL   string
-	KYCServiceURL      string
+	KYCServiceURL         string
+	TransactionServiceURL string
 }
 
 // Load reads Gateway configuration from environment variables with sensible defaults.
 func Load() *Config {
 	return &Config{
-		Port:               getEnv("PORT", "8080"),
-		AllowedOrigins:     getEnvAsSlice("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173"),
-		MetricsUser:        getEnv("METRICS_USER", "bastion_metrics"),
-		MetricsPassword:    getEnv("METRICS_PASSWORD", "bastion_metrics_secret"),
-		RequestTimeoutSec:  getEnvAsInt("REQUEST_TIMEOUT_SEC", 15),
-		MaxBodyBytes:       getEnvAsInt64("MAX_BODY_BYTES", 2*1024*1024), // 2MB limit
-		IdentityServiceURL: getEnv("IDENTITY_SERVICE_URL", "http://localhost:8081"),
-		CustomerServiceURL: getEnv("CUSTOMER_SERVICE_URL", "http://localhost:8082"),
-		WalletServiceURL:   getEnv("WALLET_SERVICE_URL", "http://localhost:8083"),
-		KYCServiceURL:      getEnv("KYC_SERVICE_URL", "http://localhost:8085"),
+		Port:                  getEnv("PORT", "8080"),
+		AllowedOrigins:        getEnvAsSlice("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173"),
+		MetricsUser:           getEnv("METRICS_USER", "bastion_metrics"),
+		MetricsPassword:       getEnv("METRICS_PASSWORD", "bastion_metrics_secret"),
+		RequestTimeoutSec:     getEnvAsInt("REQUEST_TIMEOUT_SEC", 15),
+		MaxBodyBytes:          getEnvAsInt64("MAX_BODY_BYTES", 2*1024*1024), // 2MB limit
+		IdentityServiceURL:    getEnv("IDENTITY_SERVICE_URL", "http://localhost:8081"),
+		CustomerServiceURL:    getEnv("CUSTOMER_SERVICE_URL", "http://localhost:8082"),
+		WalletServiceURL:      getEnv("WALLET_SERVICE_URL", "http://localhost:8083"),
+		KYCServiceURL:         getEnv("KYC_SERVICE_URL", "http://localhost:8085"),
+		TransactionServiceURL: getEnv("TRANSACTION_SERVICE_URL", "http://localhost:8086"),
 	}
 }
 

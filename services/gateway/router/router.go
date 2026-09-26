@@ -50,6 +50,7 @@ func New(cfg *config.Config) *gin.Engine {
 	proxyCustomer := NewReverseProxy(cfg.CustomerServiceURL)
 	proxyWallet := NewReverseProxy(cfg.WalletServiceURL)
 	proxyKYC := NewReverseProxy(cfg.KYCServiceURL)
+	proxyTransaction := NewReverseProxy(cfg.TransactionServiceURL)
 
 	r.Any("/v1/auth", proxyIdentity)
 	r.Any("/v1/auth/*path", proxyIdentity)
@@ -59,6 +60,12 @@ func New(cfg *config.Config) *gin.Engine {
 	r.Any("/v1/wallets/*path", proxyWallet)
 	r.Any("/v1/kyc", proxyKYC)
 	r.Any("/v1/kyc/*path", proxyKYC)
+	r.Any("/v1/transactions", proxyTransaction)
+	r.Any("/v1/transactions/*path", proxyTransaction)
+	r.Any("/v1/transfers", proxyTransaction)
+	r.Any("/v1/transfers/*path", proxyTransaction)
+	r.Any("/v1/topups", proxyTransaction)
+	r.Any("/v1/topups/*path", proxyTransaction)
 
 	return r
 }
